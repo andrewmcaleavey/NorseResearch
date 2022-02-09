@@ -7,6 +7,9 @@
 #' @param item The name of the item to plot.
 #' @param data A dataframe.
 #' @return Not much, just a plot.
+#'
+#' @export
+#'
 #' @examples
 #' item_plot("Q71", data.joined)
 #' item_plot(Q71, data.joined)  # error
