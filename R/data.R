@@ -71,6 +71,8 @@
 #'
 "summary_norms_MH_out"
 
+here's the data.R file entry:
+
 #' Research-friendly data from Helse Førde 2021.
 #'
 #' Anonymous research data from Helse Førde area (all clinics)
@@ -81,8 +83,8 @@
 #' @format A data frame.
 #' \describe{
 #'   \itemize{
-#'     \item{\code{respondent_id}} {Numeric. Unique patient number.}
-#'     \item{\code{treatment_id}} {Numeric. Unique treatment number, assigned by NF system.}
+#'     \item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
+#'     \item{\code{anon_tx_id}} {Numeric. Unique treatment number, anonymized.}
 #'     \item{\code{date}} {Date. Date (and time) NF was completed.}
 #'     \item{\code{pt_first_date}} {Date. First date in the data for each \code{respondent_id}.}
 #'     \item{\code{pt_wks_since_first}} {Numeric. Time difference in weeks from \code{pt_first_date}.}
@@ -131,7 +133,6 @@
 #'
 #'   }
 #' }
-#'
 #'
 #' @source Processed from NORSEpkg::hf.all.scored.2021.05.10.
 #' See \code{data-raw/HF_research_data_2021.R}.
