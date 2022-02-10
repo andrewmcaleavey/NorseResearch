@@ -71,7 +71,6 @@
 #'
 "summary_norms_MH_out"
 
-here's the data.R file entry:
 
 #' Research-friendly data from Helse Førde 2021.
 #'

@@ -8,8 +8,8 @@
 A data frame.
 \describe{
 \itemize{
-\item{\code{respondent_id}} {Numeric. Unique patient number.}
-\item{\code{treatment_id}} {Numeric. Unique treatment number, assigned by NF system.}
+\item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
+\item{\code{anon_tx_id}} {Numeric. Unique treatment number, anonymized.}
 \item{\code{date}} {Date. Date (and time) NF was completed.}
 \item{\code{pt_first_date}} {Date. First date in the data for each \code{respondent_id}.}
 \item{\code{pt_wks_since_first}} {Numeric. Time difference in weeks from \code{pt_first_date}.}
