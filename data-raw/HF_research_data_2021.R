@@ -19,6 +19,20 @@ inpt.strings <- c("døgn", "DØGN", "Døgn",
 outpt.strings <- c("dag", "DAG", "Dag", "ISP", "ISP Sogndal", "Florø",
                    "DPS Florø", "DPS Sogndal")
 
+anon_ids <- tibble(NORSEpkg::hf.all.scored.2021.05.10) %>%
+  dplyr::select(respondent_id) %>%
+  distinct() %>%
+  mutate(anon_id = order(respondent_id + runif(n(), min = -10000, max = 10000)))
+# do same for treatment_id and assessment_instance_id
+treatment_id_hash <- tibble(NORSEpkg::hf.all.scored.2021.05.10) %>%
+  dplyr::select(treatment_id) %>%
+  distinct() %>%
+  mutate(anon_tx_id = order(treatment_id + runif(n(), min = -90000, max = 90000)))
+assess_id_hash <- tibble(NORSEpkg::hf.all.scored.2021.05.10) %>%
+  dplyr::select(assessment_instance_id) %>%
+  distinct() %>%
+  mutate(anon_assess_id = order(assessment_instance_id + runif(n(), min = -90000, max = 90000)))
+
 HF_research_data_2021 <- NORSEpkg::hf.all.scored.2021.05.10 %>%
   # extract birthyear (birthdate removed later)
   mutate(birthyear = format(.data$respondent_birthdate, "%Y"),
@@ -87,10 +101,15 @@ HF_research_data_2021 <- NORSEpkg::hf.all.scored.2021.05.10 %>%
          pt_any_sub = ifelse(pt_total_sub_tx > 0, TRUE, FALSE),
          pt_any_MH = ifelse(pt_total_MH_tx > 0, TRUE, FALSE)) %>%
 
+  ungroup() %>%
+  # need to recode respondent_id and any other even potentially identifying variables.
+  left_join(anon_ids) %>%
+  left_join(treatment_id_hash) %>%
+  left_join(assess_id_hash) %>%
   # get ready for export by ungrouping and arranging variables
   ungroup() %>%
-  select(respondent_id,
-         treatment_id,
+  select(anon_id,
+         anon_tx_id,
          date,
          pt_first_date,
          pt_wks_since_first,
@@ -115,10 +134,17 @@ HF_research_data_2021 <- NORSEpkg::hf.all.scored.2021.05.10 %>%
          pt_total_sub_tx,
          sum_tx_cats,
          birthyear,
+         anon_assess_id,
          everything(),
+         -respondent_id,
+         -assessment_instance_id,
+         -treatment_id,
          -respondent_birthdate)
 
 # Data checks of interest:
+# length(unique(HF_research_data_2021$anon_id)) == length(unique(HF_research_data_2021$respondent_id))
+# length(unique(HF_research_data_2021$anon_tx_id)) == length(unique(HF_research_data_2021$treatment_id))
+# length(unique(HF_research_data_2021$anon_assess_id)) == length(unique(HF_research_data_2021$assessment_instance_id))
 #
 # table(HF_research_data_2021$tx_focus)
 # table(HF_research_data_2021$in_or_out)
