@@ -5,7 +5,7 @@
 \alias{HF_research_data_2021}
 \title{Research-friendly data from Helse Førde 2021.}
 \format{
-A data frame.
+A data frame with 18620 observations of 170 variables.
 \describe{
 \itemize{
 \item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
@@ -69,7 +69,16 @@ HF_research_data_2021
 \description{
 Anonymous research data from Helse Førde area (all clinics)
 from May 2021, scored, with additional variables for external use.
-A dataset from Helse Førde, scored.
-Any values that were 99 are now NA.
+}
+\details{
+Any values that were 99 are now NA, and these represent patient non-responses.
+
+THIS DATA IS NOT PROVIDED as part of the package and must be received separately
+for confidentiality. Once received, the .rda file can be saved in the
+global environment as \code{HF_research_data_2021 <- load("HF_research_data_2021.rda")}.
+This process means that it is not really accessible as part of the package,
+but must be stored locally.
+
+The codebook for the relevant items is provided here though.
 }
 \keyword{datasets}
