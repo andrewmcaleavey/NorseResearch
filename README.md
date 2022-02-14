@@ -11,11 +11,8 @@ require(devtools)
 devtools::install_github("andrewmcaleavey/NorseResearch")
 ```
 
-## Data
-The appropriate data file, provided separately to authorized researchers, should be saved directly in the `data/` folder wherever the package is installed. 
-
 ## Usage
-See `?HF_research_data_2021` for information about the currently-shareable data, and other helpfiles about specific functions. 
+See `?HF_research_data_2021` for information about the currently-shareable data, how to load it once it is received, and other helpfiles about specific functions. 
 
 ## License
 
