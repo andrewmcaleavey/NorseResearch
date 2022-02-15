@@ -99,7 +99,27 @@ HF_research_data_2021 <- NORSEpkg::hf.all.scored.2021.05.10 %>%
   mutate(pt_total_sub_tx = sum(is_sub),
          pt_total_MH_tx = sum(is_MH),
          pt_any_sub = ifelse(pt_total_sub_tx > 0, TRUE, FALSE),
-         pt_any_MH = ifelse(pt_total_MH_tx > 0, TRUE, FALSE)) %>%
+         pt_any_MH = ifelse(pt_total_MH_tx > 0, TRUE, FALSE),
+         cog_first_pt = first(cog, order_by = date),
+         control_first_pt = first(control, order_by = date),
+         eating_first_pt = first(eating, order_by = date),
+         genFunc_first_pt = first(genFunc, order_by = date),
+         hopeless_first_pt = first(hopeless, order_by = date),
+         internal_first_pt = first(internal, order_by = date),
+         irritable_first_pt = first(irritable, order_by = date),
+         ready_first_pt = first(ready, order_by = date),
+         recovEnv_first_pt = first(recovEnv, order_by = date),
+         sad_first_pt = first(sad, order_by = date),
+         selfCrit_first_pt = first(selfCrit, order_by = date),
+         avoidSit_first_pt = first(avoidSit, order_by = date),
+         avoidSoc_first_pt = first(avoidSoc, order_by = date),
+         socialSafety_first_pt = first(socialSafety, order_by = date),
+         somAnx_first_pt = first(somAnx, order_by = date),
+         subRecov_first_pt = first(subRecov, order_by = date),
+         subUse_first_pt = first(subUse, order_by = date),
+         suicide_first_pt = first(suicide, order_by = date),
+         trauma_first_pt = first(trauma, order_by = date),
+         worry_first_pt = first(worry, order_by = date)) %>%
 
   ungroup() %>%
   # need to recode respondent_id and any other even potentially identifying variables.
