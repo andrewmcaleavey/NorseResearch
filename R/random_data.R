@@ -31,7 +31,7 @@ random_item_vector <- function(num = 1,
          size = num,
          replace = replace)
 }
-
+random_item_vector(5)
 
 
 ### modeling a whole data set
@@ -42,9 +42,6 @@ random_item_vector <- function(num = 1,
 # A model for other variables (e.g., gender/age)
 random_person_generator <- function(num = 2,  # num people
                                     mean_obs = 5.79,  # grand mean number of observations per person
-                                    mean_interval, # grand mean time distance bw obs
-                                    sd_obs,  # SD of number of observations to use
-                                    sd_interval,  # sd of intervals to use
                                     gender = NULL,
                                     birthyear = NULL,
                                     tx_focus = NULL,
@@ -83,7 +80,25 @@ random_person_generator <- function(num = 2,  # num people
 }
 
 random_person_generator(100)
+
 # observation level variables:
+# item responses for all NF items
 # A model for missing data (tough!)
+# Date variable: after the first per person
+
+
+# just making one row of data here.
+random_assessment_generator <- function(date = Sys.Date()){
+  item_names <- names(HF_research_data_2021)[grepl("Q", names(HF_research_data_2021))]
+  item_values <- random_item_vector(length(item_names))
+
+  var_names <- append(item_names, "date")
+
+  data.frame(matrix(item_values, nrow = 1, ncol = length(item_values))) %>%
+    cbind(tibble("date" = date)) %>%
+    set_names(var_names) %>%
+    dplyr::select(date, everything())
+}
+random_assessment_generator()
 
 # model for treatment numbers (tough!)

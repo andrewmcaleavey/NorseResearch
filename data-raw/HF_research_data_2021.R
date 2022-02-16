@@ -155,6 +155,8 @@ HF_research_data_2021 <- NORSEpkg::hf.all.scored.2021.05.10 %>%
          sum_tx_cats,
          birthyear,
          anon_assess_id,
+         all_of(NORSEpkg::scale_names),
+         contains("first_pt"),
          everything(),
          -respondent_id,
          -assessment_instance_id,
