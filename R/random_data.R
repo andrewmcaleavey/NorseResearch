@@ -4,6 +4,10 @@
 
 # could model this as totally random item responses for now, say
 
+
+item_names_nf2 <- names(NORSEpkg::hf.scored.2019)[grepl("Q", names(NORSEpkg::hf.scored.2019))]
+
+
 #' Item response RNG
 #'
 #' @return A single number, 1:7
@@ -67,7 +71,7 @@ random_person_generator <- function(num = 2,  # num people
   # size 1 or the same size as num. Otherwise will not work. Spits error.
 
   tibble::tibble(anon_id = 1:num,
-                 pt_first_data = sample(seq(as.Date("2017-11-13 11:30:51 UTC"),
+                 pt_first_date = sample(seq(as.Date("2017-11-13 11:30:51 UTC"),
                                             as.Date('2021-05-10 08:19:11 UTC'),
                                             by="day"),
                                         num,
@@ -87,18 +91,111 @@ random_person_generator(100)
 # Date variable: after the first per person
 
 
-# just making one row of data here.
-random_assessment_generator <- function(date = Sys.Date()){
-  item_names <- names(HF_research_data_2021)[grepl("Q", names(HF_research_data_2021))]
-  item_values <- random_item_vector(length(item_names))
+random_assessment_generator <- function(date_df = NULL,
+                                        num_dates = NULL){
+  # if no value given, use today to have something
+  if(is.null(date_df)){date_df <- data.frame("date" = Sys.Date())}
+  #else if only a single value provided, convert that to an appropriate df
+  else if(is.atomic(date_df)){
+    date_val <- as.Date(date_df)
+    date_df <- data.frame("date" = date_val)}
 
-  var_names <- append(item_names, "date")
+  if(is.null(num_dates)){num_dates <- nrow(date_df)}
+  item_names <- item_names_nf2
+  item_values <- random_item_vector(length(item_names) * num_dates)
+  item_values_mat <- matrix(item_values,
+                            nrow = num_dates)
 
-  data.frame(matrix(item_values, nrow = 1, ncol = length(item_values))) %>%
-    cbind(tibble("date" = date)) %>%
-    set_names(var_names) %>%
+  item_df <- suppressMessages(data.frame(item_values_mat)) %>%
+    setNames(item_names)
+
+  bind_cols(date_df, item_df) %>%
+    # set_names(var_names) %>%
     dplyr::select(date, everything())
 }
+# tests:
 random_assessment_generator()
+random_assessment_generator(Sys.Date())
+random_assessment_generator(date = tibble("date" = c(Sys.Date(), Sys.Date() +1)))
+random_assessment_generator(num_dates = 3)
 
+# this  just takes a date and a length of treatment and returns a series of ordered
+# dates as a tibble column including the first date as the first row.
+random_tx_generator <- function(num_obs = 1,
+                                num_pts = length(num_obs),
+                                first_date = rep(as.Date("2017-11-13 11:30:51 UTC"), num_pts),
+                                identifiers = 1:num_pts,
+                                tx_days = NULL){ # a typical sd of tx_length in weeks
+  # define behavior for the case when more than 1 patient is provided.
+  # assume num_obs could be any length vector
+
+  # generate length of treatment
+  if(is.null(tx_days)) {
+    tx_days <- rpois(num_pts,
+                     21*7 - sample(0:6, num_pts))  # add a random draw from a "typical" max tx length distribution
+    # subtract 0-6 days at random
+  }
+  # print("first_date is")
+  # print(first_date)
+  # print(identifiers)
+  # setting maximum date is a little weird
+  max_date <- as.Date(first_date + tx_days)
+
+  # print(max_date)
+
+  id_var <- rep(identifiers, times = num_obs)
+
+  # print(id_var)
+
+  date_seq <- c(first_date)
+
+
+  for(i in 1:num_pts){
+    date_seq_i <- append(first_date[i],
+                       sort(sample(seq(first_date[i] + 1,
+                                       max_date[i],
+                                       by="day"),
+                                   num_obs[i] - 1,
+                                   replace = FALSE)))
+    # print(date_seq_i)
+    date_seq <- append(date_seq, date_seq_i)
+  }
+  # print(date_seq)
+  date_seq <- date_seq[(num_pts + 1):length(date_seq)]
+  # print(date_seq)
+  # date_seq <- append(first_date,
+  #                    sort(sample(seq(first_date+1,
+  #                             max_date,
+  #                             by="day"),
+  #                         num_obs-1,
+  #                         replace = FALSE)))
+
+  # generate data
+  # export a data frame
+  tibble("id" = id_var,
+    "date" = date_seq)
+}
+random_tx_generator(4)
+random_tx_generator(num_obs = c(3, 5))
+random_tx_generator(1:3, first_date = c(as.Date("2017-11-20"),
+                                      as.Date("2017-03-20"),
+                                      as.Date("2017-12-20")))
+random_tx_generator(num_obs = c(1, 4, 2),
+                    first_date = c(as.Date("2017-11-20"),
+                                        as.Date("2017-03-20"),
+                                        as.Date("2017-12-20")),
+                    num_pts = 3)
+
+# what happens when given a series of patients?
 # model for treatment numbers (tough!)
+
+
+random_assessment_generator(random_tx_generator(10))
+
+testdata_pt <- random_person_generator(3)
+random_tx_generator(num_obs = testdata_pt$pt_total_obs[1], first_date = testdata_pt$pt_first_date[1])
+
+random_assessment_generator(random_tx_generator(num_obs = testdata_pt$pt_total_obs[1],
+                                                first_date = testdata_pt$pt_first_date[1]))
+
+random_tx_generator(num_obs = 1:3)
