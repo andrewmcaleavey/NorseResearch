@@ -14,6 +14,8 @@ devtools::install_github("andrewmcaleavey/NorseResearch")
 ## Usage
 See `?HF_research_data_2021` for information about the currently-shareable data, how to load it once it is received, and other helpfiles about specific functions. 
 
+Also see the synthetic data (essentially random numbers) in  `synthetic_data`. Or generate some new NF data using `random_norse_data()`. 
+
 ## License
 
 This package is licensed under the MIT license.  
