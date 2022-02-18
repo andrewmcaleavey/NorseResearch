@@ -137,10 +137,35 @@
 #'     \item{\code{respondent_test_account}} {Numeric.}
 #'     \item{\code{respondent_last_login}} {Date.}
 #'     \item{\code{respondent_communication_disabled}} {Numeric.}
-#'
 #'   }
 #' }
 #'
 #' @source Processed from NORSEpkg::hf.all.scored.2021.05.10.
 #' See \code{data-raw/HF_research_data_2021.R}.
 "HF_research_data_2021"
+
+
+#' Synthetic Data (N = 500)
+#'
+#' This is not real data, it is essentially random numbers in the form of data
+#' very similar to what Norse Feedback looks like. it is based on the function
+#' random_norse_data().
+#'
+#' @format A data frame with 2883 observations of 132 variables.
+#' \describe{
+#'   \itemize{
+#'     \item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
+#'     \item{\code{date}} {Date. Date (and time) NF was completed.}
+#'     \item{\code{pt_first_date}} {Date. First date in the data for each \code{respondent_id}.}
+#'     \item{\code{pt_total_obs}} {Numeric. Total number of observations (rows) of data for this patient.}
+#'     \item{\code{tx_focus}} {Character. What was the focus of \code{treatment_name} for this observation.
+#'     Values are "Sub", "MH", or "Unclear".}
+#'     \item{\code{in_or_out}} {Character. Is the current \code{treatment_name} inpatient, outpatient, or unclear.}
+#'     \item{\code{birthyear}} {Character. Year of birth for each \code{respondent_id}.}
+#'     \item{\code{gender}} {Character. Options are "male" and "female".}
+#'     \item{code{OTHERS}} {Others including scale and item names.}
+#'   }
+#' }
+#'
+#' @source See \code{data-raw/synthetic_data.R}.
+"synthetic_data"

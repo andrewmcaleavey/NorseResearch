@@ -55,7 +55,6 @@ Values are "Sub", "MH", or "Unclear".}
 \item{\code{respondent_test_account}} {Numeric.}
 \item{\code{respondent_last_login}} {Date.}
 \item{\code{respondent_communication_disabled}} {Numeric.}
-
 }
 }
 }

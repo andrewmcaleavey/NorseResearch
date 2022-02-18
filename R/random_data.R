@@ -19,9 +19,9 @@ random_item_response <- function(){sample(1:7, 1)}
 
 #' Random item responses as a vector
 #'
-#' @param num
-#' @param range
-#' @param replace
+#' @param num Numeric. How many items?
+#' @param range Vector. Defaults to 1:7
+#' @param replace Logical. Should observations be repeatable? Defaults to TRUE.
 #'
 #' @return a vector of length `num`
 #' @export
@@ -35,7 +35,7 @@ random_item_vector <- function(num = 1,
          size = num,
          replace = replace)
 }
-random_item_vector(5)
+# random_item_vector(5)
 
 
 ### modeling a whole data set
@@ -44,6 +44,22 @@ random_item_vector(5)
 # A model for patient length of treatment/number of observations
 # A model for time between observations (interval)
 # A model for other variables (e.g., gender/age)
+
+#' Generate a set of random patient variables of arbitrary length
+#'
+#' @param num Integer. Number of people.
+#' @param mean_obs Numeric. Defines a typical number of observations per person. Is randomly altered.
+#' @param gender Character. Defaults to NULL, and is replaced.
+#' @param birthyear Numeric. Defaults to NULL, and is replaced
+#' @param tx_focus Character. Defaults to NULL, and is replaced
+#' @param in_or_out Character. Defaults to NULL, and is replaced
+#' @param ... Additional parameters
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' random_person_generator(100)
 random_person_generator <- function(num = 2,  # num people
                                     mean_obs = 5.79,  # grand mean number of observations per person
                                     gender = NULL,
@@ -84,7 +100,7 @@ random_person_generator <- function(num = 2,  # num people
                  birthyear = birthyear)
 }
 
-random_person_generator(100)
+# random_person_generator(100)
 
 # observation level variables:
 # item responses for all NF items
@@ -92,6 +108,22 @@ random_person_generator(100)
 # Date variable: after the first per person
 
 # still needs to properly treat the treatment needs variables.
+
+
+#' Generate random NF-like data
+#'
+#' @param date_df A data.frame if provided. Defaults to NULL, and then is rewritten.
+#' @param num_dates Optional. Number of assessments to produce.
+#' @param ... Additional parameters
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' random_assessment_generator()
+#' random_assessment_generator(Sys.Date())
+#' random_assessment_generator(date_df = tibble("date" = c(Sys.Date(), Sys.Date() +1)))
+#' random_assessment_generator(num_dates = 3)
 random_assessment_generator <- function(date_df = NULL,
                                         num_dates = NULL,
                                         ...){
@@ -123,15 +155,40 @@ random_assessment_generator <- function(date_df = NULL,
     # set_names(var_names) %>%
     dplyr::select(anon_id, date, everything())
 }
-# tests:
-random_assessment_generator()
-random_assessment_generator(Sys.Date())
-# doesn't assign an id variable, gets one back
-random_assessment_generator(date_df = tibble("date" = c(Sys.Date(), Sys.Date() +1)))
-random_assessment_generator(num_dates = 3)
+# # tests:
+# random_assessment_generator()
+# random_assessment_generator(Sys.Date())
+# # doesn't assign an id variable, gets one back
+# random_assessment_generator(date_df = tibble("date" = c(Sys.Date(), Sys.Date() +1)))
+# random_assessment_generator(num_dates = 3)
 
 # this  just takes a date and a length of treatment and returns a series of ordered
 # dates as a tibble column including the first date as the first row.
+
+#' Generate an entire treatment course, possibly given several specific parameters
+#'
+#' @param num_obs Vector. Number of observations per person. Can be a vector.
+#' @param num_pts Integer. Number of patients.
+#' @param first_date Vector of dates with length = num_pts.
+#' @param identifiers Vector. Optional names for individuals.
+#' @param tx_days Numeric. Defaults to NULL and is rewritten. Defines typical length of treatment.
+#' @param ... Additional parameters.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' random_tx_generator(4)
+#' random_tx_generator(num_obs = c(3, 5))
+#' random_tx_generator(num_obs = 5, num_pts = 3)
+#' random_tx_generator(1:3, first_date = c(as.Date("2017-11-20"),
+#'                                       as.Date("2017-03-20"),
+#'                                       as.Date("2017-12-20")))
+#' random_tx_generator(num_obs = c(1, 4, 2),
+#'                     first_date = c(as.Date("2017-11-20"),
+#'                                         as.Date("2017-03-20"),
+#'                                         as.Date("2017-12-20")),
+#'                     num_pts = 3)
 random_tx_generator <- function(num_obs,
                                 num_pts = length(num_obs),
                                 first_date = rep(as.Date("2017-11-13 11:30:51 UTC"), num_pts),
@@ -178,44 +235,61 @@ random_tx_generator <- function(num_obs,
     "date" = date_seq) %>%
     arrange(anon_id, date)
 }
-random_tx_generator(4)
-random_tx_generator(num_obs = c(3, 5))
-# need this to work seamlessly:
-random_tx_generator(num_obs = 5, num_pts = 3)
-random_tx_generator(1:3, first_date = c(as.Date("2017-11-20"),
-                                      as.Date("2017-03-20"),
-                                      as.Date("2017-12-20")))
-random_tx_generator(num_obs = c(1, 4, 2),
-                    first_date = c(as.Date("2017-11-20"),
-                                        as.Date("2017-03-20"),
-                                        as.Date("2017-12-20")),
-                    num_pts = 3)
+# random_tx_generator(4)
+# random_tx_generator(num_obs = c(3, 5))
+# # need this to work seamlessly:
+# random_tx_generator(num_obs = 5, num_pts = 3)
+# random_tx_generator(1:3, first_date = c(as.Date("2017-11-20"),
+#                                       as.Date("2017-03-20"),
+#                                       as.Date("2017-12-20")))
+# random_tx_generator(num_obs = c(1, 4, 2),
+#                     first_date = c(as.Date("2017-11-20"),
+#                                         as.Date("2017-03-20"),
+#                                         as.Date("2017-12-20")),
+#                     num_pts = 3)
 
 # what happens when given a series of patients?
 # model for treatment numbers (tough!)
 
 # combining them
-random_assessment_generator(random_tx_generator(10))
+# random_assessment_generator(random_tx_generator(10))
+#
+# testdata_assess <- random_assessment_generator(random_tx_generator(num_obs = c(1, 4, 2),
+#                     first_date = c(as.Date("2017-11-20"),
+#                                    as.Date("2017-03-20"),
+#                                    as.Date("2017-12-20")),
+#                     num_pts = 3))
 
-testdata_assess <- random_assessment_generator(random_tx_generator(num_obs = c(1, 4, 2),
-                    first_date = c(as.Date("2017-11-20"),
-                                   as.Date("2017-03-20"),
-                                   as.Date("2017-12-20")),
-                    num_pts = 3))
-
-testdata_pt <- random_person_generator(3)
-random_tx_generator(num_obs = testdata_pt$pt_total_obs[1], first_date = testdata_pt$pt_first_date[1])
-
-random_assessment_generator(random_tx_generator(num_obs = testdata_pt$pt_total_obs[1],
-                                                first_date = testdata_pt$pt_first_date[1]))
-
-random_tx_generator(num_obs = 1:3)
+# testdata_pt <- random_person_generator(3)
+# random_tx_generator(num_obs = testdata_pt$pt_total_obs[1], first_date = testdata_pt$pt_first_date[1])
+#
+# random_assessment_generator(random_tx_generator(num_obs = testdata_pt$pt_total_obs[1],
+#                                                 first_date = testdata_pt$pt_first_date[1]))
+#
+# random_tx_generator(num_obs = 1:3)
 
 # join patient data and assessment data
-left_join(testdata_pt, testdata_assess, by = "anon_id")
+# left_join(testdata_pt, testdata_assess, by = "anon_id")
 
 # simplest possible wrapper>
 # want to require the least possible information at the time of calling
+
+
+#' Create a synthetic data set of NF-like data
+#'
+#' @param num_ppl Numeric. Number of patients.
+#' @param ... Additional parameters
+#'
+#' @seealso \code{\link{random_assessment_generator}}, \code{\link{random_person_generator}},
+#' \code{\link{random_tx_generator}}
+#'
+#' @return A tibble.
+#' @export
+#'
+#' @examples
+#' random_norse_data(2, num_obs = c(3, 2))
+#' random_norse_data(2, num_obs = 5)
+#' random_norse_data(2)
 random_norse_data <- function(num_ppl,
                               ...){
   pt_data <- random_person_generator(num = num_ppl)
@@ -233,10 +307,8 @@ random_norse_data <- function(num_ppl,
            date,
            everything())
 }
+#
+# random_norse_data(2, num_obs = c(3, 2))
+# random_norse_data(2, num_obs = 5)
+# random_norse_data(2)
 
-random_norse_data(2, num_obs = c(3, 2))
-random_norse_data(2, num_obs = 5)
-random_norse_data(2)
-synthetic_data <- random_norse_data(500) %>%
-  NorseResearch::score_all_NORSE2()
-# doesn't accept pt_total_obs from the patient data as the number of rows. It should.
