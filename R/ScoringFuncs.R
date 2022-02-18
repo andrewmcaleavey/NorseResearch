@@ -139,6 +139,8 @@ find_trigger_among <- function(items){
 #'
 #' @return a data_frame with new subscale values
 #'
+#' @export
+#'
 #' @details
 #'
 #' Provides the following scale scores:
