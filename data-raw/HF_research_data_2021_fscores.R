@@ -17,6 +17,7 @@ require(NorseResearch)
 
 # compute the models
 grm.eating <- mirt::mirt(data = HF_research_data_2021 %>%
+                           filter(pt_order == 1) %>%
                            select(all_of(NORSEpkg::eating.names)),
                          model = 1,
                          itemtype = "graded")
