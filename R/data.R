@@ -169,3 +169,80 @@
 #'
 #' @source See \code{data-raw/synthetic_data.R}.
 "synthetic_data"
+
+#' Research-friendly data from Helse Førde 2021.
+#'
+#' Anonymous research data from Helse Førde area (all clinics)
+#' from May 2021, scored, with additional variables for external use.
+#'
+#' INCLUDES factor-scored subscale scores.
+#'
+#' Any values that were 99 are now NA, and these represent patient non-responses.
+#'
+#' THIS DATA IS NOT PROVIDED as part of the package and must be received separately
+#' for confidentiality. Once received, the .rda file can be saved in the
+#' global environment as \code{HF_research_data_2021 <- load("HF_research_data_2021.rda")}.
+#' This process means that it is not really accessible as part of the package,
+#' but must be stored locally.
+#'
+#' The codebook for the relevant items is provided here though.
+#'
+#' @format A data frame with 18620 observations of 170 variables.
+#' \describe{
+#'   \itemize{
+#'     \item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
+#'     \item{\code{anon_tx_id}} {Numeric. Unique treatment number, anonymized.}
+#'     \item{\code{date}} {Date. Date (and time) NF was completed.}
+#'     \item{\code{pt_first_date}} {Date. First date in the data for each \code{respondent_id}.}
+#'     \item{\code{pt_wks_since_first}} {Numeric. Time difference in weeks from \code{pt_first_date}.}
+#'     \item{\code{pt_order}} {Numeric. Observation number within patient (all treatment types).}
+#'     \item{\code{pt_total_obs}} {Numeric. Total number of observations (rows) of data for this patient.}
+#'     \item{\code{pt_total_txs}} {Numeric. Total number of treatments (from \code{treatment_id}) for this patient.}
+#'     \item{\code{pt_tx_order}} {Numeric. Treatment number within patient.}
+#'     \item{\code{tx_first_date}} {Date. First date for this \code{treatment_id}.}
+#'     \item{\code{tx_wks_since_first}} {Numeric. Time difference in weeks from \code{tx_first_date}.}
+#'     \item{\code{tx_order}} {Numeric. Observation number within \code{treatment_id}, which is within \code{respondent_id}. }
+#'     \item{\code{tx_total}} {Numeric. Total number of observations (rows) in this \code{treatment_id}.}
+#'     \item{\code{treatment_name}} {Character. Data as input regarding treatment type/location.}
+#'     \item{\code{tx_focus}} {Character. What was the focus of \code{treatment_name} for this observation.
+#'     Values are "Sub", "MH", or "Unclear".}
+#'     \item{\code{in_or_out}} {Character. Is the current \code{treatment_name} inpatient, outpatient, or unclear.}
+#'     \item{\code{is_MH}} {Logical. Is this \code{treatment_name} a Mental Health service?}
+#'     \item{\code{is_sub}} {Logical. Is this \code{treatment_name} a Substance Use service?}
+#'     \item{\code{is_inpt}} {Logical. Is this \code{treatment_name} an inpatient service?}
+#'     \item{\code{is_outpt}} {Logical. Is this \code{treatment_name} an outpatient service?}
+#'     \item{\code{pt_any_MH}} {Logical. Did this patient contribute any mental health service observations (rows)?}
+#'     \item{\code{pt_any_sub}} {Logical. Did this patient contribute any substance use service observations (rows)?}
+#'     \item{\code{pt_total_MH_tx}} {Numeric. Total number MH observations (rows) for this patient.}
+#'     \item{\code{pt_total_sub_tx}} {Numeric. Total number substance use observations (rows) for this patient.}
+#'     \item{\code{sum_tx_cats}} {Numeric. Total number of categories this \code{treatment_name} fit.}
+#'     \item{\code{birthyear}} {Character. Year of birth for each \code{respondent_id}.}
+#'     \item{\code{assessment_instance_id}} {Numeric. Unique identifier for assessment instance (unique row number)}
+#'     \item{\code{assessment_version}} {Character. Norse Feedback back-end version number (does not correspond to number used in other contexts).}
+#'     \item{\code{assessment_instance_title}} {Character.}
+#'     \item{\code{assessment_instance_start_date}} {Date.}
+#'     \item{\code{assessment_instance_end_date}} {Date.}
+#'     \item{\code{assessment_instance_created_date}} {Date.}
+#'     \item{\code{assessment_instance_last_modified_submitted}} {Date.}
+#'     \item{\code{assessment_instance_has_started}} {Logical.}
+#'     \item{\code{assessment_instance_is_submitted}} {Logical.}
+#'     \item{\code{assessment_instance_is_closed}} {Logical.}
+#'     \item{\code{assessment_instance_context_label}} {Character. Options are "Inntak" (intake), "Vekesmåling" (weekly assessment), "Avslutning" (termination), and NA.}
+#'     \item{\code{assessment_instance_first_time_started_date}} {Date.}
+#'     \item{\code{assessment_instance_first_time_submitted_date}} {Date.}
+#'     \item{\code{treatment_type_id}} {Numeric.}
+#'     \item{\code{treatment_type_name}} {Character.}
+#'     \item{\code{respondent_gender}} {Character. Options are "male" and "female".}
+#'     \item{\code{respondent_account_enabled}} {Numeric.}
+#'     \item{\code{respondent_test_account}} {Numeric.}
+#'     \item{\code{respondent_last_login}} {Date.}
+#'     \item{\code{respondent_communication_disabled}} {Numeric.}
+#'     \item{\code{cog_fscore}} {Numeric. Cognitive Problems subscale, recoded with factor scoring. Same for other scale scores.}
+#'     \item{\code{cog_fscore_se}} {Numeric. Cognitive Problems subscale factor score SE. Same for other scale scores.}
+#'     \item{\code{cog_fs_first_pt}} {Numeric. First Cognitive Problems subscale score for this patient, scored as factor score. Same for other scale scores.}
+#'     }
+#' }
+#'
+#' @source Processed from \code{NORSEpkg::hf.all.scored.2021.05.10}.
+#' See \code{data-raw/HF_research_data_2021_fscores.R}.
+"HF_research_data_2021_fscores"

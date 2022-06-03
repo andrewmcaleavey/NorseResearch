@@ -163,6 +163,8 @@ HF_research_data_2021 <- NORSEpkg::hf.all.scored.2021.05.10 %>%
          -treatment_id,
          -respondent_birthdate)
 
+# adding the factor scores
+
 # Data checks of interest:
 # length(unique(HF_research_data_2021$anon_id)) == length(unique(HF_research_data_2021$respondent_id))
 # length(unique(HF_research_data_2021$anon_tx_id)) == length(unique(HF_research_data_2021$treatment_id))
