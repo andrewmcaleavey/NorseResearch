@@ -2,5 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.DS_Store
 HF_research_data_2021.rda
 HF_research_data.csv
+HF_research_data_2021_fscores.rda
