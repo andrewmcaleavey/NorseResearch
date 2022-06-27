@@ -246,3 +246,11 @@
 #' @source Processed from \code{NORSEpkg::hf.all.scored.2021.05.10}.
 #' See \code{data-raw/HF_research_data_2021_fscores.R}.
 "HF_research_data_2021_fscores"
+
+#' Names of items
+#'
+#' @format An character vector of item names.
+#'
+#' @source See \code{data-raw/item_names_nf2.R}
+#'
+"item_names_nf2"

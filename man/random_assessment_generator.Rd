@@ -14,7 +14,7 @@ random_assessment_generator(date_df = NULL, num_dates = NULL, ...)
 \item{...}{Additional parameters}
 }
 \value{
-
+You have to find out
 }
 \description{
 Generate random NF-like data
