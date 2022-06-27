@@ -27,7 +27,7 @@ random_tx_generator(
 \item{...}{Additional parameters.}
 }
 \value{
-
+A data frame probably
 }
 \description{
 Generate an entire treatment course, possibly given several specific parameters

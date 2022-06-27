@@ -30,7 +30,7 @@ random_person_generator(
 \item{...}{Additional parameters}
 }
 \value{
-
+Something, I am not sure what
 }
 \description{
 Generate a set of random patient variables of arbitrary length

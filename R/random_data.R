@@ -5,7 +5,6 @@
 # could model this as totally random item responses for now, say
 
 
-item_names_nf2 <- names(NORSEpkg::hf.scored.2019)[grepl("Q", names(NORSEpkg::hf.scored.2019))]
 
 
 #' Item response RNG
@@ -55,7 +54,7 @@ random_item_vector <- function(num = 1,
 #' @param in_or_out Character. Defaults to NULL, and is replaced
 #' @param ... Additional parameters
 #'
-#' @return
+#' @return Something, I am not sure what
 #' @export
 #'
 #' @examples
@@ -116,7 +115,7 @@ random_person_generator <- function(num = 2,  # num people
 #' @param num_dates Optional. Number of assessments to produce.
 #' @param ... Additional parameters
 #'
-#' @return
+#' @return You have to find out
 #' @export
 #'
 #' @examples
@@ -174,7 +173,7 @@ random_assessment_generator <- function(date_df = NULL,
 #' @param tx_days Numeric. Defaults to NULL and is rewritten. Defines typical length of treatment.
 #' @param ... Additional parameters.
 #'
-#' @return
+#' @return A data frame probably
 #' @export
 #'
 #' @examples
