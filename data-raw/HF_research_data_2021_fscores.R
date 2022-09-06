@@ -18,7 +18,7 @@ require(NorseResearch)
 # compute the models
 grm.eating <- mirt::mirt(data = HF_research_data_2021 %>%
                            filter(pt_order == 1) %>%
-                           select(all_of(NORSEpkg::eating.names)),
+                           dplyr::select(all_of(NORSEpkg::eating.names)),
                          model = 1,
                          itemtype = "graded")
 
@@ -38,14 +38,14 @@ get_fscores <- function(scale){
 
   grm_obj <- mirt::mirt(data = HF_research_data_2021 %>%
                           filter(pt_order == 1) %>%
-                          select(all_of({{ varnames }})),
+                          dplyr::select(all_of({{ varnames }})),
                         model = 1,
                         itemtype = "graded")
   fscores_options <- mirt::fscores(grm_obj,
                                    full.scores = FALSE)
   fscores_obj <- HF_research_data_2021 %>%
     left_join(data.frame(fscores_options)) %>%
-    select(F1, SE_F1)
+    dplyr::select(F1, SE_F1)
 
   names(fscores_obj) <- paste0(scale, "_", c("fscore", "fscore_se"))
   fscores_obj

@@ -53,7 +53,7 @@ HF_research_data_2021 <- NORSEpkg::hf.all.scored.2021.05.10 %>%
                                         units = "weeks")),
          pt_total_txs = length(unique(.data$treatment_id)),
          pt_tx_order = cumsum(!duplicated(.data$treatment_id))) %>%
-  group_by(treatment_id) %>%
+  group_by(respondent_id, treatment_id) %>%
   mutate(tx_order = row_number(),
          tx_total = n(),
          tx_first_date = min(.data$date),
