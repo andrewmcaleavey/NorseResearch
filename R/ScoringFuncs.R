@@ -37,8 +37,12 @@ rev_score_NORSE2 <- function(data) {mutate(data,  # note: rev_score() is defined
                   Q136 = rev_score(Q136), Q155 = rev_score(Q155),
                   Q138 = rev_score(Q138), Q84 = rev_score(Q84),
                   Q139 = rev_score(Q139), Q82 = rev_score(Q82),
-                  Q67 = rev_score(Q67),
-                  Q43 = rev_score(Q43))
+                  Q67 = rev_score(Q67),   Q43 = rev_score(Q43),
+                  # alliance items should be reversed too (8 Sept 2022)
+                  Q11  = rev_score(Q11),
+                  Q12  = rev_score(Q12),
+                  Q13  = rev_score(Q13),
+                  Q14  = rev_score(Q14))
 }
 
 
