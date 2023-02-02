@@ -287,6 +287,7 @@ score_all_NORSE2 <- function(dat, process_vars = TRUE){
 #'
 #' This will mean that there will be some NEGATIVE scores for open scales
 #'
+#' @export
 #' @examples
 #' test_data <- data.frame(Q1 = c(1, 2, 3, 5, 3, 2, NA, NA),
 #'                         Q2 = c(3, 4, 2, 5, 2, NA, 1, NA),
@@ -355,6 +356,7 @@ score_NORSE_overunder <- function(dat,
 #' - Control: \code{control_ou}
 #' - etc.
 #'
+#' @export
 #' @examples
 #' test_out <- score_all_NORSE2_ou(data2017_18)
 #'

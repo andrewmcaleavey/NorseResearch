@@ -1,8 +1,22 @@
 ## Plot themes
 
-# This is a basic theme for plotting on computers
-# Based on theme_bw(), but without gridlines
-norse_theme_bw <- ggplot2::theme_bw() +
-  ggplot2::theme(panel.grid = ggplot2::element_blank(),
-                 panel.grid.minor = ggplot2::element_blank())
-theme_bw_norse <- norse_theme_bw
+#' A ggplot2 theme with no gridlines
+#'
+#' @return a ggplot object
+#' @export
+#'
+#' @examples
+#' ggplot(aes(x = 1:5, y = 2:6)) + geom_line() + theme_norse_bw()
+theme_norse_bw <- function(){
+  # font <- "Georgia"   #assign font family up front
+
+  theme_bw() %+replace%    #replace elements we want to change
+
+    theme(
+
+      #grid elements
+      panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_blank(),    #strip minor gridlines
+
+    )
+}
