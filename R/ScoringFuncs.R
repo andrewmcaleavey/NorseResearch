@@ -510,3 +510,15 @@ score_normed_NF <- function(dat,
 # testout <- score_normed_NF(hf.scored.2019, scale = scale_names)
 
 
+# a function to norm the item responses themselves, then generate averaged scale
+# scores
+item_norm <- function(item,
+                      value,
+                      norm_data = NorseResearch::HF_research_data_2021_fscores){
+  # item <- dplyr::ensym(item)
+  M_item <- mean(norm_data[{{item}}], na.rm = TRUE)
+  SD_item <- sd(norm_data[{{item}}], na.rm = TRUE)
+
+  (value - M_item) / SD_item
+}
+item_norm("Q142", value = 2)
