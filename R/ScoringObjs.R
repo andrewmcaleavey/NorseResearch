@@ -38,3 +38,14 @@ scale_names <- c("cog", "control", "eating", "genFunc", "hopeless", "internal",
                  "suicide", "trauma", "worry")
 
 scale_names_ou <- paste0(scale_names, "_ou")
+
+nicer.nf2.names <- c("Cognitive Problems", "Need for Control", "Eating Problems",
+                     "General Functioning", "Hopelessness", "Internal Avoidance",
+                     "Irritability", "Readiness for Recovery", "Recovery Environment",
+                     "Sad Affect", "Self-Criticism", "Situational Avoidance",
+                     "Social Avoidance", "Social Safety", "Somatic Anxiety",
+                     "Substance Recovery", "Substance Use",
+                     "Suicidality", "Trauma Reaction", "Worry")
+
+item_norm_table <- NorseResearch::HF_research_data_2021_fscores
+
