@@ -11,7 +11,7 @@
 #' 3. Provide functions to compute factor scores from item-level data
 #' 4. Compute factor scores from item-level data in the real and synthetic data.
 
-require(NORSEpkg)
+# require(NORSEpkg)
 require(mirt)
 require(NorseResearch)
 

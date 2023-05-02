@@ -514,11 +514,12 @@ score_normed_NF <- function(dat,
 # scores
 item_norm <- function(item,
                       value,
-                      norm_data = NorseResearch::HF_research_data_2021_fscores){
+                      norm_data){
+  # need to set norm_data to NorseResearch::HF_research_data_2021_fscores
   # item <- dplyr::ensym(item)
   M_item <- mean(norm_data[{{item}}], na.rm = TRUE)
   SD_item <- sd(norm_data[{{item}}], na.rm = TRUE)
 
   (value - M_item) / SD_item
 }
-item_norm("Q142", value = 2)
+# item_norm("Q142", value = 2, norm_data = NORSEpkg)

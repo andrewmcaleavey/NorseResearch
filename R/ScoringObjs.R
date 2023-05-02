@@ -47,5 +47,5 @@ nicer.nf2.names <- c("Cognitive Problems", "Need for Control", "Eating Problems"
                      "Substance Recovery", "Substance Use",
                      "Suicidality", "Trauma Reaction", "Worry")
 
-item_norm_table <- NorseResearch::HF_research_data_2021_fscores
+# item_norm_table <- NorseResearch::HF_research_data_2021_fscores
 
