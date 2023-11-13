@@ -16,7 +16,9 @@
 #'
 check_rev <- function(.data, verbose = FALSE, version = "NF2") {
   # check to see if all values are between 1 and 7 first
-  qs <- .data %>% select(starts_with("Q", ignore.case = FALSE))
+  qs <- .data %>%
+    select(starts_with("Q", ignore.case = FALSE)) %>%
+    select(-matches("2[2]"))
   try(qs <- select(qs, -Q71, -Q72, -Q152, -Q153, -Q74),
       silent = TRUE)
 
