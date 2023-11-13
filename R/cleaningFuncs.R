@@ -97,6 +97,8 @@ get_first_obs <- function(.data,
 #' Swap the short name of a scale for the nicer name of a scale.
 #'
 #' @param simplename A character matching a value in `scale_names`.
+#' @param version A character string defining version to use. Defaults to
+#' `2` for NF 2.x.
 #'
 #' @return A character from `nicer.nf2.names`. If no match found, returns `simplename`.
 #' @export
@@ -104,11 +106,42 @@ get_first_obs <- function(.data,
 #' @examples
 #' get_nicer_name("eating") # should return "Eating Problems"
 #' get_nicer_name(c("eating", "subUse")) # should return a character vector
-get_nicer_name <- function(simplename){
-  output <- nicer.nf2.names[match(simplename, scale_names)]
+get_nicer_name <- function(simplename,
+                           version = "2"){
+  lifecycle::signal_stage("superseded",
+                          what ="get_nicer_name()",
+                          with = "get_nf3_nicer_name()")
+  output <- rep(NA, length(simplename))
+  if(version == "2"){
+    output <- nicer.nf2.names[match(simplename, scale_names)]
+  }
+  if(any(is.na(output))){
+    output[is.na(output)] <- simplename[is.na(output)]
+    message("No nicer name identified, kept the same value")
+  }
 
-  if(is.na(output)){
-    output <- simplename
+  return(output)
+}
+
+#' Swap the short name of a scale for the nicer name of a scale in NF 3.x
+#'
+#' @param simplename A character matching a value in `scale_names`.
+#' @param version A character string defining version to use. Defaults to
+#' `3` for NF 3.x.
+#'
+#' @return A character from `nicer.nf2.names`.
+#' If no match found, returns `simplename`.
+#' @export
+#'
+#' @examples
+get_nf3_nicer_name <- function(simplename,
+                               version = "3"){
+  output <- rep(NA, length(simplename))
+  if(version == "3"){
+    output <- nicer_names_nf3[match(simplename, scale_names_nf3)]
+  }
+  if(any(is.na(output))){
+    output[is.na(output)] <- simplename[is.na(output)]
     message("No nicer name identified, kept the same value")
   }
 
