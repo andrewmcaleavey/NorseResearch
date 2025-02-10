@@ -594,6 +594,11 @@ check_version_nf <- function(dat){
 # functions when the items are present.
 # NF 3
 
+# the current task is to
+#1. make this detect and correct -98 and -99 values
+#2. correctly recode any modified items, that have names like Q46_1 but should
+#.  be Q46.
+
 #' Score all versions of the NF3 in raw scale form
 #'
 #' @param dat A dataset. Should have clean names that have been simplified to include

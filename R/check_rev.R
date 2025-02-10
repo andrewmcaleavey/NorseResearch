@@ -17,7 +17,7 @@
 check_rev <- function(.data, verbose = FALSE, version = "NF2") {
   # check to see if all values are between 1 and 7 first
   qs <- .data %>%
-    select(starts_with("Q", ignore.case = FALSE)) %>%
+    select(matches("^Q\\d+"))   %>%
     select(-matches("2[2]"))
   try(qs <- select(qs, -Q71, -Q72, -Q152, -Q153, -Q74),
       silent = TRUE)
@@ -84,3 +84,36 @@ check_rev <- function(.data, verbose = FALSE, version = "NF2") {
   return(output)
 }
 
+# need a function to find and properly treat any -98 or -99 values
+# in NF 3, the default should be any -98 (not relevant) is 1
+# and any -99 is NA.
+
+#' Replace Specific Values in a Data Frame
+#'
+#' This function takes a data frame and replaces all instances of the value
+#' `-98` with `1`, and all instances of `-99` with `NA`. It works across both
+#' numeric and character variables.
+#'
+#' @param dat A data frame whose values will be modified. The function can
+#' handle columns containing either numeric or character types, but the
+#' replacement logic applies only to numeric-like columns (i.e., integer
+#' or double).
+#'
+#' @return A data frame of the same structure as `dat`, with specified
+#' replacements made.
+#'
+#' @export
+#'
+#' @examples
+#' df <- data.frame(a = c(1, -98, -99), b = c("text", "more text", "-98"),
+#' stringsAsFactors = FALSE)
+#' new_df <- replace_98s_99s(df)
+#' print(new_df)
+#'
+replace_98s_99s <- function(dat){
+  dat %>%
+    mutate(across(everything(),
+                  ~ ifelse(. == -98, 1,
+                           ifelse(. == -99, NA_real_, .))))
+}
+# replace_98s_99s(calData)
