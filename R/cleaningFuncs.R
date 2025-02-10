@@ -134,6 +134,7 @@ get_nicer_name <- function(simplename,
 #' @export
 #'
 #' @examples
+#' get_nf3_nicer_name("sad")
 get_nf3_nicer_name <- function(simplename,
                                version = "3"){
   output <- rep(NA, length(simplename))

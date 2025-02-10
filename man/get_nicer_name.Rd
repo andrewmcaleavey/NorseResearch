@@ -4,10 +4,13 @@
 \alias{get_nicer_name}
 \title{Swap the short name of a scale for the nicer name of a scale.}
 \usage{
-get_nicer_name(simplename)
+get_nicer_name(simplename, version = "2")
 }
 \arguments{
 \item{simplename}{A character matching a value in \code{scale_names}.}
+
+\item{version}{A character string defining version to use. Defaults to
+\code{2} for NF 2.x.}
 }
 \value{
 A character from \code{nicer.nf2.names}. If no match found, returns \code{simplename}.
