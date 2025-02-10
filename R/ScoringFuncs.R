@@ -558,6 +558,30 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
            QOL = Q226)
 }
 
+#' Check which version(s) of the NF are present in a data set.
+#'
+#' Should not require the data to already have clean names. But needs to work when that is the case.
+#'
+#' @param dat a data.frame
+#'
+#' @return a character vector containing one or more of the following: "2", "3".
+#' If no matching items are found, will return "No NF items found."
+#' @export
+#'
+#' @examples
+check_version_nf <- function(dat){
+  if(any(grepl("Q1[0-9]{2}", names(dat))) &
+     any(grepl("Q2[0-9]{2}", names(dat)))){
+    return(c("2", "3"))
+  } else if(any(grepl("Q1[0-9]{2}", names(dat)))){
+    return(c("2"))
+  } else if(any(grepl("Q2[0-9]{2}", names(dat)))){
+    return(c("3"))
+  } else {
+    return("No NF items found.")
+  }
+}
+
 #####
 # come back to this when score_all_nf3() functions
 # need to make it work using those features, so that it only calls those
@@ -585,114 +609,118 @@ score_all <- function(dat,
   # if(!check_rev(dat)){
   #   warning("DATA may not be properly scored, check reversing and NA values!!!")
   # }
+  if(!any(names(dat) == version_variable)){
+    stop("The version_variable does not exist in the dataframe.\n")
+  }
+  # this only works if both item sets are in the data.
+  # should put in an automatic check function to see which norse versions are in the data.
   dat <- ungroup(dat) %>%
-    if("3" %in% versions &
-       "2" %in% versions){
-      mutate(anger = case_when(grepl(version_variable, pattern =  ~ NORSEpkg::score_NORSE_trigger(dat, anger.names.nf3),
-                               "2" %in% versions ~ NA,
-                               .default = NA),
-             cog = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, cog.names.nf3),
-                             "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, cog.names),
+    mutate(anger = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, anger.names.nf3),
+                             grepl("2" , .data[[version_variable]]) ~ NA,
                              .default = NA),
-             eating = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, eating.names.nf3),
-                                "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, eating.names),
-                                .default = NA),
-             genFunc = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, genFunc.names.nf3),
-                                 "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, genFunc.names),
-                                 .default = NA),
-             hopeless = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, hopeless.names.nf3),
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, hopeless.names),
-                                  .default = NA),
-             impulsivity = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, impulsivity.names.nf3),
-                                     "2" %in% versions ~ NA,
-                                     .default = NA),
-             intAvoid = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, intAvoid.names.nf3),
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, internal.names),
-                                  .default = NA),
-             intMem = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, intMem.names.nf3),
-                                "2" %in% versions ~ NA,
-                                .default = NA),
-             pain = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, pain.names.nf3),
-                              "2" %in% versions ~ NA,
+           cog = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, cog.names.nf3),
+                           grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, cog.names),
+                           .default = NA),
+           eating = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, eating.names.nf3),
+                              grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, eating.names),
                               .default = NA),
-             physAnx = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, physAnx.names.nf3),
-                                 "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, somAnx.names),
-                                 .default = NA),
-             ready = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, ready.names.nf3),
-                               "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, ready.names),
+           genFunc = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, genFunc.names.nf3),
+                               grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, genFunc.names),
                                .default = NA),
-             sad = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, sad.names.nf3),
-                             "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, sad.names),
-                             .default = NA),
-             selfComp = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, selfComp.names.nf3),
-                                  "2" %in% versions ~ NA,
-                                  .default = NA),
-             selfContempt = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, selfContempt.names.nf3),
-                                      "2" %in% versions ~ NA,
-                                      .default = NA),
-             socAvoid = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, socAvoid.names.nf3),
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, avoidSoc.names),
-                                  .default = NA),
-             socSup = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, socSup.names.nf3),
-                                "2" %in% versions ~ NA,
+           hopeless = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, hopeless.names.nf3),
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, hopeless.names),
                                 .default = NA),
-             subUse = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, subUse.names.nf3),
-                                "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, subUse.names),
-                                .default = NA),
-             suicide = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, suicide.names.nf3),
-                                 "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, suicide.names),
-                                 .default = NA),
-             worry = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, worry.names.nf3),
-                               "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, worry.names),
-                               .default = NA),
-             QOL = Q226,
-             # scales only on NF2
-             trauma = case_when("3" %in% versions ~ NA,
-                                "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, trauma.names),
-                                .default = NA),
-             selfCrit = case_when("3" %in% versions ~ NA,
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, selfCrit.names),
-                                  .default = NA),
-             socialSafety = case_when("3" %in% versions ~ NA,
-                                      "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, socialSafety.names),
-                                      .default = NA),
-             control = case_when("3" %in% versions ~ NA,
-                                 "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, control.names),
-                                 .default = NA),
-             internal = case_when("3" %in% versions ~ NA,
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, internal.names),
-                                  .default = NA),
-             irritable = case_when("3" %in% versions ~ NA,
-                                   "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, irritable.names),
+           impulsivity = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, impulsivity.names.nf3),
+                                   grepl("2" , .data[[version_variable]]) ~ NA,
                                    .default = NA),
-             recovEnv = case_when("3" %in% versions ~ NA,
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, recovEnv.names),
-                                  .default = NA),
-             avoidSit = case_when("3" %in% versions ~ NA,
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, avoidSit.names),
-                                  .default = NA),
-             subRecov = case_when("3" %in% versions ~ NA,
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, subRecov.names),
-                                  .default = NA),
-             somAnx = case_when("3" %in% versions ~ NA,
-                                "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, somAnx.names),
+           intAvoid = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, intAvoid.names.nf3),
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, internal.names),
                                 .default = NA),
-             avoidSoc = case_when("3" %in% versions ~ NA,
-                                  "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, avoidSoc.names),
-                                  .default = NA)
-      )
-    } else if("3" %in% versions) # end if 3 and 2
+           intMem = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, intMem.names.nf3),
+                              grepl("2" , .data[[version_variable]]) ~ NA,
+                              .default = NA),
+           pain = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, pain.names.nf3),
+                            grepl("2" , .data[[version_variable]]) ~ NA,
+                            .default = NA),
+           physAnx = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, physAnx.names.nf3),
+                               grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, somAnx.names),
+                               .default = NA),
+           ready = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, ready.names.nf3),
+                             grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, ready.names),
+                             .default = NA),
+           sad = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, sad.names.nf3),
+                           grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, sad.names),
+                           .default = NA),
+           selfComp = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, selfComp.names.nf3),
+                                grepl("2" , .data[[version_variable]]) ~ NA,
+                                .default = NA),
+           selfContempt = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, selfContempt.names.nf3),
+                                    grepl("2" , .data[[version_variable]]) ~ NA,
+                                    .default = NA),
+           socAvoid = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, socAvoid.names.nf3),
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, avoidSoc.names),
+                                .default = NA),
+           socSup = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, socSup.names.nf3),
+                              grepl("2" , .data[[version_variable]]) ~ NA,
+                              .default = NA),
+           subUse = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, subUse.names.nf3),
+                              grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, subUse.names),
+                              .default = NA),
+           suicide = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, suicide.names.nf3),
+                               grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, suicide.names),
+                               .default = NA),
+           worry = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, worry.names.nf3),
+                             grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, worry.names),
+                             .default = NA),
+           QOL = Q226,
+           # scales only on NF2
+           trauma = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                              grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, trauma.names),
+                              .default = NA),
+           selfCrit = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, selfCrit.names),
+                                .default = NA),
+           socialSafety = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                    grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, socialSafety.names),
+                                    .default = NA),
+           control = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                               grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, control.names),
+                               .default = NA),
+           internal = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, internal.names),
+                                .default = NA),
+           irritable = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                 grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, irritable.names),
+                                 .default = NA),
+           recovEnv = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, recovEnv.names),
+                                .default = NA),
+           avoidSit = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, avoidSit.names),
+                                .default = NA),
+           subRecov = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, subRecov.names),
+                                .default = NA),
+           somAnx = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                              grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, somAnx.names),
+                              .default = NA),
+           avoidSoc = case_when(grepl("3", .data[[version_variable]])  ~ NA,
+                                grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, avoidSoc.names),
+                                .default = NA)
+    )
+
   # score the process variables
   if(process_vars){
     dat <- mutate(dat,
-                  alliance = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, alliance.names.nf3),
-                                       "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, alliance.names),
+                  alliance = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, alliance.names.nf3),
+                                       grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, alliance.names),
                                        .default = NA),
-                  pref = case_when("3" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, pref.names.nf3),
-                                   "2" %in% versions ~ NORSEpkg::score_NORSE_trigger(dat, needs.names),
+                  pref = case_when(grepl("3", .data[[version_variable]])  ~ NORSEpkg::score_NORSE_trigger(dat, pref.names.nf3),
+                                   grepl("2" , .data[[version_variable]]) ~ NORSEpkg::score_NORSE_trigger(dat, needs.names),
                                    .default = NA)
     )
   }
+
 
   # should insert some checks here to see if range is appropriate.
   if(dat %>%
@@ -709,3 +737,4 @@ score_all <- function(dat,
   # return
   dat
 }
+# score_all(HF_research_data_2021_fscores)
