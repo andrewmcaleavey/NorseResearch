@@ -525,15 +525,18 @@ item_norm <- function(item,
 # item_norm("Q142", value = 2, norm_data = NORSEpkg)
 
 
-#' score the NF3 scales
+#' Score the NF3 scales
 #'
-#' @param dat
-#' @param process_vars
+#' @param dat Data
+#' @param process_vars logical. Should the process variables be included?
 #'
-#' @return
+#' @return A data frame with additional variables
 #' @export
 #'
 #' @examples
+#' /dontrun{
+#' score_all_nf3(HF_research_data_2021)
+#' }
 score_all_nf3 <- function(dat, process_vars = TRUE){
   dat <- ungroup(dat) %>%
     mutate(anger = NORSEpkg::score_NORSE_trigger(dat, anger.names.nf3),
@@ -569,6 +572,9 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
 #' @export
 #'
 #' @examples
+#' /dontrun{
+#' check_version_nf(dataGoesHere)
+#' }
 check_version_nf <- function(dat){
   if(any(grepl("Q1[0-9]{2}", names(dat))) &
      any(grepl("Q2[0-9]{2}", names(dat)))){
@@ -587,20 +593,24 @@ check_version_nf <- function(dat){
 # need to make it work using those features, so that it only calls those
 # functions when the items are present.
 # NF 3
+
 #' Score all versions of the NF3 in raw scale form
 #'
 #' @param dat A dataset. Should have clean names that have been simplified to include
 #' only item indicators. For example, `M53_Q142_1` should instead by `Q142`.
-#' @param process_vars
+#' @param process_vars logical. Should the process variables be included?
 #' @param versions Which versions of the NF do you want to score? Includes both
 #' 2.x and 3.x by default.
 #' @param version_variable Character name of the variable encoding the version
 #' to use for each row.
 #'
-#' @return
+#' @return A data.frame/tibble with new variables.
 #' @export
 #'
 #' @examples
+#' /dontrun{
+#' score_all(dataGoesHere)
+#' }
 score_all <- function(dat,
                       process_vars = TRUE,
                       versions = c("2", "3"),

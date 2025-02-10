@@ -8,6 +8,7 @@
 #' Scoring mixed NF data
 #'
 #' This function should take a dataset and add new variables as needed.
+#' It is obsolete and should be replaced with `score_all()`.
 #'
 #' @param dat A data.frame.
 #' @param versions_to_score Character vector. Which versions should be scored
@@ -18,10 +19,13 @@
 #' @param raw_scores Logical. Should raw scale scores be computed? Defaults to `TRUE`.
 #' @param factor_scores Logical. Should factor-scored scale scores be computed? Defaults to `FALSE`.
 #'
-#' @return
+#' @return A data.frame/tibble
 #' @export
 #'
 #' @examples
+#' /dontrun{
+#' nf_score()
+#' }
 nf_score <- function(dat,
                      versions_to_score = c("2", "3"),
                      version_variable = "Ver_10",

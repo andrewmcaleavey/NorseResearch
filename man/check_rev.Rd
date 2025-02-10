@@ -4,13 +4,16 @@
 \alias{check_rev}
 \title{check if NORSE scores are reversed}
 \usage{
-check_rev(.data, verbose = FALSE)
+check_rev(.data, verbose = FALSE, version = "NF2")
 }
 \arguments{
 \item{.data}{The data to clean.}
 
 \item{verbose}{Logical. Default is FALSE. If TRUE, will
 return the list of correlations tested with their values.}
+
+\item{version}{Which version of NF is being used. Acceptable values
+are "NF2" and "NF3".}
 }
 \value{
 logical. Is data likely reversed? TRUE if yes.

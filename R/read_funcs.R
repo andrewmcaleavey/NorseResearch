@@ -9,7 +9,7 @@
 #' @param file Location of the file
 #' @param ... Additional arguments
 #'
-#' @return
+#' @return a data.frame
 #' @export
 #'
 #' @examples
@@ -28,11 +28,11 @@ read.csv_nf3 <- function(file, ...){
 #' @param file Location of the file
 #' @param ... Additional arguments
 #'
-#' @return
+#' @return a data frame
 #' @export
 #'
 #' @examples
-#' read.csv_nf3("HF_research_data.csv")
+#' read.csv2_nf3("HF_research_data.csv")
 read.csv2_nf3 <- function(file, ...){
   read.csv2(file = file, header = TRUE, sep = ";", quote = "\"",
            dec = ",", fill = TRUE, comment.char = "",
@@ -44,11 +44,11 @@ read.csv2_nf3 <- function(file, ...){
 #' @param file Location of the file
 #' @param ... Additional arguments
 #'
-#' @return
+#' @return a data.frame
 #' @export
 #'
 #' @examples
-#'
+#' read_excel_nf3("HF_research_data.csv")
 read_excel_nf3 <- function(file, ...){
   readxl::read_excel(path = file,
                      na = c("NA", "", "-99"))
