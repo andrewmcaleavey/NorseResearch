@@ -1,6 +1,6 @@
 Package: NorseResearch
 Title: Utilities for analyzing Norse Feedback data
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: 
     person("Andrew", "Mcaleavey", , "andrew.athan.mcaleavey@helse-forde.no", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5986-2033"))
