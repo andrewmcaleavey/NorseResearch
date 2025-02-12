@@ -15,6 +15,7 @@
 #'
 #' @return a table with per-item marginal information over the range supplied by \code{z}.
 #'
+#' @export
 #' @examples
 #' TK.
 info_ltm <- function(fit,
@@ -52,6 +53,8 @@ info_ltm <- function(fit,
 #' @param printAuto Should the info table be printed? Defaults to TRUE for direct calls.
 #'
 #' @return a table with per-item marginal information over the range supplied by \code{z}.
+#'
+#' @export
 #'
 #' @examples
 #' info_mirt(cogGP_mirt)
