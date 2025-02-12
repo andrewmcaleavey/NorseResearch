@@ -16,10 +16,17 @@
 #'
 check_rev <- function(.data, verbose = FALSE, version = "NF2") {
   # check to see if all values are between 1 and 7 first
+  # qs is data from items only (the regex says it must
+  # begin with "Q"
+  # then have at least one number
+  # then anything or nothing
+  # and it must end with a number)
   qs <- .data %>%
-    select(matches("^Q\\d+"))   %>%
-    select(-matches("2[2]"))
-  try(qs <- select(qs, -Q71, -Q72, -Q152, -Q153, -Q74),
+    dplyr::select(tidyselect::matches("^Q\\d*.*\\d$")) %>%
+    # manually dropping Q226
+    drop_variable("Q226")
+  # this then drops variables for process analysis.
+  try(qs <- select(qs, -Q71, -Q72, -Q152, -Q153, -Q74, -Q226),
       silent = TRUE)
 
 
@@ -117,3 +124,24 @@ replace_98s_99s <- function(dat){
                            ifelse(. == -99, NA_real_, .))))
 }
 # replace_98s_99s(calData)
+
+
+#' Conditionally drop variables without an error
+#'
+#' @param df data
+#' @param var_name a character name of a variable
+#'
+#' @returns data
+#'
+#' @export
+#'
+#' @examples
+#' df <- data.frame(A = 1:5, B = letters[1:5], C = rnorm(5))
+#' drop_variable(df, "C")
+#' drop_variable(df, "D")
+drop_variable <- function(df, var_name) {
+  if (exists(var_name, where = as.environment(df))) {
+    df <- df %>% dplyr::select(-all_of(var_name))
+  }
+  return(df)
+}

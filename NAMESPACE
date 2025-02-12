@@ -3,6 +3,7 @@
 export(check_rev)
 export(check_version_nf)
 export(clean_NF_names)
+export(drop_variable)
 export(get_first_obs)
 export(get_nf3_nicer_name)
 export(get_nicer_name)
