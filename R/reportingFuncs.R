@@ -184,4 +184,137 @@ lookup_trigger_among <- function(items,
   output
 }
 
+#' Conduct Scale Analysis with Classical and IRT Methods
+#'
+#' This function performs scale analysis by computing descriptive statistics, reliability,
+#' and item response theory (IRT) models using either the `{ltm}` or `{mirt}` package.
+#'
+#' @param scale.name A character string specifying the name of the scale for labeling.
+#' @param item.names A character vector of item names (column names in `data`).
+#' @param data A data frame containing the item responses.
+#' @param IRTpackage A character string specifying which IRT package to use.
+#'   Options: `"ltm"` (default) or `"mirt"`.
+#' @param print.now Logical. If `TRUE`, plots for item characteristic curves (ICC) and
+#'   test information function (TIF) are displayed immediately. Default is `FALSE`.
+#'
+#' @return A list containing:
+#'   \item{new_data}{Subset of `data` containing only the selected items.}
+#'   \item{histogram}{A ggplot histogram of the scale score distribution.}
+#'   \item{min, max}{Observed minimum and maximum scale scores.}
+#'   \item{zmin, zmax}{Standardized minimum and maximum scores.}
+#'   \item{floor, ceiling}{Proportion of responses at the minimum and maximum score.}
+#'   \item{alpha}{Cronbach's alpha and other reliability statistics.}
+#'   \item{grm}{The fitted graded response model (`ltm::grm` or `mirt::mirt`).}
+#'   \item{ICC, TIF, IIC}{Item characteristic curves, test information, and item information.}
+#'   \item{printed}{Logical indicating if plots were printed (`TRUE`/`FALSE`).}
+#'   \item{info}{Item information statistics from the IRT model.}
+#'   \item{tables}{Frequency tables for each item.}
+#'   \item{cor}{Polychoric correlation matrix of the items.}
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' df <- data.frame(
+#' Q1 = sample(1:5, 100, replace = TRUE),
+#' Q2 = sample(1:5, 100, replace = TRUE),
+#' Q3 = sample(1:5, 100, replace = TRUE)
+#' )
+#' result <- scale_analysis("Example Scale", c("Q1", "Q2", "Q3"),
+#'                          df, IRTpackage = "mirt")
+#' print(result$histogram)
+#' }
+scale_analysis <- function(scale.name,
+                           item.names,
+                           data,
+                           IRTpackage = "ltm", # "ltm" or "mirt"
+                           print.now = FALSE) {
 
+  # Identify indices of selected items
+  ind <- match(item.names, names(data))
+
+  # Count missing responses per participant
+  data$mi <- rowSums(is.na(data[, ind]))
+
+  # Compute mean-based scale score (ignoring missing values)
+  data$y.mean <- rowMeans(data[, ind], na.rm = TRUE)
+
+  # Summary statistics
+  y_m <- mean(data$y.mean, na.rm = TRUE)
+  y_sd <- sd(data$y.mean, na.rm = TRUE)
+  y_min <- min(data$y.mean, na.rm = TRUE)
+  y_max <- max(data$y.mean, na.rm = TRUE)
+  y_zmin <- (y_min - y_m) / y_sd
+  y_zmax <- (y_max - y_m) / y_sd
+
+  # Floor and ceiling effects
+  y_pct_floor <- mean(data$y.mean == y_min, na.rm = TRUE)
+  y_pct_ceiling <- mean(data$y.mean == y_max, na.rm = TRUE)
+
+  # Histogram
+  title_obj <- paste0(scale.name, " raw score distribution")
+  hist.y <- ggplot(data, aes(x = y.mean)) +
+    geom_histogram(binwidth = 1 / length(item.names), fill = "gray") +
+    theme_bw() +
+    geom_vline(xintercept = y_m, color = "red") +
+    geom_vline(xintercept = y_m - y_sd, color = "red", linetype = "dashed") +
+    ggtitle(title_obj) +
+    xlab("Subscale score") +
+    ylab("Number of responses")
+
+  # Extract item response data
+  y.data <- data[, ind]
+
+  # Compute Cronbach's alpha
+  alpha.data <- psych::alpha(y.data)
+
+  # Fit IRT model
+  if (IRTpackage == "ltm") {
+    grm.y <- ltm::grm(y.data)
+    ICC.y <- plot(grm.y, ask = FALSE)
+    TIF.y <- plot(grm.y, type = "IIC", items = 0, zrange = c(-4, 4), ask = FALSE)
+    IIC.y <- plot(grm.y, type = "IIC", zrange = c(-4, 4), ask = FALSE)
+    y.info <- ltm::info(grm.y, printAuto = FALSE)
+  } else if (IRTpackage == "mirt") {
+    grm.y <- mirt::mirt(y.data, 1, itemtype = "graded")
+
+    if (print.now) {
+      ICC.y <- plot(grm.y, type = "trace")  # ICC equivalent for mirt
+      TIF.y <- plot(grm.y, type = "info")
+      IIC.y <- plot(grm.y, type = "info", items = 1:length(item.names))
+    } else {
+      ICC.y <- NULL
+      TIF.y <- NULL
+      IIC.y <- NULL
+    }
+
+    y.info <- mirt::fscores(grm.y, full.scores = FALSE)  # Extract item information
+  } else {
+    stop("Invalid IRT package specified. Use 'ltm' or 'mirt'.")
+  }
+
+  # Compute frequency tables and polychoric correlations
+  item_freq_tables <- lapply(y.data, table)
+  item_cor <- psych::polychoric(y.data)$rho
+
+  # Return results
+  return(list(
+    new_data = y.data,
+    histogram = hist.y,
+    min = y_min,
+    max = y_max,
+    zmin = y_zmin,
+    zmax = y_zmax,
+    floor = y_pct_floor,
+    ceiling = y_pct_ceiling,
+    alpha = alpha.data,
+    grm = grm.y,
+    ICC = ICC.y,
+    TIF = TIF.y,
+    IIC = IIC.y,
+    printed = print.now,
+    info = y.info,
+    tables = item_freq_tables,
+    cor = round(item_cor, 2)
+  ))
+}
