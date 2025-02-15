@@ -753,3 +753,56 @@ score_all <- function(dat,
   dat
 }
 # score_all(HF_research_data_2021_fscores)
+
+
+# Need a function to combine all values from variables like Q140 and Q140_1, when one of them is NA, then
+# delete the item Q140
+#' Combine Suffix Variables with the Same Base Name
+#'
+#' This function merges columns that share the same base name but have different suffixes
+#' (e.g., `Q140`, `Q140_1`, `Q140_2`). If a row contains `NA` in one column but a value in another,
+#' the function combines them, keeping the non-NA value. The function only considers variable names
+#' that start with a single letter followed by numbers.
+#'
+#' @param dat A data frame containing the variables to be merged.
+#' @param sep A character string specifying the separator between the base name and the suffix.
+#'   Default is `"_"`
+#'
+#' @return A data frame with merged variables, where redundant suffix columns are removed.
+#' @export
+#'
+#' @examples
+#' df <- data.frame(
+#'   Q140 = c(NA, 2, 3, NA),
+#'   Q140_1 = c(1, NA, NA, 4),
+#'   Q140_2 = c(NA, NA, 5, NA),
+#'   Q141 = c(10, 11, 12, 13),  # Should remain unchanged
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' df_combined <- combine_suffix_variables(df)
+#' print(df_combined)
+combine_suffix_variables <- function(dat, sep = "_") {
+  # Identify relevant variable names
+  var_names <- names(dat)
+
+  # Extract base names (e.g., "Q140" from "Q140", "Q140_1", "Q140_2")
+  base_names <- unique(str_extract(var_names, "^[A-Za-z]\\d+"))
+  base_names <- base_names[!is.na(base_names)]  # Remove NA values
+
+  # Iterate over each base name and combine values
+  for (base in base_names) {
+    # Find all columns that start with the base name
+    matching_cols <- var_names[str_detect(var_names, paste0("^", base, "(_\\d+)?$"))]
+
+    if (length(matching_cols) > 1) {
+      # Use coalesce to merge values row-wise
+      dat[[base]] <- do.call(coalesce, dat[matching_cols])
+
+      # Remove the suffix columns after merging using base R
+      dat <- dat[, !names(dat) %in% setdiff(matching_cols, base)]
+    }
+  }
+
+  return(dat)
+}
