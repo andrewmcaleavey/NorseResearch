@@ -282,10 +282,13 @@ scale_analysis <- function(scale.name,
       ICC.y <- plot(grm.y, type = "trace")  # ICC equivalent for mirt
       TIF.y <- plot(grm.y, type = "info")
       IIC.y <- plot(grm.y, type = "info", items = 1:length(item.names))
+      ICC.y
+      TIF.y
+      IIC.y
     } else {
-      ICC.y <- NULL
-      TIF.y <- NULL
-      IIC.y <- NULL
+      ICC.y <- plot(grm.y, type = "trace")  # ICC equivalent for mirt
+      TIF.y <- plot(grm.y, type = "info")
+      IIC.y <- plot(grm.y, type = "info", items = 1:length(item.names))
     }
 
     y.info <- mirt::fscores(grm.y, full.scores = FALSE)  # Extract item information
