@@ -184,6 +184,89 @@ lookup_trigger_among <- function(items,
   output
 }
 
+#' Compute Item and Test Information for IRT Models
+#'
+#' This function calculates item-level and total test information for a fitted
+#' graded response model (GRM) from either the `{ltm}` or `{mirt}` package.
+#'
+#' @param fit A fitted IRT model object from either `{ltm}` (`grm()`) or `{mirt}` (`mirt()`).
+#' @param z A numeric vector of length 2 specifying the theta range for computing information.
+#'   Default is `c(-6, 6)`.
+#' @param n.items Optional. The number of items in the model. If `NULL`, the function
+#'   determines this automatically.
+#' @param printAuto Logical. If `TRUE`, the function prints the item information table to the console.
+#'   Default is `TRUE`.
+#'
+#' @return A data frame containing:
+#'   \item{item}{The item names.}
+#'   \item{info}{The computed item information over the specified theta range.}
+#'   \item{PctTot}{The percentage of total test information contributed by each item.}
+#'
+#' @details
+#' - When a model from `{ltm}` is provided, the function uses `ltm::information()`.
+#' - When a model from `{mirt}` is provided, the function computes item information using `mirt::iteminfo()`
+#'   and total test information using `mirt::testinfo()`.
+#'
+#' @examples
+#' \dontrun{
+#' library(ltm)
+#' data(Science)
+#' fit_ltm <- grm(Science)
+#' info(fit_ltm)
+#'
+#' library(mirt)
+#' data <- expand.grid(matrix(sample(1:5, 100 * 5, replace = TRUE), ncol = 5))
+#' names(data) <- paste0("Q", 1:5)
+#' fit_mirt <- mirt(data, 1, itemtype = "graded")
+#' info(fit_mirt)
+#' }
+#' @export
+info <- function(fit, z = c(-6,6), n.items = NULL, printAuto = TRUE) {
+  # Detect if the model is from {mirt} or {ltm}
+  is_mirt <- inherits(fit, "SingleGroupClass")  # {mirt} models have this class
+  theta_range <- seq(z[1], z[2], length.out = 100)  # Standard theta range
+
+  if (is_mirt) {
+    # {mirt} computation
+    total_info <- sum(mirt::testinfo(fit, Theta = theta_range))
+    item_names <- colnames(mirt::extract.mirt(fit, "data"))
+    n.items <- length(item_names)
+
+    y <- matrix(nrow = n.items, ncol = 3, dimnames = list(NULL, c("item", "info", "PctTot")))
+
+    for (i in seq_len(n.items)) {
+      item_info <- sum(mirt::iteminfo(fit, Theta = theta_range)[, i])
+      y[i, ] <- c(item_names[i], round(item_info, 2), round(item_info * 100 / total_info, 2))
+    }
+  } else {
+    # {ltm} computation
+    total <- ltm::information(fit, range = z)
+    item_names <- names(fit$coefficients)
+    n.items <- length(item_names)
+
+    y <- matrix(nrow = n.items, ncol = 3, dimnames = list(NULL, c("item", "info", "PctTot")))
+
+    for (i in seq_len(n.items)) {
+      temp.fit <- ltm::information(fit, range = z, items = i)
+      y[i, ] <- c(item_names[i], round(temp.fit$InfoRange, 2), round(temp.fit$InfoRange * 100 / total$InfoRange, 2))
+    }
+  }
+
+  # Convert to dataframe and ensure numeric values
+  y.df <- as.data.frame(y, stringsAsFactors = FALSE)
+  y.df$info <- as.numeric(y.df$info)
+  y.df$PctTot <- as.numeric(y.df$PctTot)
+
+  # Print results if requested
+  if (printAuto) {
+    cat("The average contribution is: ", round(100 / n.items, 2), "% per item. \n", sep = "")
+    print(y.df)
+  }
+
+  return(y.df)
+}
+
+
 #' Conduct Scale Analysis with Classical and IRT Methods
 #'
 #' This function performs scale analysis by computing descriptive statistics, reliability,
@@ -274,24 +357,19 @@ scale_analysis <- function(scale.name,
     ICC.y <- plot(grm.y, ask = FALSE)
     TIF.y <- plot(grm.y, type = "IIC", items = 0, zrange = c(-4, 4), ask = FALSE)
     IIC.y <- plot(grm.y, type = "IIC", zrange = c(-4, 4), ask = FALSE)
-    y.info <- ltm::info(grm.y, printAuto = FALSE)
+    y.info <- NorseResearch::info(grm.y, printAuto = FALSE)
   } else if (IRTpackage == "mirt") {
     grm.y <- mirt::mirt(y.data, 1, itemtype = "graded")
-
+    ICC.y <- plot(grm.y, type = "trace")  # ICC equivalent for mirt
+    TIF.y <- plot(grm.y, type = "info")
+    IIC.y <- plot(grm.y, type = "infotrace", items = 1:length(item.names))
     if (print.now) {
-      ICC.y <- plot(grm.y, type = "trace")  # ICC equivalent for mirt
-      TIF.y <- plot(grm.y, type = "info")
-      IIC.y <- plot(grm.y, type = "info", items = 1:length(item.names))
-      ICC.y
-      TIF.y
-      IIC.y
-    } else {
-      ICC.y <- plot(grm.y, type = "trace")  # ICC equivalent for mirt
-      TIF.y <- plot(grm.y, type = "info")
-      IIC.y <- plot(grm.y, type = "info", items = 1:length(item.names))
+      print(ICC.y)
+      print(TIF.y)
+      print(IIC.y)
     }
 
-    y.info <- mirt::fscores(grm.y, full.scores = FALSE)  # Extract item information
+    y.info <- NorseResearch::info(grm.y, printAuto = FALSE)  # Extract item information
   } else {
     stop("Invalid IRT package specified. Use 'ltm' or 'mirt'.")
   }
