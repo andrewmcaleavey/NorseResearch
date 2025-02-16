@@ -43,9 +43,9 @@ fit_ltm <- grm(Science)
 info(fit_ltm)
 
 library(mirt)
-data <- expand.grid(matrix(sample(1:5, 100 * 5, replace = TRUE), ncol = 5))
+data <- data.frame(matrix(sample(1:5, 100 * 5, replace = TRUE), ncol = 5))
 names(data) <- paste0("Q", 1:5)
-fit_mirt <- mirt(data, 1, itemtype = "graded")
+fit_mirt <- mirt::mirt(data, 1, itemtype = "graded")
 info(fit_mirt)
 }
 }

@@ -316,7 +316,7 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #'                          df, IRTpackage = "mirt")
 #' print(result$histogram)
 #' }
-scale_analysis <- function(scale.name,
+scale_analysis2 <- function(scale.name,
                            item.names,
                            data,
                            IRTpackage = "ltm", # "ltm" or "mirt"
@@ -369,16 +369,34 @@ scale_analysis <- function(scale.name,
     y.info <- NorseResearch::info(grm.y, printAuto = FALSE)
   } else if (IRTpackage == "mirt") {
     grm.y <- mirt::mirt(y.data, 1, itemtype = "graded")
-    ICC.y <- plot(grm.y, type = "trace")  # ICC equivalent for mirt
+    message("Checking fitted model structure:")
+    message(class(grm.y))
+    flush.console()
+    ICC.y <- tryCatch({
+      plot(grm.y, type = "trace")
+    }, error = function(e) {
+      message("Error in ICC plot: ", e$message)
+      NULL
+    })
     TIF.y <- plot(grm.y, type = "info")
+    message("hi3")
+
     IIC.y <- plot(grm.y, type = "infotrace", items = 1:length(item.names))
+    message("1")
+    if (print.now && !is.null(ICC.y)) {
+      print(ICC.y)  # Explicitly print the ggplot object
+    }
     if (print.now) {
       print(ICC.y)
       print(TIF.y)
       print(IIC.y)
+      message("2")
     }
+    message("3")
 
     y.info <- NorseResearch::info(grm.y, printAuto = FALSE)  # Extract item information
+    message("4")
+
   } else {
     stop("Invalid IRT package specified. Use 'ltm' or 'mirt'.")
   }
