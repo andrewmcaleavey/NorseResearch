@@ -369,33 +369,25 @@ scale_analysis2 <- function(scale.name,
     y.info <- NorseResearch::info(grm.y, printAuto = FALSE)
   } else if (IRTpackage == "mirt") {
     grm.y <- mirt::mirt(y.data, 1, itemtype = "graded")
-    message("Checking fitted model structure:")
-    message(class(grm.y))
-    flush.console()
-    ICC.y <- tryCatch({
-      plot(grm.y, type = "trace")
-    }, error = function(e) {
-      message("Error in ICC plot: ", e$message)
-      NULL
-    })
-    TIF.y <- plot(grm.y, type = "info")
-    message("hi3")
+    # message("Checking model fit structure:")
+    # print(class(grm.y))  # Should be "SingleGroupClass"
+    # print(isS4(grm.y))   # Should return TRUE
+    # str(grm.y)           # Check internal structure
+    # flush.console()
 
-    IIC.y <- plot(grm.y, type = "infotrace", items = 1:length(item.names))
-    message("1")
-    if (print.now && !is.null(ICC.y)) {
-      print(ICC.y)  # Explicitly print the ggplot object
-    }
+    ICC.y <- ggplot_trace_plot(grm.y)
+    TIF.y <- ggplot_information_plot(grm.y, type = "test")
+    IIC.y <- ggplot_information_plot(grm.y, type = "item")
     if (print.now) {
       print(ICC.y)
       print(TIF.y)
       print(IIC.y)
-      message("2")
+      # message("2")
     }
-    message("3")
+    # message("3")
 
     y.info <- NorseResearch::info(grm.y, printAuto = FALSE)  # Extract item information
-    message("4")
+    # message("4")
 
   } else {
     stop("Invalid IRT package specified. Use 'ltm' or 'mirt'.")
