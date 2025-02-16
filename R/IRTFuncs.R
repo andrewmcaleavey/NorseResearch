@@ -129,6 +129,8 @@ info_mirt <- function(fit,
 #'     \item{\code{cor}} {A polychoric correlation table of item responses}
 #'   }
 #'
+#' @export
+#'
 #' @examples
 #' internal.out <- scale_analysis("Internal Avoidance", internal.names, data = data2017_18)
 #'
