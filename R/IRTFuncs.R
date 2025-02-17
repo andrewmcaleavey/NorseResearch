@@ -142,7 +142,7 @@ scale_analysis <- function(scale.name,
                            irt.package = 'ltm'){  # give it a names vector
   # item.names is a character vector of item names in quotes
   # scale.name is character string for naming purposes
-
+  lifecycle::deprecate_soft("0.0.0.9002", "scale_analysis()", "scale_analysis2()")
   ind <- match(item.names, names(data))  # find the indices
   data$mi <- rowSums(is.na(data[, ind]))  # counts missing items on this scale
 

@@ -472,6 +472,9 @@ print.scale_analysis2 <- function(x, ...) {
   cat("\nPolychoric Correlation Matrix:\n")
   print(x$cor)
 
+  cat("\nMarginal Information Share:\n")
+  print(x$info)
+
   cat("\nItem Frequency Tables:\n")
   print(x$tables)
 
