@@ -289,13 +289,14 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #' @param print.now Logical. If `TRUE`, plots for item characteristic curves (ICC) and
 #'   test information function (TIF) are displayed immediately. Default is `FALSE`.
 #'
-#' @return A list containing:
+#' @return An S3 object of type `scale_analysis2` containing:
 #'   \item{new_data}{Subset of `data` containing only the selected items.}
 #'   \item{histogram}{A ggplot histogram of the scale score distribution.}
 #'   \item{min, max}{Observed minimum and maximum scale scores.}
 #'   \item{zmin, zmax}{Standardized minimum and maximum scores.}
 #'   \item{floor, ceiling}{Proportion of responses at the minimum and maximum score.}
 #'   \item{alpha}{Cronbach's alpha and other reliability statistics.}
+#'   \item{reliability}{More reliability statistics.}
 #'   \item{grm}{The fitted graded response model (`ltm::grm` or `mirt::mirt`).}
 #'   \item{ICC, TIF, IIC}{Item characteristic curves, test information, and item information.}
 #'   \item{printed}{Logical indicating if plots were printed (`TRUE`/`FALSE`).}
@@ -317,10 +318,10 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #' print(result$histogram)
 #' }
 scale_analysis2 <- function(scale.name,
-                           item.names,
-                           data,
-                           IRTpackage = "ltm", # "ltm" or "mirt"
-                           print.now = FALSE) {
+                            item.names,
+                            data,
+                            IRTpackage = "ltm", # "ltm" or "mirt"
+                            print.now = FALSE) {
 
   # Identify indices of selected items
   ind <- match(item.names, names(data))
@@ -360,6 +361,9 @@ scale_analysis2 <- function(scale.name,
   # Compute Cronbach's alpha
   alpha.data <- psych::alpha(y.data)
 
+  # Compute more reliability statistics
+  reliability.data <- psych::reliability(y.data)
+
   # Fit IRT model
   if (IRTpackage == "ltm") {
     grm.y <- ltm::grm(y.data)
@@ -375,9 +379,14 @@ scale_analysis2 <- function(scale.name,
     # str(grm.y)           # Check internal structure
     # flush.console()
 
-    ICC.y <- ggplot_icc_plot(grm.y)
-    TIF.y <- ggplot_information_plot(grm.y, plot_type = "test")
-    IIC.y <- ggplot_information_plot(grm.y, plot_type = "item")
+    ICC.y <- ggplot_icc_plot(grm.y,
+                             scale.name = scale.name)
+    TIF.y <- ggplot_information_plot(grm.y,
+                                     plot_type = "test",
+                                     scale.name = scale.name)
+    IIC.y <- ggplot_information_plot(grm.y,
+                                     plot_type = "item",
+                                     scale.name = scale.name)
     if (print.now) {
       print(ICC.y)
       print(TIF.y)
@@ -398,23 +407,113 @@ scale_analysis2 <- function(scale.name,
   item_cor <- psych::polychoric(y.data)$rho
 
   # Return results
-  return(list(
-    new_data = y.data,
-    histogram = hist.y,
-    min = y_min,
-    max = y_max,
-    zmin = y_zmin,
-    zmax = y_zmax,
-    floor = y_pct_floor,
-    ceiling = y_pct_ceiling,
-    alpha = alpha.data,
-    grm = grm.y,
-    ICC = ICC.y,
-    TIF = TIF.y,
-    IIC = IIC.y,
-    printed = print.now,
-    info = y.info,
-    tables = item_freq_tables,
-    cor = round(item_cor, 2)
-  ))
+  result <- list(
+    new_data    = y.data,
+    histogram   = hist.y,
+    min         = y_min,
+    max         = y_max,
+    zmin        = y_zmin,
+    zmax        = y_zmax,
+    floor       = y_pct_floor,
+    ceiling     = y_pct_ceiling,
+    alpha       = alpha.data,
+    reliability = reliability.data,
+    grm         = grm.y,
+    ICC         = ICC.y,
+    TIF         = TIF.y,
+    IIC         = IIC.y,
+    printed     = print.now,
+    info        = y.info,
+    tables      = item_freq_tables,
+    cor         = round(item_cor, 2),
+    scale_name  = scale.name  # optionally, store the scale name as part of the object
+  )
+  class(result) <- "scale_analysis2"  # assign custom class
+  return(result)
+}
+
+
+#' Print Method for scale_analysis2 Objects
+#'
+#' This function provides a concise textual summary for objects produced by
+#' \code{scale_analysis2()}. It displays key descriptive statistics, reliability
+#' measures, polychoric correlations, and frequency tables. It does not attempt
+#' to print the graphical elements.
+#'
+#' @param x An object of class \code{scale_analysis2} returned by \code{scale_analysis2()}.
+#' @param ... Additional arguments (currently ignored).
+#'
+#' @return Invisibly returns the object \code{x}.
+#'
+#' @examples
+#' \dontrun{
+#'   result <- scale_analysis2("Example Scale", c("Q1", "Q2", "Q3"), data, IRTpackage = "mirt")
+#'   print(result)
+#' }
+#'
+#' @export
+#' @method print scale_analysis2
+print.scale_analysis2 <- function(x, ...) {
+  cat("Scale Analysis Results\n")
+  cat("----------------------\n")
+  cat("Scale Name: ", x$scale_name, "\n\n")
+  cat("Descriptive Statistics:\n")
+  cat("  Min: ", x$min, "\n")
+  cat("  Max: ", x$max, "\n")
+  cat("  Standardized Min: ", x$zmin, "\n")
+  cat("  Standardized Max: ", x$zmax, "\n")
+  cat("  Floor effect: ", x$floor, "\n")
+  cat("  Ceiling effect: ", x$ceiling, "\n\n")
+
+  cat("Reliability Statistics:\n")
+  print(x$alpha)
+  print(x$reliability)
+
+  cat("\nPolychoric Correlation Matrix:\n")
+  print(x$cor)
+
+  cat("\nItem Frequency Tables:\n")
+  print(x$tables)
+
+  # Do not attempt to print the plots here.
+  invisible(x)
+}
+
+#' Plot Method for scale_analysis2 Objects
+#'
+#' This method displays the graphical outputs contained in an object of class
+#' \code{scale_analysis2} returned by \code{scale_analysis2()}. It prints the histogram,
+#' item characteristic curves (ICC), test information function (TIF), and item information curves (IIC).
+#'
+#' @param x An object of class \code{scale_analysis2} returned by \code{scale_analysis2()}.
+#' @param ... Additional arguments (currently ignored).
+#'
+#' @return Invisibly returns the object \code{x}.
+#'
+#' @examples
+#' \dontrun{
+#'   result <- scale_analysis2("Example Scale", c("Q1", "Q2", "Q3"), data, IRTpackage = "mirt")
+#'   plot(result)
+#' }
+#'
+#' @export
+#' @method plot scale_analysis2
+plot.scale_analysis2 <- function(x, ...) {
+  # Print the histogram
+  if (!is.null(x$histogram)) {
+    print(x$histogram)
+  }
+  # Print the ICC plot
+  if (!is.null(x$ICC)) {
+    print(x$ICC)
+  }
+  # Print the test information function plot
+  if (!is.null(x$TIF)) {
+    print(x$TIF)
+  }
+  # Print the item information curves plot
+  if (!is.null(x$IIC)) {
+    print(x$IIC)
+  }
+  invisible(x)
 }

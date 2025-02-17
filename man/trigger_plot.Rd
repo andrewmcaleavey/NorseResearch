@@ -11,7 +11,7 @@ trigger_plot(scaleName, mirt_obj, lim = c(-3, 3))
 }
 \arguments{
 \item{scaleName}{A quoted simple scale name, e.g., \code{"somAnx"}.
-Suitable for use with \code{scale_names}.}
+Suitable for use with \code{scale.names}.}
 
 \item{lim}{Interval for plotting, as a vector of two values.}
 
