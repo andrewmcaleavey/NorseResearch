@@ -217,7 +217,7 @@ trigger_plot <- function(scaleName,
 #'   icc_plot <- ggplot_icc_plot(fit_m)
 #'   print(icc_plot)
 #' }
-ggplot_icc_plot <- function(fit, Theta = seq(-6, 6, length.out = 200), facet_items = TRUE) {
+ggplot_icc_plot <- function(fit, Theta = seq(-4, 4, length.out = 200), facet_items = TRUE) {
   # Determine the total number of items.
   n_items <- extract.mirt(fit, 'nitems')
   which.items <- 1:n_items
@@ -327,7 +327,7 @@ ggplot_icc_plot <- function(fit, Theta = seq(-6, 6, length.out = 200), facet_ite
 #'   item_plot <- ggplot_information_plot(fit_m, plot_type = "items")
 #'   print(item_plot)
 #' }
-ggplot_information_plot <- function(fit, Theta = seq(-6, 6, length.out = 200),
+ggplot_information_plot <- function(fit, Theta = seq(-4, 4, length.out = 200),
                                     plot_type = c("test", "items")) {
   plot_type <- match.arg(plot_type)
 

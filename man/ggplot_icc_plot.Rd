@@ -4,7 +4,7 @@
 \alias{ggplot_icc_plot}
 \title{Generate Item Characteristic Curves (ICCs) from a mirt Object}
 \usage{
-ggplot_icc_plot(fit, Theta = seq(-6, 6, length.out = 200), facet_items = TRUE)
+ggplot_icc_plot(fit, Theta = seq(-4, 4, length.out = 200), facet_items = TRUE)
 }
 \arguments{
 \item{fit}{An object of class \code{SingleGroupClass} from \pkg{mirt} representing a
