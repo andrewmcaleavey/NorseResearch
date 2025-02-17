@@ -375,9 +375,9 @@ scale_analysis2 <- function(scale.name,
     # str(grm.y)           # Check internal structure
     # flush.console()
 
-    ICC.y <- ggplot_trace_plot(grm.y)
-    TIF.y <- ggplot_information_plot(grm.y, type = "test")
-    IIC.y <- ggplot_information_plot(grm.y, type = "item")
+    ICC.y <- ggplot_icc_plot(grm.y)
+    TIF.y <- ggplot_information_plot(grm.y, plot_type = "test")
+    IIC.y <- ggplot_information_plot(grm.y, plot_type = "item")
     if (print.now) {
       print(ICC.y)
       print(TIF.y)

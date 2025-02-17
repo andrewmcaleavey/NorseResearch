@@ -6,7 +6,7 @@
 \usage{
 ggplot_information_plot(
   fit,
-  Theta = seq(-6, 6, length.out = 200),
+  Theta = seq(-4, 4, length.out = 200),
   plot_type = c("test", "items")
 )
 }
