@@ -7,7 +7,9 @@
 ggplot_information_plot(
   fit,
   Theta = seq(-4, 4, length.out = 200),
-  plot_type = c("test", "items")
+  plot_type = c("test", "items"),
+  scale.name = "",
+  facet = TRUE
 )
 }
 \arguments{
@@ -15,11 +17,18 @@ ggplot_information_plot(
 unidimensional IRT model.}
 
 \item{Theta}{A numeric vector of theta values at which to compute information. Default is
-\code{seq(-6, 6, length.out = 200)}.}
+\code{seq(-4, 4, length.out = 200)}.}
 
 \item{plot_type}{A character string indicating which plot to return. Must be either
 \code{"test"} to return the overall test information function or \code{"items"} to return
-faceted individual item information curves. Default is \code{"test"}.}
+individual item information curves. Default is \code{"test"}.}
+
+\item{scale.name}{A character string specifying the name of the scale (e.g., "Sad Affect"). This
+is appended to the plot title.}
+
+\item{facet}{Logical. When \code{plot_type = "items"}, if \code{TRUE} (the default), the individual
+item curves will be displayed in separate facets; if \code{FALSE}, all curves will be shown
+in a single plot.}
 }
 \value{
 A \pkg{ggplot2} object displaying either the overall test information function (if
@@ -30,15 +39,19 @@ A \pkg{ggplot2} object displaying either the overall test information function (
 This function computes and plots information functions for a unidimensional IRT model
 fitted using the \pkg{mirt} package. By setting the \code{plot_type} argument, the user
 can choose to return either the overall test information function (a single plot) or
-faceted individual item information curves.
+individual item information curves. The \code{scale.name} parameter is incorporated into the
+plot titles, and when plotting items, the actual variable names from the mirt object are used.
+Additionally, the user can choose whether to facet the individual item curves (default)
+or display them all on one plot.
 }
 \details{
 The function works by first creating a unidimensional theta grid based on the provided
 \code{Theta} vector. If \code{plot_type = "test"}, it computes the overall test information
-using \code{mirt::testinfo()} and returns a single line plot. If \code{plot_type = "items"},
-it computes the information function for each item using \code{mirt::iteminfo()} on each
-extracted item (via \code{extract.item()}) and then combines the curves into a data frame that
-is plotted with \pkg{ggplot2} and faceted by item.
+using \code{mirt::testinfo()} and returns a single line plot with a title that includes
+\code{scale.name} (if provided). If \code{plot_type = "items"}, it computes the information function
+for each item using \code{mirt::iteminfo()} on each extracted item (via \code{extract.item()}),
+uses the actual variable names from the mirt fit object, and then combines the curves into a data frame
+that is plotted with \pkg{ggplot2}. When \code{facet = TRUE}, the curves are faceted by item.
 }
 \examples{
 \dontrun{
@@ -47,20 +60,25 @@ is plotted with \pkg{ggplot2} and faceted by item.
 
   # Fit a unidimensional IRT model using mirt.
   data <- expand.grid(matrix(sample(1:5, 100 * 5, replace = TRUE), ncol = 5))
-  names(data) <- paste0("Item", 1:5)
+  names(data) <- paste0("Question", 1:5)
   fit_m <- mirt(data, 1, itemtype = "graded")
 
-  # Get the overall test information function.
-  test_plot <- ggplot_information_plot(fit_m, plot_type = "test")
+  # Get the overall test information function with a scale name.
+  test_plot <- ggplot_information_plot(fit_m, plot_type = "test", scale.name = "Sad Affect")
   print(test_plot)
 
-  # Get faceted individual item information curves.
-  item_plot <- ggplot_information_plot(fit_m, plot_type = "items")
-  print(item_plot)
+  # Get individual item information curves on separate facets.
+  item_plot_facet <- ggplot_information_plot(fit_m, plot_type = "items", scale.name = "Sad Affect")
+  print(item_plot_facet)
+
+  # Get individual item information curves in a single plot.
+  item_plot_all <- ggplot_information_plot(fit_m, plot_type = "items", scale.name = "Sad Affect", facet = FALSE)
+  print(item_plot_all)
 }
 }
 \seealso{
 \code{\link[mirt]{testinfo}}, \code{\link[mirt]{iteminfo}},
-\code{\link[mirt]{extract.item}}, \code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{geom_line}},
+\code{\link[mirt]{extract.item}}, \code{\link[mirt]{extract.mirt}},
+\code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{geom_line}},
 \code{\link[ggplot2]{facet_wrap}}
 }

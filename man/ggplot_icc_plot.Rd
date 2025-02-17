@@ -2,46 +2,58 @@
 % Please edit documentation in R/plotFuncs.R
 \name{ggplot_icc_plot}
 \alias{ggplot_icc_plot}
-\title{Generate Item Characteristic Curves (ICCs) from a mirt Object}
+\title{Generate Item Characteristic Curves (ICCs) from a mirt Object with Flexible Layout}
 \usage{
-ggplot_icc_plot(fit, Theta = seq(-4, 4, length.out = 200), facet_items = TRUE)
+ggplot_icc_plot(
+  fit,
+  Theta = seq(-4, 4, length.out = 200),
+  facet_items = TRUE,
+  scale.name = ""
+)
 }
 \arguments{
 \item{fit}{An object of class \code{SingleGroupClass} from \pkg{mirt} representing a
 unidimensional IRT model.}
 
 \item{Theta}{A numeric vector of theta values at which to compute the item probabilities.
-Default is \code{seq(-6, 6, length.out = 200)}.}
+Default is \code{seq(-4, 4, length.out = 200)}.}
 
-\item{facet_items}{Logical. If \code{TRUE} (the default), the resulting plot will be faceted by item.}
+\item{facet_items}{Logical. If \code{TRUE} (the default), the resulting plot will be faceted by item.
+If \code{FALSE}, the function returns a list of separate plots (one per item).}
+
+\item{scale.name}{A character string specifying the scale name (e.g., "Sad Affect") that will be
+incorporated into the plot titles.}
 }
 \value{
-A \pkg{ggplot2} object displaying the item characteristic curves (ICCs). Each item
-is optionally faceted, and within each item, separate curves represent the probability curves
-for each response category.
+If \code{facet_items = TRUE}, a single \pkg{ggplot2} object displaying the item characteristic
+curves (ICCs) faceted by item. If \code{facet_items = FALSE}, a list of \pkg{ggplot2} objects (one per item)
+is returned, with each plot's title including the scale name and the corresponding variable name.
 }
 \description{
 This function computes and plots item characteristic curves (ICCs) for each item in a
 unidimensional IRT model fitted using the \pkg{mirt} package. It extracts the probability
 traces for each item using \code{extract.item()} and \code{probtrace()}, reshapes the resulting
 matrix into long format, and then builds a \pkg{ggplot2} object. Separate lines are plotted for
-each response category.
+each response category. The plot titles incorporate a user-specified \code{scale.name} and the actual
+variable names from the mirt object are used instead of generic labels. When generating ICC plots,
+the user can choose to have a single faceted plot or a list of separate plots.
 }
 \details{
-For each item in the model, the function performs the following steps:
+The function works as follows:
 \enumerate{
 \item Determines the number of items using \code{extract.mirt(fit, 'nitems')}.
+\item Extracts the variable names from the mirt object via \code{colnames(mirt::extract.mirt(fit, "data"))}.
 \item Creates a unidimensional theta grid from the supplied \code{Theta} vector.
-\item For each item, extracts the item object with \code{extract.item()} and computes its
-probability trace using \code{probtrace()}. This returns a matrix with rows corresponding
-to theta values and columns corresponding to response categories.
-\item If the probability matrix does not have column names, they are assigned as "Category 1",
-"Category 2", etc.
+\item For each item, extracts the item object with \code{extract.item()} and computes its probability trace
+using \code{probtrace()}. This returns a matrix with rows corresponding to theta values and columns corresponding
+to response categories.
+\item If the probability matrix lacks column names, they are assigned as "Category 1", "Category 2", etc.
 \item The wide-format probability matrix is reshaped into long format using \code{tidyr::pivot_longer()},
 with separate rows for each theta value and response category.
-\item A \pkg{ggplot2} line plot is constructed, showing the probability (y-axis) as a function
-of theta (x-axis), with different colors for each response category.
-\item If \code{facet_items} is \code{TRUE}, the plot is faceted by item.
+\item A \pkg{ggplot2} line plot is constructed showing probability (y-axis) as a function of theta (x-axis),
+with different colors for each response category.
+\item The plot title is generated to include \code{scale.name}. When returning separate plots, each plot's title
+also includes the actual variable name.
 }
 }
 \examples{
@@ -55,9 +67,13 @@ of theta (x-axis), with different colors for each response category.
   names(data) <- paste0("Item", 1:5)
   fit_m <- mirt(data, 1, itemtype = "graded")
 
-  # Generate the ICC plot.
-  icc_plot <- ggplot_icc_plot(fit_m)
-  print(icc_plot)
+  # Generate a faceted ICC plot with scale name.
+  icc_plot_faceted <- ggplot_icc_plot(fit_m, scale.name = "Sad Affect", facet_items = TRUE)
+  print(icc_plot_faceted)
+
+  # Generate separate ICC plots for each item.
+  icc_plot_list <- ggplot_icc_plot(fit_m, scale.name = "Sad Affect", facet_items = FALSE)
+  lapply(icc_plot_list, print)
 }
 }
 \seealso{

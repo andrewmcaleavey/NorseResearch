@@ -26,13 +26,14 @@ Options: \code{"ltm"} (default) or \code{"mirt"}.}
 test information function (TIF) are displayed immediately. Default is \code{FALSE}.}
 }
 \value{
-A list containing:
+An S3 object of type \code{scale_analysis2} containing:
 \item{new_data}{Subset of \code{data} containing only the selected items.}
 \item{histogram}{A ggplot histogram of the scale score distribution.}
 \item{min, max}{Observed minimum and maximum scale scores.}
 \item{zmin, zmax}{Standardized minimum and maximum scores.}
 \item{floor, ceiling}{Proportion of responses at the minimum and maximum score.}
 \item{alpha}{Cronbach's alpha and other reliability statistics.}
+\item{reliability}{More reliability statistics.}
 \item{grm}{The fitted graded response model (\code{ltm::grm} or \code{mirt::mirt}).}
 \item{ICC, TIF, IIC}{Item characteristic curves, test information, and item information.}
 \item{printed}{Logical indicating if plots were printed (\code{TRUE}/\code{FALSE}).}
