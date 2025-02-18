@@ -7,6 +7,7 @@
 #' @param table the lookup table, defaults to \code{item_descriptions}.
 #' Can be expanded to provide Norwegian or other lookup tables.
 #'
+#'
 #' @return a character string with the English-language item text.
 get_item_text <- function(target,
                           table = item_descriptions){
@@ -41,19 +42,24 @@ lookup_item <- function(target,
                       version = "2.1",
                       verbose = FALSE){
   # version 2.0 is mostly a copy of get_item_text()
-  if(version == 2 | version == "2" | version =="2.0"){
+  if (version == 2 | version == "2" | version == "2.0") {
     text_ret <- as.character(item_descriptions[item_descriptions$item == target, "item_text"])
     verb_out <- item_descriptions[item_descriptions$item == target, ]
   }
 
   # version 2.1 is similar
-  if(version == 2.1 | version == "2.1"){
+  if (version == 2.1 | version == "2.1") {
     text_ret <- as.character(nf2.1.item.descriptions[match(target, nf2.1.item.descriptions$item), "item_text_e"])
     verb_out <- nf2.1.item.descriptions[nf2.1.item.descriptions$item == target, ]
   }
 
+  if (version == 3 | version == "3" | version == "3.1" | version == 3.1) {
+    text_ret <- as.character(NF3.1_items[match(target, NF3.1_items$item), "item_text_e"])
+    verb_out <- NF3.1_items[NF3.1_items$item == target, ]
+  }
+
   # This is the return() block
-  if(verbose) return(verb_out)
+  if (verbose) return(verb_out)
   else return(text_ret)
 }
 
@@ -285,9 +291,11 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #' @param item.names A character vector of item names (column names in `data`).
 #' @param data A data frame containing the item responses.
 #' @param IRTpackage A character string specifying which IRT package to use.
-#'   Options: `"ltm"` (default) or `"mirt"`.
+#'   Options: `"ltm"` or `"mirt"` (default).
 #' @param print.now Logical. If `TRUE`, plots for item characteristic curves (ICC) and
 #'   test information function (TIF) are displayed immediately. Default is `FALSE`.
+#'   @param version character string specifying the version of the NF to use
+#'   when looking up item text
 #'
 #' @return An S3 object of type `scale_analysis2` containing:
 #'   \item{new_data}{Subset of `data` containing only the selected items.}
@@ -303,6 +311,10 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #'   \item{info}{Item information statistics from the IRT model.}
 #'   \item{tables}{Frequency tables for each item.}
 #'   \item{cor}{Polychoric correlation matrix of the items.}
+#'   \item{scale_name}{The name of the scale.}
+#'   \item{items}{The item names.}
+#'   \item{item_text}{English text.}
+#'   \item{pct_open_scale}{The percent of people without missing data on non-trigger items.}
 #'
 #' @export
 #'
@@ -320,8 +332,9 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 scale_analysis2 <- function(scale.name,
                             item.names,
                             data,
-                            IRTpackage = "ltm", # "ltm" or "mirt"
-                            print.now = FALSE) {
+                            IRTpackage = "mirt", # can be "ltm" or "mirt"
+                            print.now = FALSE,
+                            version = "3.1") {
 
   # Identify indices of selected items
   ind <- match(item.names, names(data))
@@ -372,7 +385,7 @@ scale_analysis2 <- function(scale.name,
     IIC.y <- plot(grm.y, type = "IIC", zrange = c(-4, 4), ask = FALSE)
     y.info <- NorseResearch::info(grm.y, printAuto = FALSE)
   } else if (IRTpackage == "mirt") {
-    grm.y <- mirt::mirt(y.data, 1, itemtype = "graded")
+    grm.y <- mirt::mirt(y.data, 1, itemtype = "graded", verbose = FALSE)
     # message("Checking model fit structure:")
     # print(class(grm.y))  # Should be "SingleGroupClass"
     # print(isS4(grm.y))   # Should return TRUE
@@ -406,6 +419,14 @@ scale_analysis2 <- function(scale.name,
   item_freq_tables <- lapply(y.data, table)
   item_cor <- psych::polychoric(y.data)$rho
 
+  # create a table for the item text
+  item_text <- lookup_item(item.names, version = version)
+
+  # can provide the percent of people who have missing data on the non-trigger items
+  pct_open_scale <- 1- max(alpha.data$response.freq %>%
+                             data.frame() %>%
+                             pull(miss))
+
   # Return results
   result <- list(
     new_data    = y.data,
@@ -426,7 +447,10 @@ scale_analysis2 <- function(scale.name,
     info        = y.info,
     tables      = item_freq_tables,
     cor         = round(item_cor, 2),
-    scale_name  = scale.name  # optionally, store the scale name as part of the object
+    scale_name  = scale.name,  # optionally, store the scale name as part of the object
+    items       = item.names,  # optionally, store the item names as part of the object
+    item_text   = item_text,
+    pct_open_scale = pct_open_scale  # percent of people with missing data on non-trigger items
   )
   class(result) <- "scale_analysis2"  # assign custom class
   return(result)
@@ -457,16 +481,24 @@ print.scale_analysis2 <- function(x, ...) {
   cat("Scale Analysis Results\n")
   cat("----------------------\n")
   cat("Scale Name: ", x$scale_name, "\n\n")
-  cat("Descriptive Statistics:\n")
+
+  # make a table with item name and English text
+  item_table <- data.frame(item = x$items,
+                           item_text = x$item_text)
+  # print the item names and text
+  print(item_table)
+
+  cat("\nDescriptive Statistics:\n")
   cat("  Min: ", x$min, "\n")
   cat("  Max: ", x$max, "\n")
   cat("  Standardized Min: ", x$zmin, "\n")
   cat("  Standardized Max: ", x$zmax, "\n")
   cat("  Floor effect: ", x$floor, "\n")
-  cat("  Ceiling effect: ", x$ceiling, "\n\n")
+  cat("  Ceiling effect: ", x$ceiling, "\n")
+  cat("  Percent of people opening scale (estimated): ", x$pct_open_scale, "\n\n")
 
   cat("Reliability Statistics:\n")
-  print(x$alpha)
+  # print(x$alpha)
   print(x$reliability)
 
   cat("\nPolychoric Correlation Matrix:\n")
