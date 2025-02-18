@@ -18,7 +18,8 @@ NF3.1_items <- read.csv("data-raw/NF3.1_items.csv",
          item_text_b = Bokm_l_item_question,
          scale_b = Bokm_l_dimension_subscale,
          domain_b = Bokm_l_domain,
-         .before = 1) %>%
+         .before = 1,
+         .keep = "unused") %>%
   mutate(simple_scale = case_when(scale_e == "Sad Affect" ~ "sad",
                                   scale_e == "Physical Anxiety" ~ "physAnx",
                                   scale_e == "Restrictive Eating" ~ "eating",
@@ -52,7 +53,9 @@ NF3.1_items <- read.csv("data-raw/NF3.1_items.csv",
                                   scale_e == "Alliance (Task)" ~ "alliance",
                                   scale_e == "Medication" ~ NA,
                                   scale_e == "Norse" ~ NA,
-                                  scale_e == "Therapy Preferences" ~ "pref"))
+                                  scale_e == "Therapy Preferences" ~ "pref")) %>%
+  # need to remove trailing .1 from item names
+  mutate(item = str_remove(item, "\\.1$"))
 # once simple_scale is taken care of, can delete rest of items
 
 unique(NF3.1_items$scale_e)

@@ -254,3 +254,34 @@
 #' @source See \code{data-raw/item_names_nf2.R}
 #'
 "item_names_nf2"
+
+
+#' Item information, NF 3.1
+#'
+#' A summary of information about the NF items, updated 2022
+#' @format A data frame with 96 rows and 16 variables:
+#' \describe{
+#'   \item{\code{assess_order}}{integer Order in assessment}
+#'   \item{\code{item}}{character item name}
+#'   \item{\code{reverse}}{character is the item reverse scored}
+#'   \item{\code{trigger}}{logical is this a trigger item}
+#'   \item{\code{simple_scale}}{character simple scale name}
+#'   \item{\code{item_text_e}}{character Item text in English}
+#'   \item{\code{scale_e}}{character Scale name in English}
+#'   \item{\code{domain_e}}{character Domain in English}
+#'   \item{\code{item_text_n}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{scale_n}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{domain_n}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{item_text_b}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{scale_b}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{domain_b}}{character COLUMN_DESCRIPTION}
+#'   \item{\code{Changes_on_items}}{character Were there item changes from 2.2 to 3?}
+#'   \item{\code{Changes_on_dimensions}}{character Were there dimension changes from 2.2 to 3?}
+#'}
+#' }
+#' @usage View(NF3.1_items)
+#'
+#' @details Not generally accessed directly. Use lookup functions like \code{\link{lookup_item}}.
+#'
+#' @source Based on 'NORSE Measure Master Document.xlsx', and more proximally 'data-raw/NF3.1_items.csv'.
+"NF3.1_items"

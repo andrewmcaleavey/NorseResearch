@@ -8,8 +8,9 @@ scale_analysis2(
   scale.name,
   item.names,
   data,
-  IRTpackage = "ltm",
-  print.now = FALSE
+  IRTpackage = "mirt",
+  print.now = FALSE,
+  version = "3.1"
 )
 }
 \arguments{
@@ -20,10 +21,12 @@ scale_analysis2(
 \item{data}{A data frame containing the item responses.}
 
 \item{IRTpackage}{A character string specifying which IRT package to use.
-Options: \code{"ltm"} (default) or \code{"mirt"}.}
+Options: \code{"ltm"} or \code{"mirt"} (default).}
 
 \item{print.now}{Logical. If \code{TRUE}, plots for item characteristic curves (ICC) and
-test information function (TIF) are displayed immediately. Default is \code{FALSE}.}
+test information function (TIF) are displayed immediately. Default is \code{FALSE}.
+@param version character string specifying the version of the NF to use
+when looking up item text}
 }
 \value{
 An S3 object of type \code{scale_analysis2} containing:
@@ -40,6 +43,10 @@ An S3 object of type \code{scale_analysis2} containing:
 \item{info}{Item information statistics from the IRT model.}
 \item{tables}{Frequency tables for each item.}
 \item{cor}{Polychoric correlation matrix of the items.}
+\item{scale_name}{The name of the scale.}
+\item{items}{The item names.}
+\item{item_text}{English text.}
+\item{pct_open_scale}{The percent of people without missing data on non-trigger items.}
 }
 \description{
 This function performs scale analysis by computing descriptive statistics, reliability,
