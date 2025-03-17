@@ -16,7 +16,8 @@ LazyData: true
 Imports: 
     lifecycle,
     magrittr,
-    mirt
+    mirt,
+    reticulate
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
