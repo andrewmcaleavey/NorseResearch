@@ -17,6 +17,7 @@ Imports:
     lifecycle,
     magrittr,
     mirt,
+    readxl,
     reticulate
 Suggests: 
     testthat (>= 3.0.0)
