@@ -92,6 +92,8 @@ QOL.name.nf3 <- "Q226"
 alliance.names.nf3 <- c("Q236", "Q235", "Q237")
 pref.names.nf3 <- c("Q71", "Q74", "Q152", "Q153")
 
+scoreNames.nf3 <- read.csv(file = "data-raw/ScoreNames.csv") |>
+  select(ScoreName, ScaleName)
 
 # use_data() calls for everything that contains "names"
 
@@ -147,4 +149,4 @@ usethis::use_data(suicide.names.nf3, overwrite = TRUE)
 usethis::use_data(trauma.names, overwrite = TRUE)
 usethis::use_data(worry.names, overwrite = TRUE)
 usethis::use_data(worry.names.nf3, overwrite = TRUE)
-
+usethis::use_data(scoreNames.nf3, overwrite = TRUE)

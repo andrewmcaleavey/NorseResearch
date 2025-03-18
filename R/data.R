@@ -285,3 +285,18 @@
 #'
 #' @source Based on 'NORSE Measure Master Document.xlsx', and more proximally 'data-raw/NF3.1_items.csv'.
 "NF3.1_items"
+
+#' Lookup table for Exported scores to useful scales
+#'
+#' A linking table for SCORE variables and human-readable scale names
+#' @format A data frame with 47 rows and 2 variables:
+#' \describe{
+#'   \item{\code{ScoreName}}{character. Simplified name of the SCORE variable}
+#'   \item{\code{ScaleName}}{character. Nicely formatted Scale name}
+#' }
+#' @usage View(scoreNames.nf3)
+#'
+#' @details Could be incorporated into a scoring function.
+#'
+#' @source Based on exports of data provided by NF, and more proximally `data-raw/scoring_objects_raw.R`.
+"scoreNames.nf3"
