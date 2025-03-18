@@ -222,7 +222,87 @@ combine_q_vars <- function(df,
   return(df_updated)
 }
 
+#' Rename SCORE Variables Using a Mapping Table
+#'
+#' This function renames SCORE variables in a data frame by replacing their names with
+#' human-readable scale names provided in a mapping table. The mapping table must contain
+#' two columns: \code{ScoreName} (the original variable names, e.g., "SCORE_G10") and
+#' \code{ScaleName} (the corresponding human-readable names, e.g., "Physical Anxiety").
+#' An optional prefix (default \code{"score_"}) is prepended to the cleaned scale name.
+#' Cleaning involves replacing spaces with underscores and removing non-alphanumeric characters,
+#' ensuring that the new variable names are syntactically valid.
+#'
+#' @param df A data frame containing the SCORE variables to be renamed.
+#' @param prefix A character string to prepend to the cleaned scale name. Defaults to \code{"score_"}.
+#' @param mapping A data frame with two columns: \code{ScoreName} (the original variable names)
+#'   and \code{ScaleName} (the desired human-readable names). Defaults to \code{scoreNames.nf3}.
+#'
+#' @return A data frame with SCORE variables renamed to the new names.
+#'
+#' @details For each SCORE variable found in \code{df} that matches a \code{ScoreName} in \code{mapping},
+#'   the function builds a new variable name by concatenating \code{prefix} with a cleaned version
+#'   of the corresponding \code{ScaleName}. Cleaning is done by replacing spaces with underscores and
+#'   removing any characters other than letters, digits, and underscores. If duplicate names result,
+#'   \code{make.unique} is used to ensure uniqueness.
+#'
+#' @examples
+#' \dontrun{
+#' # Assume scoreNames.nf3 is available and looks like this:
+#' scoreNames.nf3 <- data.frame(
+#'   ScoreName = c("SCORE_G10", "SCORE_G11", "SCORE_G12"),
+#'   ScaleName = c("Physical Anxiety", "Self-Compassion", "Emotional Resilience"),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' # Example data frame:
+#' df <- data.frame(
+#'   SCORE_G10 = rnorm(10),
+#'   SCORE_G11 = rnorm(10),
+#'   SCORE_G12 = rnorm(10),
+#'   OtherVar  = letters[1:10],
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' # Rename the SCORE variables.
+#' df_new <- rename_score_vars(df)
+#' # New names will be like "score_Physical_Anxiety", "score_SelfCompassion", and "score_Emotional_Resilience"
+#' }
+#'
+#' @export
+rename_score_vars <- function(df,
+                              prefix = "score_",
+                              mapping = scoreNames.nf3) {
+  # Check that mapping has the required columns
+  if (!all(c("ScoreName", "ScaleName") %in% names(mapping))) {
+    stop("Mapping must have columns 'ScoreName' and 'ScaleName'.")
+  }
 
+  # Identify which columns in df are SCORE variables found in the mapping.
+  score_vars <- intersect(names(df), mapping$ScoreName)
+
+  # If no SCORE variables found, return df unmodified.
+  if (length(score_vars) == 0) return(df)
+
+  # Create new variable names from the mapping.
+  new_names <- sapply(score_vars, function(old_name) {
+    # Get the human-readable scale name for this variable.
+    scale <- mapping$ScaleName[mapping$ScoreName == old_name][1]
+    # Replace spaces with underscores and remove non-alphanumeric characters (except underscores).
+    clean_scale <- gsub("[^A-Za-z0-9_]", "", gsub(" ", "_", scale))
+    paste0(prefix, clean_scale)
+  }, USE.NAMES = FALSE)
+
+  # Make names unique if necessary.
+  new_names <- make.unique(new_names)
+
+  # Create a named vector for dplyr::rename(), with names as the new names and values as the old names.
+  rename_vec <- setNames(score_vars, new_names)
+
+  # Rename the columns in df.
+  df <- dplyr::rename(df, !!!rename_vec)
+
+  return(df)
+}
 
 
 

@@ -31,8 +31,6 @@ test_that("get_nf3_nicer_name() returns message and simplename when no match fou
 })
 
 
-context("combine_q_vars")
-
 test_that("combine_q_vars combines paired Q variables correctly", {
   df <- data.frame(
     Q140 = c(NA, 2, NA),
@@ -59,4 +57,47 @@ test_that("combine_q_vars errors on conflict", {
   )
 
   expect_error(combine_q_vars(df_conflict), "Conflict")
+})
+
+# Create a small mapping table for testing.
+test_mapping <- data.frame(
+  ScoreName = c("SCORE_G10", "SCORE_G11", "SCORE_G12"),
+  ScaleName = c("Physical Anxiety", "Self-Compassion", "Emotional Resilience"),
+  stringsAsFactors = FALSE
+)
+
+test_that("rename_score_vars renames SCORE variables correctly", {
+  df <- data.frame(
+    SCORE_G10 = 1:3,
+    SCORE_G11 = 4:6,
+    SCORE_G12 = 7:9,
+    OtherVar  = letters[1:3],
+    stringsAsFactors = FALSE
+  )
+
+  df_new <- rename_score_vars(df, prefix = "score_", mapping = test_mapping)
+
+  # Check that the old SCORE variable names are no longer present.
+  expect_false("SCORE_G10" %in% names(df_new))
+  expect_false("SCORE_G11" %in% names(df_new))
+  expect_false("SCORE_G12" %in% names(df_new))
+
+  # Check that the new names are as expected.
+  expect_true("score_Physical_Anxiety" %in% names(df_new))
+  expect_true("score_SelfCompassion" %in% names(df_new) ||
+                "score_Self-Compassion" %in% names(df_new))
+  expect_true("score_Emotional_Resilience" %in% names(df_new))
+
+  # Check that non-SCORE variables remain unchanged.
+  expect_true("OtherVar" %in% names(df_new))
+})
+
+test_that("rename_score_vars returns the input unchanged if no SCORE variables are found", {
+  df <- data.frame(
+    A = 1:3,
+    B = 4:6,
+    stringsAsFactors = FALSE
+  )
+  df_new <- rename_score_vars(df, mapping = test_mapping)
+  expect_equal(df_new, df)
 })
