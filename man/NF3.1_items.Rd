@@ -25,7 +25,6 @@ A data frame with 96 rows and 16 variables:
 \item{\code{Changes_on_dimensions}}{character Were there dimension changes from 2.2 to 3?}
 }
 }
-}
 \source{
 Based on 'NORSE Measure Master Document.xlsx', and more proximally 'data-raw/NF3.1_items.csv'.
 }

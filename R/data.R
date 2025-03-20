@@ -278,7 +278,7 @@
 #'   \item{\code{Changes_on_items}}{character Were there item changes from 2.2 to 3?}
 #'   \item{\code{Changes_on_dimensions}}{character Were there dimension changes from 2.2 to 3?}
 #'}
-#' }
+#'
 #' @usage View(NF3.1_items)
 #'
 #' @details Not generally accessed directly. Use lookup functions like \code{\link{lookup_item}}.

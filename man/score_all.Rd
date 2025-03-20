@@ -13,9 +13,9 @@ score_all(
 }
 \arguments{
 \item{dat}{A dataset. Should have clean names that have been simplified to include
-only item indicators. For example, \code{M53_Q142_1} should instead by \code{Q142}.}
+only item indicators. For example, \code{M53_Q142_1} should instead be \code{Q142}.}
 
-\item{process_vars}{logical. Should the process variables be included?}
+\item{process_vars}{Logical. Should the process variables be included?}
 
 \item{versions}{Which versions of the NF do you want to score? Includes both
 2.x and 3.x by default.}
@@ -24,13 +24,16 @@ only item indicators. For example, \code{M53_Q142_1} should instead by \code{Q14
 to use for each row.}
 }
 \value{
-A data.frame/tibble with new variables.
+A data.frame/tibble with new variables. The original item responses remain unchanged.
 }
 \description{
-Score all versions of the NF3 in raw scale form
+This function AUTOMATICALLY treats data with -98 and -99 values. The assumption is that
+-98 means "not relevant to me" and -99 means "Prefer not to answer". For all scores,
+-99s are considered NA when calculating scores. For all scales EXCEPT PROCESS VARIABLES -98s
+mean 1, the lowest possible severity. For Alliance and Preference scales, -98 means NA.
 }
 \examples{
-/dontrun{
+\dontrun{
 score_all(dataGoesHere)
 }
 }
