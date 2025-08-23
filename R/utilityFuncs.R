@@ -371,3 +371,219 @@ make_english_export <- function(dat) {
 
   dplyr::rename(dat, dplyr::any_of(lookup))
 }
+
+#' Create formatted GT tables for factor analysis results
+#'
+#' @description
+#' Given a fitted factor model from **psych** (`psych::fa()`), this function
+#' builds two nicely formatted [`gt`](https://gt.rstudio.com/) tables:
+#'
+#' 1) **Indicator table** (`ind_table`): item (indicator) loadings per factor,
+#'    with communalities, uniquenesses, and complexity. Small loadings are
+#'    grey/italic; cross-loadings are italic; non-assignable indicators (unclear
+#'    loadings) are highlighted.
+#'
+#' 2) **Factor summary table** (`f_table`): eigenvalues and variance explained
+#'    (from `x[["Vaccounted"]]`), and—when there are multiple factors—the factor
+#'    correlation matrix `Phi`.
+#'
+#' @param x An object returned by `psych::fa()` (i.e., a factor analysis fit
+#'   from the **psych** package). Must contain `loadings`, `communality`,
+#'   `uniquenesses`, `complexity`, `Vaccounted`, and (for \(>1\) factors) `Phi`.
+#' @param varlabels Optional character vector of length equal to the number of
+#'   rows in `x$loadings`. Used as human-readable indicator names (row labels).
+#'   If `sort = TRUE`, labels are re-ordered to match the sorted loadings.
+#' @param title Character string used as the title of the indicator table.
+#'   Default is `"Factor analysis results"`.
+#' @param diffuse Numeric tolerance in \[0, 1\] for determining *non-assignable*
+#'   indicators (items with unclear loadings). If the absolute difference
+#'   between the two highest absolute loadings on an item is *less than*
+#'   `diffuse`, the item is marked as non-assignable (row highlighted). Default
+#'   is `0.10`.
+#' @param small Numeric threshold in \[0, 1\] below which absolute factor
+#'   loadings are styled grey and italic to indicate small magnitude. Default
+#'   is `0.30`.
+#' @param cross Numeric threshold in \[0, 1\] above which *secondary* (off-factor)
+#'   loadings are styled italic to indicate cross-loadings. Default is `0.20`.
+#' @param sort Logical; if `TRUE` (default), the loadings are sorted using
+#'   `psych::fa.sort()` and `varlabels` are re-ordered accordingly.
+#'
+#' @details
+#' Factor columns are auto-named as `"Factor_1"`, `"Factor_2"`, … in the
+#' returned tables. Styling rules applied to the indicator table:
+#'
+#' * **Small loadings**: `abs(loading) < small` → grey + italic text.
+#' * **Cross-loadings** (when `n_factors > 1`): `abs(loading) > cross` on any
+#'   non-primary factor for that item → italic text.
+#' * **Non-assignable items**: if the gap between the two largest absolute
+#'   loadings is `< diffuse` → row filled red (indicates unclear factor
+#'   assignment).
+#'
+#' The factor summary table stacks `Vaccounted` (eigenvalues and variance
+#' explained) and, if available, `Phi` (factor correlations), with values
+#' rounded for readability.
+#'
+#' @return
+#' A named list with two `gt_tbl` objects:
+#' * `ind_table`: GT table of indicators (rows) by factors (columns), plus
+#'   `Communality`, `Uniqueness`, and `Complexity`.
+#' * `f_table`: GT table of eigenvalues/variance explained and, if applicable,
+#'   factor correlations.
+#'
+#' @section Warnings:
+#' If `varlabels` is supplied but its length differs from `nrow(x$loadings)`,
+#' a warning is issued and labels are not applied.
+#'
+#' @examples
+#' \dontrun{
+#'   library(psych)
+#'   set.seed(1)
+#'   # Toy data with 3 factors
+#'   X <- simulatePolychoric(300, 3, 5)$data
+#'   fa_fit <- fa(X, nfactors = 3, rotate = "oblimin")
+#'
+#'   # Optional labels
+#'   labs <- paste("Item", seq_len(nrow(fa_fit$loadings)))
+#'
+#'   out <- fa_table(
+#'     x = fa_fit,
+#'     varlabels = labs,
+#'     title = "EFA results (oblimin)",
+#'     diffuse = 0.10,
+#'     small   = 0.30,
+#'     cross   = 0.20,
+#'     sort    = TRUE
+#'   )
+#'
+#'   # Print the GT tables
+#'   out$ind_table
+#'   out$f_table
+#' }
+#'
+#' @seealso [psych::fa()], [psych::fa.sort()], [gt::gt()]
+#'
+#' @importFrom dplyr tibble rename mutate across starts_with
+#' @importFrom purrr map map2
+#' @importFrom tibble rownames_to_column
+#' @importFrom gt gt tab_header tab_style cells_body cell_text cell_fill
+#' @export
+fa_table <- function(x, varlabels = NULL, title = "Factor analysis results", diffuse = .10, small = .30, cross = .20, sort = TRUE) {
+  #get sorted loadings
+  require(dplyr)
+  require(purrr)
+  require(tibble)
+  require(gt)
+  if(sort == TRUE) {
+    x <- psych::fa.sort(x)
+  }
+  if(!is.null(varlabels)) {
+    if(length(varlabels) != nrow(x$loadings)) { warning("Number of variable labels and number of variables are unequal. Check your input!",
+                                                        call. = FALSE) }
+    if(sort == TRUE) {
+      varlabels <- varlabels[x$order]
+    }
+  }
+  if(is.null(varlabels)) {varlabels <- rownames(x$loadings)}
+
+  loadings <- data.frame(unclass(x$loadings))
+
+  #make nice names
+  factornamer <- function(nfactors) {
+    paste0("Factor_", 1:nfactors)}
+
+  nfactors <- ncol(loadings)
+  fnames <- factornamer(nfactors)
+  names(loadings) <- fnames
+
+  # prepare locations
+  factorindex <- apply(loadings, 1, function(x) which.max(abs(x)))
+
+  # adapted from from sjplot: getremovableitems
+  getRemovableItems <- function(dataframe, fctr.load.tlrn = diffuse) {
+    # clear vector
+    removers <- vector(length = nrow(dataframe))
+    # iterate each row of the data frame. each row represents
+    # one item with its factor loadings
+    for (i in seq_along(removers)) {
+      # get factor loadings for each item
+      rowval <- as.numeric(abs(dataframe[i, ]))
+      # retrieve highest loading
+      maxload <- max(rowval)
+      # retrieve 2. highest loading
+      max2load <- sort(rowval, TRUE)[2]
+      # check difference between both
+      if (abs(maxload - max2load) < fctr.load.tlrn) {
+        # if difference is below the tolerance,
+        # remeber row-ID so we can remove that items
+        # for further PCA with updated data frame
+        removers[i] <- TRUE
+      }
+    }
+    # return a vector with index numbers indicating which items
+    # have unclear loadings
+    return(removers)
+  }
+  if(nfactors > 1) {
+    removable <- getRemovableItems(loadings)
+    cross_loadings <- purrr::map2(fnames, seq_along(fnames), function(f, i) {
+      (abs(loadings[,f] > cross)) & (factorindex != i)
+    })
+  }
+
+  small_loadings <- purrr::map(fnames, function(f) {
+    abs(loadings[,f]) < small
+  })
+
+  ind_table <- dplyr::tibble(varlabels, loadings) %>%
+    dplyr::rename(Indicator = varlabels) %>%
+    dplyr::mutate(Communality = x$communality, Uniqueness = x$uniquenesses, Complexity = x$complexity) %>%
+    dplyr::mutate(across(starts_with("Factor"), round, 3))  %>%
+    dplyr::mutate(across(c(Communality, Uniqueness, Complexity), round, 2))
+
+
+  ind_table <- ind_table %>% gt(rowname_col = "Indicator") %>% tab_header(title = title)
+  # mark small loadiongs
+  for(f in seq_along(fnames)) {
+    ind_table <- ind_table %>%  tab_style(style = cell_text(color = "#D3D3D3", style = "italic"),
+                                          locations = cells_body(columns = fnames[f], rows = small_loadings[[f]]))
+  }
+  # mark cross loadings
+
+  if (nfactors > 1) {
+    for (f in seq_along(fnames)) {
+      ind_table <-
+        ind_table %>%  tab_style(
+          style = cell_text(style = "italic"),
+          locations = cells_body(columns = fnames[f], rows = cross_loadings[[f]])
+        )
+    }
+    # mark non-assignable indicators
+    ind_table <-
+      ind_table %>%  tab_style(style = cell_fill(color = "#D93B3B"),
+                               locations = cells_body(rows = removable))
+  }
+
+  # adapted from https://www.anthonyschmidt.co/post/2020-09-27-efa-tables-in-r/
+  Vaccounted <- x[["Vaccounted"]]
+  colnames(Vaccounted) <- fnames
+  if (nfactors > 1) {
+    Phi <- x[["Phi"]]
+    rownames(Phi) <- fnames
+    colnames(Phi) <- fnames
+    f_table <- rbind(Vaccounted, Phi) %>%
+      as.data.frame() %>%
+      rownames_to_column("Property") %>%
+      mutate(across(where(is.numeric), round, 3)) %>%
+      gt() %>% tab_header(title = "Eigenvalues, Variance Explained, and Factor Correlations for Rotated Factor Solution")
+  }
+  else if(nfactors == 1) {
+    f_table <- rbind(Vaccounted) %>%
+      as.data.frame() %>%
+      rownames_to_column("Property") %>%
+      mutate(across(where(is.numeric), round, 3)) %>%
+      gt() %>% tab_header(title = "Eigenvalues, Variance Explained, and Factor Correlations for Rotated Factor Solution")
+  }
+
+  return(list("ind_table" = ind_table, "f_table" = f_table))
+
+}
