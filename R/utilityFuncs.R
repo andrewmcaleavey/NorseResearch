@@ -361,9 +361,11 @@ make_english_export <- function(dat) {
     Respondent_ID = "Pasientid",
     Measurepackage  = "Skjemapakke",
     Measure_name = "Skjema",
+    Measure_name = "Skjemanavn",
     Short_code = "Kortkode",
     Submitted = "Innsendt",
-    Duration = "Varighet"
+    Duration = "Varighet",
+    Duration = "Varigheit"
   )
 
   # Drop any mappings where the target name already exists in dat
