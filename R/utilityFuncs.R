@@ -241,7 +241,7 @@ collapse_measures_wide <- function(
   return(out)
 }
 
-# ---- Helper: enforce order within Respondent_ID by Innsendt/Submitted ----
+# ---- Helper: enforce order within Respondent_ID by Innsendt/Submitted
 # internal helper, not exported
 enforce_within_id_order <- function(DT, respondent_col = "Respondent_ID", time_order = c("asc","desc")) {
   time_order <- match.arg(time_order)
@@ -588,4 +588,212 @@ fa_table <- function(x, varlabels = NULL, title = "Factor analysis results", dif
 
   return(list("ind_table" = ind_table, "f_table" = f_table))
 
+}
+
+#' Repair likely mojibake in character columns (UTF-8 mis-decoded as Latin-1/CP1252)
+#'
+#' @description
+#' Fixes common mojibake such as `"Helse FÃ¸rde"` (should be `"Helse Førde"`)
+#' caused by UTF-8 bytes being interpreted as Latin-1 / Windows-1252 at import.
+#'
+#' The repair is performed using a byte-preserving round-trip equivalent to:
+#' \code{(encode as latin1/cp1252 bytes) -> (decode those bytes as UTF-8)}.
+#'
+#' The function returns a modified copy of \code{data}, suitable for piping, and
+#' prints a console report. By default, the report is a summary of UNIQUE changes
+#' (before -> after) with the number of instances across the whole data frame.
+#'
+#' @param data A data.frame (or tibble).
+#' @param cols Optional tidyselect-style specification of columns to check. If
+#'   \code{NULL} (default), all character columns are checked.
+#' @param from Candidate single-byte encodings to try for the byte round-trip.
+#'   Defaults to \code{c("latin1", "Windows-1252")}.
+#' @param patterns Regex patterns treated as signals of mojibake.
+#' @param quiet If \code{TRUE}, suppress console reporting.
+#' @param report Character string controlling console output:
+#'   \itemize{
+#'     \item \code{"unique"} (default): unique before->after changes with counts (global).
+#'     \item \code{"columns"}: per-column counts only.
+#'     \item \code{"both"}: both reports.
+#'     \item \code{"none"}: no output (same as \code{quiet = TRUE}).
+#'   }
+#' @param max_unique Maximum number of unique change rows to print (most frequent first).
+#'
+#' @return A data.frame of the same class as \code{data} with repaired character columns.
+#'
+#' @examples
+#' df <- data.frame(
+#'   org  = c("Helse FÃ¸rde", "Helse Vest", NA),
+#'   note = c("smÃ¥", "OK", "Ã…lesund"),
+#'   stringsAsFactors = FALSE
+#' )
+#' fix_failed_encoding(df)
+#'
+#' @export
+fix_failed_encoding <- function(data,
+                                cols = NULL,
+                                from = c("latin1", "Windows-1252"),
+                                patterns = c(
+                                  "Ã.", "Â.", "â€™", "â€œ", "â€\u009D", "â€“", "â€”", "â€¦",
+                                  "Ã¥", "Ã¸", "Ã¦", "Ã…", "Ã˜", "Ã†"
+                                ),
+                                quiet = FALSE,
+                                report = c("unique", "columns", "both", "none"),
+                                max_unique = 50) {
+
+  report <- match.arg(report)
+  if (report == "none") quiet <- TRUE
+
+  if (!is.data.frame(data)) {
+    stop("`data` must be a data.frame (or tibble).", call. = FALSE)
+  }
+
+  # Select columns: tidyselect if available; else accept character vector; else default.
+  cn <- names(data)
+  if (is.null(cols)) {
+    target_cols <- cn[vapply(data, is.character, logical(1))]
+  } else {
+    if (requireNamespace("tidyselect", quietly = TRUE) &&
+        requireNamespace("rlang", quietly = TRUE)) {
+      sel <- tidyselect::eval_select(rlang::enquo(cols), data)
+      target_cols <- names(sel)
+    } else {
+      if (!is.character(cols)) {
+        stop("`cols` requires tidyselect+rlang or a character vector of column names.", call. = FALSE)
+      }
+      target_cols <- cols
+    }
+  }
+
+  if (length(target_cols) == 0L) {
+    if (!quiet) message("fix_failed_encoding(): no character columns selected; returning input unchanged.")
+    return(data)
+  }
+
+  count_signals <- function(x) {
+    x <- x[!is.na(x)]
+    if (!length(x)) return(0L)
+    sum(vapply(patterns, function(p) sum(grepl(p, x, perl = TRUE)), integer(1)))
+  }
+
+  # Byte round-trip: encode to single-byte, then reinterpret bytes as UTF-8.
+  byte_roundtrip <- function(x, enc) {
+    if (all(is.na(x))) return(x)
+
+    out <- x
+    idx <- which(!is.na(x))
+    if (!length(idx)) return(out)
+
+    out[idx] <- vapply(
+      x[idx],
+      FUN = function(s) {
+        s_sb <- iconv(s, from = "", to = enc, sub = NA)
+        if (is.na(s_sb)) return(s)
+        rawToChar(charToRaw(s_sb))
+      },
+      FUN.VALUE = character(1),
+      USE.NAMES = FALSE
+    )
+
+    out
+  }
+
+  out <- data
+
+  # Collect change log entries across all columns for unique-summary reporting
+  # We'll store as character vectors and rbind at end (avoid heavy data.frame growth inside loops).
+  change_col <- character(0)
+  change_before <- character(0)
+  change_after <- character(0)
+
+  # Per-column summary
+  col_report <- list()
+
+  for (col in target_cols) {
+    x <- out[[col]]
+    if (!is.character(x)) next
+
+    before_signals <- count_signals(x)
+    if (before_signals == 0L) next
+
+    best <- list(enc = NA_character_, x = x, signals = before_signals, changed = 0L)
+
+    for (enc in from) {
+      x2 <- byte_roundtrip(x, enc)
+      after_signals <- count_signals(x2)
+      changed_n <- sum(!is.na(x) & !is.na(x2) & x != x2)
+
+      if (after_signals < best$signals && changed_n > 0L) {
+        best <- list(enc = enc, x = x2, signals = after_signals, changed = changed_n)
+      }
+    }
+
+    if (!is.na(best$enc)) {
+      # Log exact before->after changes for this column
+      idx <- which(!is.na(x) & !is.na(best$x) & x != best$x)
+      if (length(idx)) {
+        change_col <- c(change_col, rep(col, length(idx)))
+        change_before <- c(change_before, x[idx])
+        change_after <- c(change_after, best$x[idx])
+      }
+
+      out[[col]] <- best$x
+
+      col_report[[col]] <- list(
+        enc = best$enc,
+        changed = best$changed,
+        before_signals = before_signals,
+        after_signals = best$signals
+      )
+    }
+  }
+
+  if (!quiet) {
+    if (length(col_report) == 0L) {
+      message("fix_failed_encoding(): no likely mojibake detected; no changes made.")
+      return(out)
+    }
+
+    if (report %in% c("columns", "both")) {
+      message("fix_failed_encoding(): repaired encoding in ", length(col_report), " column(s):")
+      for (col in names(col_report)) {
+        r <- col_report[[col]]
+        message(
+          "- ", col, ": ",
+          r$changed, " value(s) changed; signals ", r$before_signals, " -> ", r$after_signals,
+          "; byte round-trip via ", r$enc, " -> UTF-8."
+        )
+      }
+    }
+
+    if (report %in% c("unique", "both")) {
+      # Build unique change table
+      key <- paste0(change_before, "\u0001", change_after)
+      tab <- sort(table(key), decreasing = TRUE)
+
+      message("fix_failed_encoding(): unique changes (before -> after) across all checked columns: ",
+              length(tab), " unique pair(s).")
+
+      if (length(tab) > 0L) {
+        n_show <- min(length(tab), max_unique)
+        keys <- names(tab)[seq_len(n_show)]
+        counts <- as.integer(tab[seq_len(n_show)])
+
+        before <- sub("\u0001.*$", "", keys)
+        after  <- sub("^.*\u0001", "", keys)
+
+        # Print as simple aligned lines (no tibble dependency)
+        for (i in seq_len(n_show)) {
+          message(sprintf("- %d× \"%s\"  ->  \"%s\"", counts[i], before[i], after[i]))
+        }
+
+        if (length(tab) > n_show) {
+          message(sprintf("... (%d more unique change(s) not shown; increase `max_unique` to print more)",
+                          length(tab) - n_show))
+        }
+      }
+    }
+  }
+
+  out
 }
