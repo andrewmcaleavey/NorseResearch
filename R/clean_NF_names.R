@@ -47,6 +47,10 @@ clean_NF_names <- function(.data, unique = FALSE) {
 
   n <- gsub("_+", "_", n)
 
+  # this should move any leading numbers to be trailing numbers,
+  # e.g. 1_level should become level_1
+  n <- gsub("^([0-9]+)([._])(.*)$", "\\3\\2\\1", n)
+
   # AAM adding a lowercase converter for Q items
   n <- gsub("^q", "Q", n)
   # and removing the underscores between Q and numbers
