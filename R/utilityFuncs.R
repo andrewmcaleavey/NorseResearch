@@ -596,12 +596,8 @@ fa_table <- function(x, varlabels = NULL, title = "Factor analysis results", dif
 #' Fixes common mojibake such as `"Helse FÃ¸rde"` (should be `"Helse Førde"`)
 #' caused by UTF-8 bytes being interpreted as Latin-1 / Windows-1252 at import.
 #'
-#' The repair is performed using a byte-preserving round-trip equivalent to:
-#' \code{(encode as latin1/cp1252 bytes) -> (decode those bytes as UTF-8)}.
-#'
-#' The function returns a modified copy of \code{data}, suitable for piping, and
-#' prints a console report. By default, the report is a summary of UNIQUE changes
-#' (before -> after) with the number of instances across the whole data frame.
+#' Robust to real-world messy data: handles strings that are not valid UTF-8 by
+#' performing detection in byte mode and using byte-safe summarization of changes.
 #'
 #' @param data A data.frame (or tibble).
 #' @param cols Optional tidyselect-style specification of columns to check. If
@@ -610,14 +606,12 @@ fa_table <- function(x, varlabels = NULL, title = "Factor analysis results", dif
 #'   Defaults to \code{c("latin1", "Windows-1252")}.
 #' @param patterns Regex patterns treated as signals of mojibake.
 #' @param quiet If \code{TRUE}, suppress console reporting.
-#' @param report Character string controlling console output:
-#'   \itemize{
-#'     \item \code{"unique"} (default): unique before->after changes with counts (global).
-#'     \item \code{"columns"}: per-column counts only.
-#'     \item \code{"both"}: both reports.
-#'     \item \code{"none"}: no output (same as \code{quiet = TRUE}).
-#'   }
+#' @param report Console output mode: \code{"unique"} (default), \code{"columns"},
+#'   \code{"both"}, or \code{"none"}.
 #' @param max_unique Maximum number of unique change rows to print (most frequent first).
+#' @param sanitize_invalid If \code{TRUE} (default), attempts to sanitize invalid
+#'   UTF-8 strings for safer processing using \code{iconv(sub="byte")}.
+#'   This is conservative: it preserves problematic bytes as <xx> escapes.
 #'
 #' @return A data.frame of the same class as \code{data} with repaired character columns.
 #'
@@ -639,7 +633,8 @@ fix_failed_encoding <- function(data,
                                 ),
                                 quiet = FALSE,
                                 report = c("unique", "columns", "both", "none"),
-                                max_unique = 50) {
+                                max_unique = 50,
+                                sanitize_invalid = TRUE) {
 
   report <- match.arg(report)
   if (report == "none") quiet <- TRUE
@@ -670,10 +665,26 @@ fix_failed_encoding <- function(data,
     return(data)
   }
 
+  # Sanitize invalid UTF-8 (optional): convert to UTF-8 and preserve invalid bytes as <xx>
+  sanitize_vec <- function(x) {
+    if (!sanitize_invalid) return(x)
+    # iconv(from="") means "assume current encoding"; sub="byte" preserves bad bytes.
+    y <- iconv(x, from = "", to = "UTF-8", sub = "byte")
+    # iconv can return NA for some inputs; keep original in that case
+    y[is.na(y) & !is.na(x)] <- x[is.na(y) & !is.na(x)]
+    y
+  }
+
+  # Count mojibake signals in byte mode to avoid UTF-8 validation errors
   count_signals <- function(x) {
     x <- x[!is.na(x)]
     if (!length(x)) return(0L)
-    sum(vapply(patterns, function(p) sum(grepl(p, x, perl = TRUE)), integer(1)))
+    x2 <- sanitize_vec(x)
+    sum(vapply(
+      patterns,
+      function(p) sum(grepl(p, x2, perl = TRUE, useBytes = TRUE)),
+      integer(1)
+    ))
   }
 
   # Byte round-trip: encode to single-byte, then reinterpret bytes as UTF-8.
@@ -700,13 +711,11 @@ fix_failed_encoding <- function(data,
 
   out <- data
 
-  # Collect change log entries across all columns for unique-summary reporting
-  # We'll store as character vectors and rbind at end (avoid heavy data.frame growth inside loops).
+  # Change log for unique-summary reporting
   change_col <- character(0)
   change_before <- character(0)
   change_after <- character(0)
 
-  # Per-column summary
   col_report <- list()
 
   for (col in target_cols) {
@@ -729,7 +738,6 @@ fix_failed_encoding <- function(data,
     }
 
     if (!is.na(best$enc)) {
-      # Log exact before->after changes for this column
       idx <- which(!is.na(x) & !is.na(best$x) & x != best$x)
       if (length(idx)) {
         change_col <- c(change_col, rep(col, length(idx)))
@@ -767,30 +775,39 @@ fix_failed_encoding <- function(data,
     }
 
     if (report %in% c("unique", "both")) {
-      # Build unique change table
-      key <- paste0(change_before, "\u0001", change_after)
-      tab <- sort(table(key), decreasing = TRUE)
+      # Aggregate unique (before, after) pairs safely without separator packing.
+      if (length(change_before) == 0L) {
+        message("fix_failed_encoding(): changes made, but no per-value differences were logged.")
+        return(out)
+      }
 
-      message("fix_failed_encoding(): unique changes (before -> after) across all checked columns: ",
-              length(tab), " unique pair(s).")
+      # Sanitize for printing only (do not alter out)
+      b_print <- sanitize_vec(change_before)
+      a_print <- sanitize_vec(change_after)
 
-      if (length(tab) > 0L) {
-        n_show <- min(length(tab), max_unique)
-        keys <- names(tab)[seq_len(n_show)]
-        counts <- as.integer(tab[seq_len(n_show)])
+      pairs <- data.frame(
+        before = b_print,
+        after  = a_print,
+        stringsAsFactors = FALSE
+      )
 
-        before <- sub("\u0001.*$", "", keys)
-        after  <- sub("^.*\u0001", "", keys)
+      # Use base aggregation (no dplyr dependency)
+      counts <- aggregate(rep(1L, nrow(pairs)), by = pairs, FUN = sum)
+      names(counts)[names(counts) == "x"] <- "n"
+      counts <- counts[order(-counts$n), , drop = FALSE]
 
-        # Print as simple aligned lines (no tibble dependency)
-        for (i in seq_len(n_show)) {
-          message(sprintf("- %d× \"%s\"  ->  \"%s\"", counts[i], before[i], after[i]))
-        }
+      message(
+        "fix_failed_encoding(): unique changes (before -> after) across all checked columns: ",
+        nrow(counts), " unique pair(s)."
+      )
 
-        if (length(tab) > n_show) {
-          message(sprintf("... (%d more unique change(s) not shown; increase `max_unique` to print more)",
-                          length(tab) - n_show))
-        }
+      n_show <- min(nrow(counts), max_unique)
+      for (i in seq_len(n_show)) {
+        message(sprintf('- %d× "%s"  ->  "%s"', counts$n[i], counts$before[i], counts$after[i]))
+      }
+      if (nrow(counts) > n_show) {
+        message(sprintf("... (%d more unique change(s) not shown; increase `max_unique` to print more)",
+                        nrow(counts) - n_show))
       }
     }
   }

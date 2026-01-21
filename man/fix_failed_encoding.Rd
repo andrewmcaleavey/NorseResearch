@@ -12,7 +12,8 @@ fix_failed_encoding(
     "â€”", "â€¦", "Ã¥", "Ã¸", "Ã¦", "Ã…", "Ã˜", "Ã†"),
   quiet = FALSE,
   report = c("unique", "columns", "both", "none"),
-  max_unique = 50
+  max_unique = 50,
+  sanitize_invalid = TRUE
 )
 }
 \arguments{
@@ -28,15 +29,14 @@ Defaults to \code{c("latin1", "Windows-1252")}.}
 
 \item{quiet}{If \code{TRUE}, suppress console reporting.}
 
-\item{report}{Character string controlling console output:
-\itemize{
-\item \code{"unique"} (default): unique before->after changes with counts (global).
-\item \code{"columns"}: per-column counts only.
-\item \code{"both"}: both reports.
-\item \code{"none"}: no output (same as \code{quiet = TRUE}).
-}}
+\item{report}{Console output mode: \code{"unique"} (default), \code{"columns"},
+\code{"both"}, or \code{"none"}.}
 
 \item{max_unique}{Maximum number of unique change rows to print (most frequent first).}
+
+\item{sanitize_invalid}{If \code{TRUE} (default), attempts to sanitize invalid
+UTF-8 strings for safer processing using \code{iconv(sub="byte")}.
+This is conservative: it preserves problematic bytes as \if{html}{\out{<xx>}} escapes.}
 }
 \value{
 A data.frame of the same class as \code{data} with repaired character columns.
@@ -44,9 +44,6 @@ A data.frame of the same class as \code{data} with repaired character columns.
 \description{
 Fixes common mojibake such as \code{"Helse FÃ¸rde"} (should be \code{"Helse Førde"})
 caused by UTF-8 bytes being interpreted as Latin-1 / Windows-1252 at import.
-
-The repair is performed using a byte-preserving round-trip equivalent to:
-\code{(encode as latin1/cp1252 bytes) -> (decode those bytes as UTF-8)}.
 
 The function returns a modified copy of \code{data}, suitable for piping, and
 prints a console report. By default, the report is a summary of UNIQUE changes
@@ -60,4 +57,6 @@ df <- data.frame(
 )
 fix_failed_encoding(df)
 
+Robust to real-world messy data: handles strings that are not valid UTF-8 by
+performing detection in byte mode and using byte-safe summarization of changes.
 }
