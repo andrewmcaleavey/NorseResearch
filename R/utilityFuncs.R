@@ -687,46 +687,25 @@ fix_failed_encoding <- function(data,
     ))
   }
 
-  # Byte round-trip: encode to single-byte, then reinterpret bytes as UTF-8.
-  # Byte round-trip: encode to single-byte bytes, then reinterpret bytes as UTF-8.
   byte_roundtrip <- function(x, enc) {
     if (all(is.na(x))) return(x)
 
-    # CP1252 special mapping (Unicode code point -> byte)
-    # Covers 0x80-0x9F block, including U+02DC (0x98).
+    `%||%` <- function(a, b) if (is.null(a)) b else a
+
+
+    # CP1252 special mapping (Unicode code point -> byte), incl. U+02DC -> 0x98
     cp1252_map <- c(
-      "8364" = 0x80, # €
-      "8218" = 0x82, # ‚
-      "402"  = 0x83, # ƒ
-      "8222" = 0x84, # „
-      "8230" = 0x85, # …
-      "8224" = 0x86, # †
-      "8225" = 0x87, # ‡
-      "710"  = 0x88, # ˆ
-      "8240" = 0x89, # ‰
-      "352"  = 0x8A, # Š
-      "8249" = 0x8B, # ‹
-      "338"  = 0x8C, # Œ
-      "381"  = 0x8E, # Ž
-      "8216" = 0x91, # ‘
-      "8217" = 0x92, # ’
-      "8220" = 0x93, # “
-      "8221" = 0x94, # ”
-      "8226" = 0x95, # •
-      "8211" = 0x96, # –
-      "8212" = 0x97, # —
-      "732"  = 0x98, # ˜  <-- the critical one for "Ã˜"
-      "8482" = 0x99, # ™
-      "353"  = 0x9A, # š
-      "8250" = 0x9B, # ›
-      "339"  = 0x9C, # œ
-      "382"  = 0x9E, # ž
-      "376"  = 0x9F  # Ÿ
+      "8364" = 0x80, "8218" = 0x82, "402"  = 0x83, "8222" = 0x84,
+      "8230" = 0x85, "8224" = 0x86, "8225" = 0x87, "710"  = 0x88,
+      "8240" = 0x89, "352"  = 0x8A, "8249" = 0x8B, "338"  = 0x8C,
+      "381"  = 0x8E, "8216" = 0x91, "8217" = 0x92, "8220" = 0x93,
+      "8221" = 0x94, "8226" = 0x95, "8211" = 0x96, "8212" = 0x97,
+      "732"  = 0x98, "8482" = 0x99, "353"  = 0x9A, "8250" = 0x9B,
+      "339"  = 0x9C, "382"  = 0x9E, "376"  = 0x9F
     )
 
-    # Convert a single string to bytes as if it were CP1252, then interpret bytes as UTF-8
     cp1252_bytes_to_utf8 <- function(s) {
-      ints <- utf8ToInt(s)  # Unicode code points
+      ints <- utf8ToInt(s)
       rawv <- raw(0)
 
       for (u in ints) {
@@ -734,12 +713,9 @@ fix_failed_encoding <- function(data,
           rawv <- c(rawv, as.raw(u))
         } else {
           key <- as.character(u)
-          if (!is.na(cp1252_map[key])) {
-            rawv <- c(rawv, as.raw(cp1252_map[key]))
-          } else {
-            # Can't represent this codepoint as CP1252 byte: keep original string
-            return(s)
-          }
+          b <- cp1252_map[key]
+          if (is.na(b)) return(s) # can't represent -> bail out
+          rawv <- c(rawv, as.raw(b))
         }
       }
 
@@ -757,7 +733,7 @@ fix_failed_encoding <- function(data,
       return(out)
     }
 
-    # latin1 (ISO-8859-1) path: safe because unicode <=255 maps 1:1 to bytes
+    # latin1 path
     out[idx] <- vapply(
       x[idx],
       FUN = function(s) {
@@ -773,6 +749,7 @@ fix_failed_encoding <- function(data,
 
     out
   }
+
 
 
   out <- data
@@ -795,12 +772,20 @@ fix_failed_encoding <- function(data,
 
     for (enc in from) {
       x2 <- byte_roundtrip(x, enc)
+      # Require valid UTF-8 after conversion
+      valid_prop <- if (length(x2)) mean(utf8Valid(x2[!is.na(x2)])) else 1
+
       after_signals <- count_signals(x2)
       changed_n <- sum(!is.na(x) & !is.na(x2) & x != x2)
 
-      if (after_signals < best$signals && changed_n > 0L) {
-        best <- list(enc = enc, x = x2, signals = after_signals, changed = changed_n)
+      # Prefer: (1) more valid UTF-8, then (2) fewer signals, then (3) more changes
+      best_score <- c(best$valid_prop %||% -1, -best$signals, best$changed)
+      cand_score <- c(valid_prop, -after_signals, changed_n)
+
+      if (changed_n > 0L && (is.null(best$valid_prop) || any(cand_score > best_score))) {
+        best <- list(enc = enc, x = x2, signals = after_signals, changed = changed_n, valid_prop = valid_prop)
       }
+
     }
 
     if (!is.na(best$enc)) {
@@ -812,6 +797,18 @@ fix_failed_encoding <- function(data,
       }
 
       out[[col]] <- best$x
+
+      # Row-level fallback: if any values are still invalid UTF-8, try the other encoding just for those
+      bad <- !is.na(out[[col]]) & !utf8Valid(out[[col]])
+      if (any(bad)) {
+        other <- setdiff(from, best$enc)
+        if (length(other)) {
+          x_bad_fixed <- byte_roundtrip(out[[col]][bad], other[1])
+          # only accept fallback where it becomes valid UTF-8
+          ok <- !is.na(x_bad_fixed) & utf8Valid(x_bad_fixed)
+          out[[col]][bad][ok] <- x_bad_fixed[ok]
+        }
+      }
 
       col_report[[col]] <- list(
         enc = best$enc,
