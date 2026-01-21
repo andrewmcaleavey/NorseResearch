@@ -773,7 +773,7 @@ fix_failed_encoding <- function(data,
     for (enc in from) {
       x2 <- byte_roundtrip(x, enc)
       # Require valid UTF-8 after conversion
-      valid_prop <- if (length(x2)) mean(utf8Valid(x2[!is.na(x2)])) else 1
+      valid_prop <- if (length(x2)) mean(utf8::utf8Valid(x2[!is.na(x2)])) else 1
 
       after_signals <- count_signals(x2)
       changed_n <- sum(!is.na(x) & !is.na(x2) & x != x2)
@@ -799,13 +799,13 @@ fix_failed_encoding <- function(data,
       out[[col]] <- best$x
 
       # Row-level fallback: if any values are still invalid UTF-8, try the other encoding just for those
-      bad <- !is.na(out[[col]]) & !utf8Valid(out[[col]])
+      bad <- !is.na(out[[col]]) & !utf8::utf8Valid(out[[col]])
       if (any(bad)) {
         other <- setdiff(from, best$enc)
         if (length(other)) {
           x_bad_fixed <- byte_roundtrip(out[[col]][bad], other[1])
           # only accept fallback where it becomes valid UTF-8
-          ok <- !is.na(x_bad_fixed) & utf8Valid(x_bad_fixed)
+          ok <- !is.na(x_bad_fixed) & utf8::utf8Valid(x_bad_fixed)
           out[[col]][bad][ok] <- x_bad_fixed[ok]
         }
       }
