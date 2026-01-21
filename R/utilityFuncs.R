@@ -688,19 +688,84 @@ fix_failed_encoding <- function(data,
   }
 
   # Byte round-trip: encode to single-byte, then reinterpret bytes as UTF-8.
+  # Byte round-trip: encode to single-byte bytes, then reinterpret bytes as UTF-8.
   byte_roundtrip <- function(x, enc) {
     if (all(is.na(x))) return(x)
+
+    # CP1252 special mapping (Unicode code point -> byte)
+    # Covers 0x80-0x9F block, including U+02DC (0x98).
+    cp1252_map <- c(
+      "8364" = 0x80, # €
+      "8218" = 0x82, # ‚
+      "402"  = 0x83, # ƒ
+      "8222" = 0x84, # „
+      "8230" = 0x85, # …
+      "8224" = 0x86, # †
+      "8225" = 0x87, # ‡
+      "710"  = 0x88, # ˆ
+      "8240" = 0x89, # ‰
+      "352"  = 0x8A, # Š
+      "8249" = 0x8B, # ‹
+      "338"  = 0x8C, # Œ
+      "381"  = 0x8E, # Ž
+      "8216" = 0x91, # ‘
+      "8217" = 0x92, # ’
+      "8220" = 0x93, # “
+      "8221" = 0x94, # ”
+      "8226" = 0x95, # •
+      "8211" = 0x96, # –
+      "8212" = 0x97, # —
+      "732"  = 0x98, # ˜  <-- the critical one for "Ã˜"
+      "8482" = 0x99, # ™
+      "353"  = 0x9A, # š
+      "8250" = 0x9B, # ›
+      "339"  = 0x9C, # œ
+      "382"  = 0x9E, # ž
+      "376"  = 0x9F  # Ÿ
+    )
+
+    # Convert a single string to bytes as if it were CP1252, then interpret bytes as UTF-8
+    cp1252_bytes_to_utf8 <- function(s) {
+      ints <- utf8ToInt(s)  # Unicode code points
+      rawv <- raw(0)
+
+      for (u in ints) {
+        if (u <= 0xFF) {
+          rawv <- c(rawv, as.raw(u))
+        } else {
+          key <- as.character(u)
+          if (!is.na(cp1252_map[key])) {
+            rawv <- c(rawv, as.raw(cp1252_map[key]))
+          } else {
+            # Can't represent this codepoint as CP1252 byte: keep original string
+            return(s)
+          }
+        }
+      }
+
+      out <- rawToChar(rawv)
+      Encoding(out) <- "UTF-8"
+      out
+    }
 
     out <- x
     idx <- which(!is.na(x))
     if (!length(idx)) return(out)
 
+    if (identical(enc, "Windows-1252")) {
+      out[idx] <- vapply(x[idx], cp1252_bytes_to_utf8, character(1), USE.NAMES = FALSE)
+      return(out)
+    }
+
+    # latin1 (ISO-8859-1) path: safe because unicode <=255 maps 1:1 to bytes
     out[idx] <- vapply(
       x[idx],
       FUN = function(s) {
         s_sb <- iconv(s, from = "", to = enc, sub = NA)
         if (is.na(s_sb)) return(s)
-        rawToChar(charToRaw(s_sb))
+        out2 <- rawToChar(charToRaw(s_sb))
+        Encoding(out2) <- "UTF-8"
+        out2
       },
       FUN.VALUE = character(1),
       USE.NAMES = FALSE
@@ -708,6 +773,7 @@ fix_failed_encoding <- function(data,
 
     out
   }
+
 
   out <- data
 

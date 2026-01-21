@@ -45,9 +45,8 @@ A data.frame of the same class as \code{data} with repaired character columns.
 Fixes common mojibake such as \code{"Helse FÃ¸rde"} (should be \code{"Helse Førde"})
 caused by UTF-8 bytes being interpreted as Latin-1 / Windows-1252 at import.
 
-The function returns a modified copy of \code{data}, suitable for piping, and
-prints a console report. By default, the report is a summary of UNIQUE changes
-(before -> after) with the number of instances across the whole data frame.
+Robust to real-world messy data: handles strings that are not valid UTF-8 by
+performing detection in byte mode and using byte-safe summarization of changes.
 }
 \examples{
 df <- data.frame(
@@ -57,6 +56,4 @@ df <- data.frame(
 )
 fix_failed_encoding(df)
 
-Robust to real-world messy data: handles strings that are not valid UTF-8 by
-performing detection in byte mode and using byte-safe summarization of changes.
 }
