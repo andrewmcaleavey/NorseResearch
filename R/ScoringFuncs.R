@@ -822,10 +822,14 @@ score_all <- function(dat,
   }
 
   # Check if scale scores are in valid range.
-  if (dat %>% dplyr::select(scale_names_nf3) %>% all(. < -1 & !is.na(.))) {
+  vals <- dat %>%
+    dplyr::select(dplyr::all_of(scale_names_nf3)) %>%
+    unlist(use.names = FALSE)
+
+  if (any(vals < 1, na.rm = TRUE)) {
     warning("Some values below 1. Scale scores not valid. Check item data.")
   }
-  if (dat %>% dplyr::select(scale_names_nf3) %>% all(. > 7 & !is.na(.))) {
+  if (any(vals > 7, na.rm = TRUE)) {
     warning("Some values above 7. Scale scores not valid. Check item data.")
   }
 
