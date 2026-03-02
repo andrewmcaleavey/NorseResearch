@@ -63,7 +63,7 @@ scale_plot <- function(data, item.names, title_obj){
     xlab("Scale score") +
     ylab("Number of responses") +
     labs(caption = "Solid red line is the mean, dashed lines are 1 SD") +
-    norse_theme_bw
+    theme_norse_bw()
 
   hist.y
 }

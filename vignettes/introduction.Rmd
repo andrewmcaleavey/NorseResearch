@@ -1,0 +1,152 @@
+---
+title: "Introduction to NorseResearch"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to NorseResearch}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+This vignette shows a practical, end-to-end workflow for using the `NorseResearch` R package with Norse Feedback (NF) version 3 and higher. It also summarizes the major functions so you can find the right tool quickly.
+
+```{r}
+library(NorseResearch)
+library(tidyverse)
+```
+
+## Major Functions At A Glance
+
+Data import and encoding repair:
+
+- `read.csv_nf3()`, `read.csv2_nf3()`, `read_excel_nf3()` for NF3+ exports
+- `read_password_protected_excel()` for protected files
+- `fix_failed_encoding()` for likely mojibake in character columns
+
+Cleaning and reshaping:
+
+- `clean_NF_names()` standardizes NF export variable names
+- `collapse_measures_wide()` collapses `_A#` suffix columns and widens multi-measure items
+- `combine_suffix_variables()` and `combine_q_vars()` merge related columns
+- `replace_98s_99s()` replaces sentinel values with `NA`
+- `nicer_id_var()` creates a more readable ID column
+- `get_first_obs()` selects the first observation per respondent
+
+Versioning, lookup, and metadata:
+
+- `check_version_nf()` detects NF versions in a data set
+- `lookup_item()`, `get_item_text()` inspect items
+- `get_nicer_name()` and `get_nf3_nicer_name()` convert short names to readable names
+- `lookup_trigger()`, `find_trigger()`, `find_trigger_among()` locate trigger items
+
+Scoring:
+
+- `score_all()` scores all NF3+ scales in raw scale form
+- `score_all_nf3()` specifically targets NF3 scales
+- `nf_score()` scores mixed-version NF data
+- `score_NORSE_trigger()` keeps subthreshold trigger data
+- `score_NORSE_overunder()` and `score_all_NORSE2_ou()` for over-under scoring
+- `score_normed_NF()` computes normed scores
+- `rename_score_vars()` renames exported `SCORE_*` variables
+
+Analysis and plotting:
+
+- `scale_analysis()`, `scale_analysis2()` analyze scale properties
+- `scale_plot()` plots annotated scale histograms
+- `item_plot()` plots item distributions
+- `trigger_plot()` visualizes trigger item distributions
+- `ggplot_icc_plot()` and `ggplot_information_plot()` for IRT plots
+
+Synthetic data generation:
+
+- `random_norse_data()`, `random_assessment_generator()` for mock NF data
+- `random_person_generator()`, `random_tx_generator()` for mock person and treatment data
+
+## NF3+ Workflow Example
+
+This example uses a typical NF3+ export file, cleans and collapses the data, scores the NF scales, and then produces a quick scale plot. Replace the file path with your own NF3+ export.
+
+```{r}
+# 1) Read NF3+ export data
+# raw_nf <- read.csv_nf3("path/to/response_data.csv")
+raw_nf <- HF_research_data_2021
+
+# 2) Confirm NF version (should show 3.x or higher)
+check_version_nf(raw_nf)
+
+# 3) Fix common encoding issues and standardize names
+raw_nf <- fix_failed_encoding(raw_nf)
+raw_nf <- clean_NF_names(raw_nf)
+
+# 4) Replace sentinel missing values (98, 99) with NA
+raw_nf <- replace_98s_99s(raw_nf)
+
+# 5) Collapse repeated measures and widen multi-measure items
+# nf_collapsed <- collapse_measures_wide(raw_nf)
+
+# 6) Score all NF3+ scales
+# nf_scored <- score_all(nf_collapsed)
+
+# 7) Optionally compute normed scores
+# nf_normed <- score_normed_NF(nf_scored)
+
+# 8) Quick visualization of a scale distribution
+scale_plot(raw_nf, item.names = sad.names,title_obj = "sad")
+```
+
+## Multi-Export Example (NF3+ Calibration Style)
+
+If you have multiple exports, the common workflow is: read each export, clean and collapse, then combine and score.
+
+```{r, include=FALSE,eval=FALSE}
+export_paths <- list(
+  "export_01/response_data.csv",
+  "export_02/response_data.csv",
+  "export_03/response_data.csv"
+)
+
+raw_exports <- purrr::map(export_paths, read.csv_nf3)
+raw_exports <- purrr::map(raw_exports, fix_failed_encoding)
+raw_exports <- purrr::map(raw_exports, clean_NF_names)
+raw_exports <- purrr::map(raw_exports, replace_98s_99s)
+
+collapsed <- purrr::map(raw_exports, collapse_measures_wide)
+
+combined <- dplyr::bind_rows(collapsed, .id = "export_id")
+
+combined_scored <- score_all(combined)
+```
+
+## Trigger Item Utilities (NF3+)
+
+Trigger items are often used to control whether a scale is considered valid. Use these helpers to inspect and manage trigger items.
+
+```{r}
+# Find trigger item for a scale name
+lookup_trigger("Depresjon")
+
+# Find trigger among a list of items
+find_trigger_among(c("Q25", "Q26", "Q27"))
+```
+
+## Scale Analysis Example
+
+```{r}
+sa <- scale_analysis2("sad affect", sad.names.nf3, raw_nf)
+print(sa)
+plot(sa)
+```
+
+## Notes For NF3+
+
+- Use `check_version_nf()` early to confirm the export version. If you find mixed versions, `nf_score()` can help.
+- Prefer `score_all()` for NF3+ data to ensure all relevant scales are scored consistently.
+- If your exports already contain `SCORE_*` variables, use `rename_score_vars()` to map them to consistent names before analysis.
+
