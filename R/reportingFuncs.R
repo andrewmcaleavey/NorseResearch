@@ -325,7 +325,7 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #' Q2 = sample(1:5, 100, replace = TRUE),
 #' Q3 = sample(1:5, 100, replace = TRUE)
 #' )
-#' result <- scale_analysis("Example Scale", c("Q1", "Q2", "Q3"),
+#' result <- scale_analysis2("Example Scale", c("Q1", "Q2", "Q3"),
 #'                          df, IRTpackage = "mirt")
 #' print(result$histogram)
 #' }

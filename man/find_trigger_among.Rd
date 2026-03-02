@@ -10,7 +10,7 @@ find_trigger_among(items)
 \item{items}{A vector of quoted item names, e.g., somAnx.names}
 }
 \value{
-The item name that is identified as a trigger in \code{item_descriptions}.
+The item name that is identified as a trigger in \code{nf2.1.item.descriptions}.
 }
 \description{
 Identify which of the items is a trigger item

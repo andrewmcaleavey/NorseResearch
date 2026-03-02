@@ -116,12 +116,12 @@ find_trigger <- function(scaleName){
 #'
 #' @param items A vector of quoted item names, e.g., somAnx.names
 #'
-#' @return The item name that is identified as a trigger in `item_descriptions`.
+#' @return The item name that is identified as a trigger in `nf2.1.item.descriptions`.
 #'
 #' @examples
 #' find_trigger_among(somAnx.names)
 find_trigger_among <- function(items){
-  item_descriptions %>%
+  nf2.1.item.descriptions %>%
     dplyr::filter(item %in% items) %>%
     dplyr::filter(trigger == TRUE) %>%
     dplyr::select(item) %>%
