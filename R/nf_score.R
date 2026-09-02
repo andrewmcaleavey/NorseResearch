@@ -7,6 +7,9 @@
 
 #' Scoring mixed NF data
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' This function should take a dataset and add new variables as needed.
 #' It is obsolete and should be replaced with `score_all()`.
 #'
@@ -32,6 +35,7 @@ nf_score <- function(dat,
                      process_vars = TRUE,
                      raw_scores = TRUE,
                      factor_scores = FALSE){
+  lifecycle::deprecate_warn("0.0.1", "nf_score()", "score_all()")
   outdat <- dat
 
   # final steps

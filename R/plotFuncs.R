@@ -43,9 +43,10 @@ item_plot <- function(item, ..., data = data.joined) {
 #' @examples
 #' scale_plot(hb.scored.2019, cog.names, "Cognitive Problems")
 scale_plot <- function(data, item.names, title_obj){
-  yout <- data %>%
-    select(all_of(item.names)) %>%
-    summarise(y.mean = rowMeans(., na.rm = TRUE))
+  items <- dplyr::select(data, dplyr::all_of(item.names))
+  scores <- rowMeans(items, na.rm = TRUE)
+  scores[is.nan(scores)] <- NA_real_
+  yout <- data.frame(y.mean = scores)
   ysd <- sd(yout$y.mean, na.rm = TRUE)
 
   hist.y <- ggplot(data = yout, aes(x = y.mean)) +

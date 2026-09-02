@@ -53,9 +53,12 @@ for \code{irt.package = 'mirt'} (2020 AUG 25).}
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 \code{scale_analysis} is a summary function, especially useful in report writing.
 Given some limited input, it returns a list of output objects which can
-later be printed in reports or extracted in various ways.
+later be printed in reports or extracted in various ways. Use
+\code{\link[=scale_analysis2]{scale_analysis2()}} instead.
 }
 \note{
 This function will give an error if the \code{grm()} call doesn't work, which may

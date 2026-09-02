@@ -11,5 +11,10 @@ Provides basic functions and data information (not data itself) for research pur
 \author{
 \strong{Maintainer}: Andrew Mcaleavey \email{andrew.athan.mcaleavey@helse-forde.no} (\href{https://orcid.org/0000-0001-5986-2033}{ORCID})
 
+Authors:
+\itemize{
+  \item Andrew Mcaleavey \email{andrew.athan.mcaleavey@helse-forde.no} (\href{https://orcid.org/0000-0001-5986-2033}{ORCID})
+}
+
 }
 \keyword{internal}

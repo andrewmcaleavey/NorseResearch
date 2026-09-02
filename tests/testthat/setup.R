@@ -1,1 +1,5 @@
-reticulate::use_python("/Users/andrew/.virtualenvs/r-reticulate/bin/python", required = TRUE)
+python <- Sys.getenv("NORSE_RESEARCH_PYTHON", unset = "")
+
+if (nzchar(python)) {
+  reticulate::use_python(python, required = TRUE)
+}

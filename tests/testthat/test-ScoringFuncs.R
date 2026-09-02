@@ -53,7 +53,9 @@ testthat::test_that("score_NORSE_trigger computes row means with NA handling (al
   )
 
   # Pass trigger explicitly to avoid evaluating default lookup_trigger_among(vars)
-  out <- score_NORSE_trigger(dat, vars = c("Q1", "Q2", "Q3"), trigger = "Q1")
+  out <- suppressWarnings(
+    score_NORSE_trigger(dat, vars = c("Q1", "Q2", "Q3"), trigger = "Q1")
+  )
 
   testthat::expect_equal(out[1], mean(c(1, 3, 5), na.rm = TRUE))
   testthat::expect_equal(out[2], mean(c(2, NA, 4), na.rm = TRUE))
@@ -61,36 +63,16 @@ testthat::test_that("score_NORSE_trigger computes row means with NA handling (al
   testthat::expect_true(is.na(out[4]))
 })
 
-testthat::test_that("find_trigger_among errors cleanly if item_descriptions is missing in namespace", {
+testthat::test_that("find_trigger_among identifies an NF2.1 trigger", {
   find_trigger_among <- get_fun("find_trigger_among")
 
-  if (has_obj("item_descriptions")) {
-    testthat::skip("item_descriptions exists; this test targets the current failing build")
-  }
-
-  testthat::expect_error(
-    find_trigger_among(c("Q1", "Q2")),
-    regexp = "item_descriptions|object.*not found|could not find",
-    ignore.case = TRUE
-  )
+  testthat::expect_equal(find_trigger_among(c("Q1", "Q51", "Q2")), "Q51")
 })
 
-testthat::test_that("find_trigger errors cleanly if item_descriptions is missing in namespace", {
+testthat::test_that("find_trigger remains as a deprecated NF2 compatibility helper", {
   find_trigger <- get_fun("find_trigger")
-
-  if (has_obj("item_descriptions")) {
-    testthat::skip("item_descriptions exists; this test targets the current failing build")
-  }
-
-  testthat::expect_warning(
-    testthat::expect_error(
-      find_trigger("somAnx"),
-      regexp = "item_descriptions|object.*not found|could not find",
-      ignore.case = TRUE
-    ),
-    regexp = "deprecated|Deprecated",
-    ignore.case = TRUE
-  )
+  testthat::expect_warning(out <- find_trigger("somAnx"), "deprecated", ignore.case = TRUE)
+  testthat::expect_equal(out, "Q51")
 })
 
 testthat::test_that("score_NORSE_overunder: locks down current behavior for trigger-only, multi-item, trigger-missing, all-NA", {
@@ -161,35 +143,22 @@ testthat::test_that("compute_normed returns z-scored values", {
   testthat::expect_equal(compute_normed(c(3, 5), m_bar = 3, sd = 2), c(0, 1))
 })
 
-testthat::test_that("score_normed_NF errors cleanly if summary_norms_MH_out is missing in namespace", {
+testthat::test_that("score_normed_NF uses supplied means and standard deviations", {
   score_normed_NF <- get_fun("score_normed_NF")
-
-  if (has_obj("summary_norms_MH_out")) {
-    testthat::skip("summary_norms_MH_out exists; this test targets the current failing build")
-  }
-
   dat <- tibble::tibble(cog = c(3, 5))
+  norms <- tibble::tibble(cog = c(3, 2, 10))
 
-  testthat::expect_error(
-    score_normed_NF(dat, scale = "cog"),
-    regexp = "summary_norms_MH_out|object.*not found|could not find",
-    ignore.case = TRUE
-  )
+  out <- score_normed_NF(dat, scale = "cog", normTable = norms)
+
+  testthat::expect_equal(out$cog_normed_NONORMTABLE_Z, c(0, 1))
 })
 
-testthat::test_that("item_norm works via quasiquotation with a dynamically chosen column", {
+testthat::test_that("item_norm standardizes values using a tibble column", {
   item_norm <- get_fun("item_norm")
 
-  norm_data <- tibble::tibble(Q142 = c(1, 2, 3, NA_real_)) # mean=2, sd=1
-
-  # item_norm uses {{item}}; you must inject a symbol, not a string, not a bare name.
-  q142 <- rlang::sym("Q142")
-
-  out0 <- rlang::inject(item_norm(!!q142, value = 2, norm_data = norm_data))
-  out1 <- rlang::inject(item_norm(!!q142, value = 3, norm_data = norm_data))
-
-  testthat::expect_equal(out0, 0)
-  testthat::expect_equal(out1, 1)
+  norm_data <- tibble::tibble(Q142 = c(1, 2, 3, NA_real_))
+  testthat::expect_equal(item_norm("Q142", value = 2, norm_data = norm_data), 0)
+  testthat::expect_equal(item_norm(Q142, value = 3, norm_data = norm_data), 1)
 })
 
 testthat::test_that("check_version_nf returns correct version flags", {

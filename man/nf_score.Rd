@@ -32,6 +32,8 @@ are available now. Ideally will add versions over time.}
 A data.frame/tibble
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 This function should take a dataset and add new variables as needed.
 It is obsolete and should be replaced with \code{score_all()}.
 }

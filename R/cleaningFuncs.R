@@ -16,25 +16,18 @@
 nicer_id_var <- function(.data,
                          id = `respondent id`,
                          keep_old_vars = TRUE) {
-
-  # check if id is a column in .data
-  if(!is.character(substitute(id))){
-    # this is only for cases where the id variable is the oddly quoted version I hate.
-    if(!as.character(quote(id)) %in% names(.data)) stop("id variable not found in .data.")
-  } else {
-    # this is for when the variable is provided as character.
-    if(!id  %in% names(.data)) stop("id variable not found in .data.")
-  }
+  id_name <- rlang::as_string(rlang::ensym(id))
+  if (!id_name %in% names(.data)) stop("id variable not found in .data.")
 
   if(!keep_old_vars){
     return(.data %>%
-             dplyr::mutate(patient_id = {{ id }},
+             dplyr::mutate(patient_id = .data[[id_name]],
                            .keep = "unused"))
   }
 
   else {
     .data %>%
-      mutate(patient_id = {{ id }})
+      mutate(patient_id = .data[[id_name]])
   }
 }
 
@@ -303,6 +296,5 @@ rename_score_vars <- function(df,
 
   return(df)
 }
-
 
 

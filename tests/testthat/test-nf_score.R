@@ -1,5 +1,10 @@
 test_that("nf_score() returns data frame", {
-  expect_true(is.data.frame(nf_score(HF_research_data_2021)))
+  expect_warning(
+    out <- nf_score(HF_research_data_2021),
+    "deprecated",
+    ignore.case = TRUE
+  )
+  expect_true(is.data.frame(out))
 })
 
 # test_that("nf_score() returns something plausibly correct.", {

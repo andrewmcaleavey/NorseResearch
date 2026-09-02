@@ -105,7 +105,7 @@ score_NORSE_trigger <- function(dat,
 #' # "I have a sense of restlessness and unease in me most of the time"
 find_trigger <- function(scaleName){
   .Deprecated("lookup_trigger")
-  item_descriptions %>%
+  nf2_item_table("2") %>%
     dplyr::filter(scale == scaleName) %>%
     dplyr::filter(trigger == TRUE) %>%
     dplyr::select(item) %>%
@@ -517,8 +517,10 @@ item_norm <- function(item,
                       norm_data){
   # need to set norm_data to NorseResearch::HF_research_data_2021_fscores
   # item <- dplyr::ensym(item)
-  M_item <- mean(norm_data[{{item}}], na.rm = TRUE)
-  SD_item <- sd(norm_data[{{item}}], na.rm = TRUE)
+  item <- rlang::ensym(item)
+  item_values <- dplyr::pull(norm_data, !!item)
+  M_item <- mean(item_values, na.rm = TRUE)
+  SD_item <- stats::sd(item_values, na.rm = TRUE)
 
   (value - M_item) / SD_item
 }

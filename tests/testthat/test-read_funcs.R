@@ -16,7 +16,6 @@ test_that("function returns a single data frame if one file is provided", {
   skip_if_not_installed("reticulate")
   skip_if_not_installed("readxl")
 
-  print(reticulate::py_config())
   # Also skip if Python environment/msoffcrypto isn't set up
   # We'll do a simple check for reticulate's ability to run Python code
   skip_if(isFALSE(reticulate::py_available(initialize = FALSE)),
@@ -49,6 +48,46 @@ test_that("function returns a single data frame if one file is provided", {
   expect_s3_class(df, "data.frame")
   # Optionally, check that it has some expected columns
   # expect_true(all(c("colA", "colB") %in% names(df)))
+})
+
+test_that("read.csv2_nf3 handles decimal commas and NF missing-value codes", {
+  path <- tempfile(fileext = ".csv")
+  on.exit(unlink(path), add = TRUE)
+  writeLines(c("id;score;note", "1;1,5;ok", "2;-99;NA"), path)
+
+  out <- read.csv2_nf3(path, stringsAsFactors = FALSE)
+
+  expect_equal(out$id, 1:2)
+  expect_equal(out$score, c(1.5, NA))
+  expect_equal(out$note, c("ok", NA))
+})
+
+test_that("read.csv_nf3 returns imported data and handles NF missing-value codes", {
+  path <- tempfile(fileext = ".csv")
+  on.exit(unlink(path), add = TRUE)
+  writeLines(c("id,score,note", "1,1.5,ok", "2,-99,NA"), path)
+
+  out <- read.csv_nf3(path, stringsAsFactors = FALSE)
+
+  expect_s3_class(out, "data.frame")
+  expect_equal(out$id, 1:2)
+  expect_equal(out$score, c(1.5, NA))
+  expect_equal(out$note, c("ok", NA))
+})
+
+test_that("read_excel_nf3 forwards NF missing-value codes", {
+  testthat::local_mocked_bindings(
+    read_excel = function(path, na, sheet = NULL, ...) {
+      expect_equal(path, "example.xlsx")
+      expect_equal(na, c("NA", "", "-99"))
+      expect_equal(sheet, "Data")
+      tibble::tibble(Q201 = 4)
+    },
+    .package = "readxl"
+  )
+
+  out <- read_excel_nf3("example.xlsx", sheet = "Data")
+  expect_equal(out, tibble::tibble(Q201 = 4))
 })
 
 test_that("function returns a named list of data frames if multiple files are provided", {

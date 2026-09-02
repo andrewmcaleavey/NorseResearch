@@ -10,9 +10,36 @@
 #'
 #' @return a character string with the English-language item text.
 get_item_text <- function(target,
-                          table = item_descriptions){
+                          table = nf2_item_table("2")){
   .Deprecated("lookup_item")
-  as.character(table[table$item == target, "item_text"])
+  table$item_text[match(target, table$item)]
+}
+
+# Internal compatibility view for the NF 2.0 lookup data that was used by
+# early versions of the package but was never included as package data.
+nf2_item_table <- function(version = c("2", "2.1")) {
+  version <- match.arg(version)
+  x <- nf2.1.item.descriptions
+
+  if (identical(version, "2")) {
+    legacy_triggers <- paste0("Q", c(
+      146, 26, 46, 27, 61, 34, 37, 135, 80, 42, 38,
+      119, 64, 43, 51, 59, 19, 111, 39
+    ))
+    trigger <- x$item %in% legacy_triggers
+  } else {
+    trigger <- x$trigger
+  }
+
+  data.frame(
+    item = x$item,
+    item_text = x$item_text_e,
+    scale = x$simple_scale,
+    trigger = trigger,
+    nicerScale = x$scale_e,
+    reverse = x$reverse,
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Look up information about an item
@@ -41,26 +68,24 @@ get_item_text <- function(target,
 lookup_item <- function(target,
                       version = "2.1",
                       verbose = FALSE){
-  # version 2.0 is mostly a copy of get_item_text()
-  if (version == 2 | version == "2" | version == "2.0") {
-    text_ret <- as.character(item_descriptions[item_descriptions$item == target, "item_text"])
-    verb_out <- item_descriptions[item_descriptions$item == target, ]
+  version <- as.character(version)
+
+  if (version %in% c("2", "2.0")) {
+    table <- nf2_item_table("2")
+    text_column <- "item_text"
+  } else if (identical(version, "2.1")) {
+    table <- nf2.1.item.descriptions
+    text_column <- "item_text_e"
+  } else if (version %in% c("3", "3.1")) {
+    table <- NF3.1_items
+    text_column <- "item_text_e"
+  } else {
+    stop("Unsupported NF version. Use '2', '2.1', '3', or '3.1'.", call. = FALSE)
   }
 
-  # version 2.1 is similar
-  if (version == 2.1 | version == "2.1") {
-    text_ret <- as.character(nf2.1.item.descriptions[match(target, nf2.1.item.descriptions$item), "item_text_e"])
-    verb_out <- nf2.1.item.descriptions[nf2.1.item.descriptions$item == target, ]
-  }
-
-  if (version == 3 | version == "3" | version == "3.1" | version == 3.1) {
-    text_ret <- as.character(NF3.1_items[match(target, NF3.1_items$item), "item_text_e"])
-    verb_out <- NF3.1_items[NF3.1_items$item == target, ]
-  }
-
-  # This is the return() block
-  if (verbose) return(verb_out)
-  else return(text_ret)
+  rows <- match(target, table$item)
+  if (verbose) return(table[rows, , drop = FALSE])
+  table[[text_column]][rows]
 }
 
 #' Look up the trigger item given a scale name in either programming or presentation format.
@@ -92,17 +117,22 @@ lookup_item <- function(target,
 #'
 lookup_trigger <- function(scaleName,
                            version = 2.1){
+  version <- as.character(version)
 
-  # version 2.0 is copy of find_trigger()
-  if(version == 2 | version == "2" | version =="2.0"){
-    output <- item_descriptions %>%
-      dplyr::filter(scale == scaleName) %>%
-      dplyr::filter(trigger == TRUE) %>%
-      dplyr::select(item) %>%
-      pull()
+  if(version %in% c("2", "2.0")){
+    table <- nf2_item_table("2")
+    candidates <- unique(c(table$nicerScale, table$scale))
+    matched <- pmatch(tolower(scaleName), tolower(candidates))
+    if (is.na(matched)) {
+      warning("scaleName not recognized", call. = FALSE)
+      return(NULL)
+    }
+    selected <- candidates[[matched]]
+    output <- table$item[table$trigger &
+                           (table$scale == selected | table$nicerScale == selected)]
   }
 
-  else if(version == 2.1 | version == "2.1"){
+  else if(identical(version, "2.1")){
     # determine whether a simple or full name is supplied.
 
     if(!is.na(pmatch(scaleName, nf2.1.logic$scale_e))){  # if this is missing,
@@ -116,7 +146,7 @@ lookup_trigger <- function(scaleName,
       rowN <- pmatch(scaleName, nf2.1.logic$simple_scale)
     }
 
-    else {print("scaleName not recognized")
+    else {warning("scaleName not recognized", call. = FALSE)
       return()}
 
     # this makes the output from v2.1
@@ -124,7 +154,7 @@ lookup_trigger <- function(scaleName,
       dplyr::slice(rowN) %>%
       dplyr::select(trigger_item) %>%
       pull()
-  }
+  } else stop("Unsupported NF version. Use '2', '2.0', or '2.1'.", call. = FALSE)
 
   return(output)
 }
@@ -152,31 +182,16 @@ lookup_trigger <- function(scaleName,
 #' lookup_trigger_among(subRecov.names)
 lookup_trigger_among <- function(items,
                                  version = 2.1) {
-  # output <- NA
+  version <- as.character(version)
+  if (version %in% c("2", "2.0")) {
+    table <- nf2_item_table("2")
+  } else if (identical(version, "2.1")) {
+    table <- nf2_item_table("2.1")
+  } else {
+    stop("Unsupported NF version. Use '2', '2.0', or '2.1'.", call. = FALSE)
+  }
 
-  # version 2.0 is copy of find_trigger_among()
-  ifelse(version %in% list(2, "2", "2.0"),
-                    {
-                      output <- item_descriptions %>%
-                        dplyr::filter(item %in% items) %>%
-                        dplyr::filter(trigger == TRUE) %>%
-                        dplyr::select(item) %>%
-                        pull()
-                    },
-                   # if version is not 2, check if 2.1
-                    ifelse(version %in% list(2.1, "2.1"),
-                            {
-                              # Version 2.1 is basically the same, new item description table
-                              output <- nf2.1.item.descriptions %>%
-                                dplyr::filter(item %in% items) %>%
-                                dplyr::filter(trigger == TRUE) %>%
-                                dplyr::select(item) %>%
-                                pull()
-                            },
-                           # Otherwise, keep it NA
-                            {
-                              output <- NA
-                            }))
+  output <- table$item[table$item %in% items & table$trigger]
 
   # If multiple  triggers returned - send message to alert
   if(length(output) > 1){
@@ -184,8 +199,9 @@ lookup_trigger_among <- function(items,
   }
   # A warning might be helpful if no trigger items were found
   # But not an error.
-  else if(is.na(output)){
+  else if(length(output) == 0L){
     warning(paste("None of these items are triggers in NF v.", version))
+    output <- NA_character_
   }
   output
 }
@@ -398,7 +414,7 @@ scale_analysis2 <- function(scale.name,
                                      plot_type = "test",
                                      scale.name = scale.name)
     IIC.y <- ggplot_information_plot(grm.y,
-                                     plot_type = "item",
+                                     plot_type = "items",
                                      scale.name = scale.name)
     if (print.now) {
       print(ICC.y)

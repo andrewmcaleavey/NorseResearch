@@ -24,8 +24,10 @@ info_ltm(
 a table with per-item marginal information over the range supplied by \code{z}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 \code{info_ltm} provides a quick summary of item performance in terms of marginal
-information over some range of theta.
+information over some range of theta. Use \code{\link[=info]{info()}} instead.
 }
 \examples{
 TK.

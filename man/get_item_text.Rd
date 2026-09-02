@@ -4,7 +4,7 @@
 \alias{get_item_text}
 \title{Retrieving the (English) item text from an item number}
 \usage{
-get_item_text(target, table = item_descriptions)
+get_item_text(target, table = nf2_item_table("2"))
 }
 \arguments{
 \item{target}{the character string to look up, e.g., "Q26".}

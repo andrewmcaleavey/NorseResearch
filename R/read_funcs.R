@@ -18,9 +18,7 @@ read.csv_nf3 <- function(file, ...){
   output <- read.csv(file = file, header = TRUE, sep = ",", quote = "\"",
            dec = ".", fill = TRUE, comment.char = "",
            na.strings = c("NA", "", "-99"), ...)
-  if(check_rev(output, version = "NF3")){
-
-  }
+  output
 }
 
 #' Read external NF3 data
@@ -51,7 +49,8 @@ read.csv2_nf3 <- function(file, ...){
 #' read_excel_nf3("HF_research_data.csv")
 read_excel_nf3 <- function(file, ...){
   readxl::read_excel(path = file,
-                     na = c("NA", "", "-99"))
+                     na = c("NA", "", "-99"),
+                     ...)
 }
 
 

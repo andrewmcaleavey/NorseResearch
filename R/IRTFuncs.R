@@ -5,8 +5,11 @@
 
 #' Marginal information per item. Only works with {ltm} objects.
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' \code{info_ltm} provides a quick summary of item performance in terms of marginal
-#' information over some range of theta.
+#' information over some range of theta. Use [info()] instead.
 #'
 #' @param fit an IRT fitted model, built for those derived from package \code{ltm}.
 #' @param z a vector, upper and lower limits on theta of interest. Default is c(-6,6)
@@ -22,12 +25,13 @@ info_ltm <- function(fit,
                  z = c(-6,6),
                  n.items = length(names(fit$coefficients)),
                  printAuto = TRUE){
-  total <- information(fit, range = z)  # defines total information within the range
+  lifecycle::deprecate_warn("0.0.1", "info_ltm()", "info()")
+  total <- ltm::information(fit, range = z)  # defines total information within the range
   y <- matrix(nrow = n.items, ncol = 3,
               dimnames = list(NULL, c("item", "info", "PctTot")))
   # creating the output matrix
   for(i in 1:n.items){  # loop through items
-    temp.fit <- information(fit, range = z, items = i)
+    temp.fit <- ltm::information(fit, range = z, items = i)
     row <- c(names(fit$coefficients)[i], round(temp.fit$InfoRange, 2),
              round(temp.fit$InfoRange*100/total$InfoRange, 2))
     y[i, ] <- row  # take that row into matrix
@@ -36,7 +40,9 @@ info_ltm <- function(fit,
     cat("The average contribution is: ", round(100/n.items, 2), "% per item. \n", sep = "")
   }
   # this is the benchmark for equal info per item
-  y.df <- as.data.frame(y)  # making DF for better output and presentation
+  y.df <- as.data.frame(y, stringsAsFactors = FALSE)
+  y.df$info <- as.numeric(y.df$info)
+  y.df$PctTot <- as.numeric(y.df$PctTot)
   if(printAuto) print(y.df)  # this prints to screen, but it also returns y.df as output
   return(y.df)
 }
@@ -44,8 +50,11 @@ info_ltm <- function(fit,
 
 #' Marginal information per item. Only works with {mirt} objects.
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' \code{info_mirt} provides a quick summary of item performance in terms of marginal
-#' information over some range of theta.
+#' information over some range of theta. Use [info()] instead.
 #'
 #' @param fit an IRT fitted model, built for those derived from package \code{mirt}.
 #' @param z a vector, upper and lower limits on theta of interest. Default is c(-6,6)
@@ -63,9 +72,11 @@ info_mirt <- function(fit,
                       n.items = length(dimnames(fit@Data$data)[[2]]),
                       printAuto = TRUE){
 
+  lifecycle::deprecate_warn("0.0.1", "info_mirt()", "info()")
+
   y <- data.frame(t(matrix(sapply(1:n.items,
                                   function(x) mirt::areainfo(fit,
-                                                             c(-6, 6),
+                                                             z,
                                                              which.items = x)),
                            nrow = 6))) %>%
     dplyr::select(3) %>%
@@ -87,9 +98,13 @@ info_mirt <- function(fit,
 
 #' Summary analysis of scales using IRT
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' \code{scale_analysis} is a summary function, especially useful in report writing.
 #' Given some limited input, it returns a list of output objects which can
-#' later be printed in reports or extracted in various ways.
+#' later be printed in reports or extracted in various ways. Use
+#' [scale_analysis2()] instead.
 #'
 #' @param scale.name String. The name of the scale of interest,
 #' e.g., \code{"Suicide Risk"}.
@@ -362,6 +377,8 @@ tif.mirt <- function(x, lim = c(-4, 4)) {
 #'
 #' @param x fitted scale analysis object (named list).
 #' @param lim limits for x-axis. Defaults to c(-4, 4).
+#'
+#' @export
 plot.scale_analysis <- function(x){
   # x is a scale_analysis output
   print(x$histogram)
@@ -390,6 +407,8 @@ plot.scale_analysis <- function(x){
 #'
 #' @param x fitted object.
 #' @param lim limits for x-axis. Defaults to c(-4, 4).
+#'
+#' @export
 summary.scale_analysis <- function(x){
   print(paste(
     "Min: ", x$min), quote = FALSE
