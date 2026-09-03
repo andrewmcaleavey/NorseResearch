@@ -2,7 +2,7 @@ Package: NorseResearch
 Title: Utilities for analyzing Norse Feedback data
 Version: 0.0.1
 Authors@R: 
-    person("Andrew", "Mcaleavey", , "andrew.athan.mcaleavey@helse-forde.no", role = c("aut", "cre"),
+    person("Andrew", "McAleavey", , "andrew.athan.mcaleavey@helse-forde.no", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5986-2033"))
 Description: Provides basic functions and data information (not data itself) for research purposes.
 License: MIT + file LICENSE

@@ -117,6 +117,7 @@ find_trigger <- function(scaleName){
 #' @param items A vector of quoted item names, e.g., somAnx.names
 #'
 #' @return The item name that is identified as a trigger in `nf2.1.item.descriptions`.
+#' @export
 #'
 #' @examples
 #' find_trigger_among(somAnx.names)

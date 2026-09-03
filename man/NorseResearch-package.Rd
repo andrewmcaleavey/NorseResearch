@@ -9,11 +9,11 @@
 Provides basic functions and data information (not data itself) for research purposes.
 }
 \author{
-\strong{Maintainer}: Andrew Mcaleavey \email{andrew.athan.mcaleavey@helse-forde.no} (\href{https://orcid.org/0000-0001-5986-2033}{ORCID})
+\strong{Maintainer}: Andrew McAleavey \email{andrew.athan.mcaleavey@helse-forde.no} (\href{https://orcid.org/0000-0001-5986-2033}{ORCID})
 
 Authors:
 \itemize{
-  \item Andrew Mcaleavey \email{andrew.athan.mcaleavey@helse-forde.no} (\href{https://orcid.org/0000-0001-5986-2033}{ORCID})
+  \item Andrew McAleavey \email{andrew.athan.mcaleavey@helse-forde.no} (\href{https://orcid.org/0000-0001-5986-2033}{ORCID})
 }
 
 }
