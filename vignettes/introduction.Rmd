@@ -60,7 +60,7 @@ any function (for example, `?score_all`).
 
 - [`score_all()`](?score_all) scores all NF2/NF3 scales in raw scale form.
 - [`score_all_nf3()`](?score_all_nf3) specifically targets NF3 scales.
-- [`nf_score()`](?nf_score) scores mixed-version NF data.
+- [`nf_score()`](?nf_score) is a deprecated mixed-version compatibility helper; use [`score_all()`](?score_all) for new work.
 - [`score_NORSE_trigger()`](?score_NORSE_trigger) keeps subthreshold trigger data.
 - [`score_NORSE_overunder()`](?score_NORSE_overunder) and [`score_all_NORSE2_ou()`](?score_all_NORSE2_ou) for over/under scoring.
 - [`score_normed_NF()`](?score_normed_NF) computes normed scores.
@@ -80,9 +80,11 @@ any function (for example, `?score_all`).
 
 ## A quick start with the bundled data
 
-The bundled `synthetic_data` is an NF2-shaped data set of random responses,
-including a few pre-computed scale columns such as `sad` and `cog`. It is the
-quickest way to exercise the lookup, analysis, and plotting functions.
+The bundled `synthetic_data` is a reproducible NF2 data set made with the
+current generator. It follows NF2 trigger rules, so items after a scale's
+trigger are `NA` when the scale is not administered. It also includes
+pre-computed scale columns such as `sad` and `cog`, making it the quickest way
+to exercise the lookup, analysis, and plotting functions.
 
 ```{r}
 data(synthetic_data)
@@ -131,7 +133,7 @@ item_plot("Q42", data = synthetic_data)
 
 ## Scoring a real NF export
 
-The scoring functions (`score_all()`, `score_all_nf3()`, `nf_score()`) expect a
+The scoring functions (`score_all()` and `score_all_nf3()`) expect a
 clean data set whose item columns are already reduced to short `Q#` names. They
 are built around real NF exports, which are larger and confidential; the bundled
 `synthetic_data` is not the right input for them. A typical NF3+ workflow looks
@@ -148,16 +150,13 @@ check_version_nf(raw_nf)
 raw_nf <- fix_failed_encoding(raw_nf)
 raw_nf <- clean_NF_names(raw_nf)
 
-# 4) Replace sentinel missing values (-98, -99)
-raw_nf <- replace_98s_99s(raw_nf)
-
-# 5) Collapse repeated measures and widen multi-measure items
+# 4) Collapse repeated measures and widen multi-measure items
 nf_collapsed <- collapse_measures_wide(raw_nf)
 
-# 6) Score all NF3+ scales
+# 5) Score all NF3+ scales. score_all() handles -98/-99 automatically.
 nf_scored <- score_all(nf_collapsed)
 
-# 7) Optionally compute normed scores
+# 6) Optionally compute normed scores
 nf_normed <- score_normed_NF(nf_scored)
 ```
 
@@ -175,7 +174,6 @@ export_paths <- list(
 raw_exports <- purrr::map(export_paths, read.csv_nf3)
 raw_exports <- purrr::map(raw_exports, fix_failed_encoding)
 raw_exports <- purrr::map(raw_exports, clean_NF_names)
-raw_exports <- purrr::map(raw_exports, replace_98s_99s)
 
 collapsed <- purrr::map(raw_exports, collapse_measures_wide)
 
@@ -186,8 +184,8 @@ combined_scored <- score_all(combined)
 
 ## Generating your own mock data
 
-If you would rather not load the bundled data, generate a fresh mock NF data set
-and run the lookup, analysis, and plotting steps against it.
+If you would rather not load the bundled data, generate a fresh mock NF data
+set. By default it is NF2 with trigger-driven `NA` values for unopened scales.
 
 ```{r}
 mock <- random_norse_data(20, num_obs = 5)
@@ -195,10 +193,42 @@ check_version_nf(mock)
 item_plot("Q42", data = mock)
 ```
 
+### Mixed NF2/NF3 mock exports
+
+Use `versions = c("2", "3")` to create a mixed export. The generated `Ver_10`
+column identifies the version for each row. Within every patient, NF2 rows
+always come before NF3 rows; a patient may have only one version if their course
+falls entirely before or after the rollout. Set `include_98` and/or
+`include_99` to simulate the raw sentinel values. `sentinel_probability` is the
+probability that an administered item is replaced by one of the requested
+sentinels.
+
+```{r}
+set.seed(20260903)
+mixed_mock <- random_norse_data(
+  20,
+  num_obs = 5,
+  versions = c("2", "3"),
+  include_98 = TRUE,
+  include_99 = TRUE,
+  sentinel_probability = 0.05
+)
+
+check_version_nf(mixed_mock)
+count(mixed_mock, Ver_10)
+```
+
+For NF3, `nf3_trigger_threshold` controls the simulated opening threshold
+(default `4.5`); NF2 instead uses the documented thresholds in `nf2.1.logic`.
+`score_all()` handles these sentinel values automatically (including its
+special handling of process variables). Use `replace_98s_99s()` only when you
+need its general-purpose `-98` to `1` and `-99` to `NA` recoding before another
+analysis.
+
 ## Notes for NF3+
 
-- Use `check_version_nf()` early to confirm the export version. If you find mixed
-  versions, `nf_score()` can help.
+- Use `check_version_nf()` early to confirm the export version. `score_all()`
+  supports mixed NF2/NF3 data; `nf_score()` is retained only for compatibility.
 - Prefer `score_all()` for NF3+ data to ensure all relevant scales are scored
   consistently.
 - If your exports already contain `SCORE_*` variables, use

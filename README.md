@@ -31,10 +31,10 @@ synthetic_data
 ```
 
 Most functions operate on a data frame whose item columns are named like `Q42`,
-`Q102`, and so on. The bundled `synthetic_data` (an NF2-shaped data set with a
-few pre-computed scales such as `sad` and `cog`) is the quickest way to try the
-analysis and plotting functions. To generate your own mock NF data instead, use
-`?random_norse_data`.
+`Q102`, and so on. The bundled `synthetic_data` is reproducible NF2 data made
+with the current generator; it has trigger-driven `NA` values for scales that
+were not administered and pre-computed scales such as `sad` and `cog`. It is
+the quickest way to try the analysis and plotting functions.
 
 ## Key functions by task
 
@@ -80,7 +80,7 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 |---|---|
 | [`score_all()`](?score_all) | Score all NF2 and/or NF3 scales in raw-scale form. |
 | [`score_all_nf3()`](?score_all_nf3) | Score the NF3 scales specifically. |
-| [`nf_score()`](?nf_score) | Score mixed-version NF data, selecting the version per row. |
+| [`nf_score()`](?nf_score) | Deprecated mixed-version compatibility helper; use [`score_all()`](?score_all). |
 | [`score_NORSE_trigger()`](?score_NORSE_trigger) | Score a scale while keeping subthreshold trigger responses. |
 | [`score_NORSE_overunder()`](?score_NORSE_overunder), [`score_all_NORSE2_ou()`](?score_all_NORSE2_ou) | Over/under scoring for NF2 scales. |
 | [`score_normed_NF()`](?score_normed_NF) | Compute normed scores from published norms. |
@@ -125,6 +125,28 @@ get_nf3_nicer_name("sad")                 # "Sad Affect"
 sa <- scale_analysis2("Sad affect", sad.names, synthetic_data)
 print(sa)
 plot(sa)
+```
+
+### Generate a mixed-version mock export
+
+`random_norse_data()` can produce NF2, NF3, or a mixed export. In mixed data,
+`Ver_10` identifies the version and each patient's NF2 rows precede their NF3
+rows. The optional sentinel values are raw-export values; `score_all()` handles
+them automatically when scoring.
+
+```r
+set.seed(20260903)
+mock <- random_norse_data(
+  20,
+  num_obs = 5,
+  versions = c("2", "3"),
+  include_98 = TRUE,
+  include_99 = TRUE,
+  sentinel_probability = 0.05
+)
+
+check_version_nf(mock) # c("2", "3")
+scored_mock <- score_all(mock)
 ```
 
 ## Learn more
