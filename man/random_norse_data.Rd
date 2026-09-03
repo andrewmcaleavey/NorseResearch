@@ -4,10 +4,42 @@
 \alias{random_norse_data}
 \title{Create a synthetic data set of NF-like data}
 \usage{
-random_norse_data(num_ppl, ...)
+random_norse_data(
+  num_ppl,
+  versions = "2",
+  include_98 = FALSE,
+  include_99 = FALSE,
+  sentinel_probability = 0.05,
+  trigger_scales = TRUE,
+  nf3_trigger_threshold = 4.5,
+  version_variable = "Ver_10",
+  num_obs = NULL,
+  ...
+)
 }
 \arguments{
 \item{num_ppl}{Numeric. Number of patients.}
+
+\item{versions}{Character vector containing \code{"2"}, \code{"3"}, or both. With
+both versions, each patient's NF2 assessments precede their NF3 assessments.}
+
+\item{include_98}{Logical. Include \code{-98} (not relevant) sentinel responses.}
+
+\item{include_99}{Logical. Include \code{-99} (prefer not to answer) sentinel responses.}
+
+\item{sentinel_probability}{Numeric. Probability that an administered item is
+replaced by a requested sentinel value.}
+
+\item{trigger_scales}{Logical. When \code{TRUE} (the default), non-trigger items
+are \code{NA} when their scale's trigger response does not meet its opening threshold.}
+
+\item{nf3_trigger_threshold}{Numeric NF3 opening threshold. NF2 uses the
+thresholds in \code{nf2.1.logic}.}
+
+\item{version_variable}{Character. Name of the generated version column.}
+
+\item{num_obs}{Optional positive integer (or one per patient) giving the
+number of observations. By default it is generated per patient.}
 
 \item{...}{Additional parameters}
 }
@@ -21,6 +53,7 @@ Create a synthetic data set of NF-like data
 random_norse_data(2, num_obs = c(3, 2))
 random_norse_data(2, num_obs = 5)
 random_norse_data(2)
+random_norse_data(20, versions = c("2", "3"), include_98 = TRUE, include_99 = TRUE)
 }
 \seealso{
 \code{\link{random_assessment_generator}}, \code{\link{random_person_generator}},

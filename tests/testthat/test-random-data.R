@@ -66,3 +66,40 @@ test_that("random_norse_data joins patient, treatment, and item data", {
   expect_true(all(item_names_nf2 %in% names(out)))
   expect_equal(as.integer(table(out$anon_id)), out$pt_total_obs[match(1:4, out$anon_id)])
 })
+
+test_that("random_norse_data can generate NF3 and a chronologically valid mixed rollout", {
+  set.seed(5)
+  nf3 <- random_norse_data(3, versions = "3", num_obs = 3)
+  expect_true(all(nf3$Ver_10 == "3"))
+  expect_true(all(NF3.1_items$item %in% names(nf3)))
+  nf2_only_items <- setdiff(item_names_nf2, NF3.1_items$item)
+  expect_false(any(nf2_only_items %in% names(nf3)))
+
+  set.seed(6)
+  mixed <- random_norse_data(30, versions = c("2", "3"), num_obs = 4)
+  expect_setequal(unique(mixed$Ver_10), c("2", "3"))
+  expect_true(all(vapply(split(mixed$Ver_10, mixed$anon_id), function(x) {
+    !any(diff(match(x, c("2", "3"))) < 0)
+  }, logical(1))))
+})
+
+test_that("random_norse_data applies trigger and sentinel options only to administered items", {
+  set.seed(7)
+  out <- random_norse_data(
+    40,
+    versions = "2",
+    num_obs = 1,
+    include_98 = TRUE,
+    include_99 = TRUE,
+    sentinel_probability = 1,
+    trigger_scales = TRUE
+  )
+  values <- unlist(out[item_names_nf2], use.names = FALSE)
+  expect_true(all(values[!is.na(values)] %in% c(-98, -99)))
+  expect_true(any(values == -98, na.rm = TRUE))
+  expect_true(any(values == -99, na.rm = TRUE))
+
+  set.seed(8)
+  triggered <- random_norse_data(100, versions = "2", num_obs = 1, trigger_scales = TRUE)
+  expect_true(any(is.na(unlist(triggered[item_names_nf2], use.names = FALSE))))
+})

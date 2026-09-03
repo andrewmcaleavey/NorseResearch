@@ -4,12 +4,37 @@
 \alias{random_assessment_generator}
 \title{Generate random NF-like data}
 \usage{
-random_assessment_generator(date_df = NULL, num_dates = NULL, ...)
+random_assessment_generator(
+  date_df = NULL,
+  num_dates = NULL,
+  version = "2",
+  include_98 = FALSE,
+  include_99 = FALSE,
+  sentinel_probability = 0.05,
+  trigger_scales = FALSE,
+  nf3_trigger_threshold = 4.5,
+  ...
+)
 }
 \arguments{
 \item{date_df}{A data.frame if provided. Defaults to NULL, and then is rewritten.}
 
 \item{num_dates}{Optional. Number of assessments to produce.}
+
+\item{version}{Character. NF version (\code{"2"} or \code{"3"}) to generate.}
+
+\item{include_98}{Logical. Include \code{-98} (not relevant) sentinel responses.}
+
+\item{include_99}{Logical. Include \code{-99} (prefer not to answer) sentinel responses.}
+
+\item{sentinel_probability}{Numeric. Probability that an administered item is
+replaced by a requested sentinel value.}
+
+\item{trigger_scales}{Logical. When \code{TRUE}, non-trigger items are \code{NA} when
+their scale's trigger response does not meet its opening threshold.}
+
+\item{nf3_trigger_threshold}{Numeric NF3 opening threshold. NF2 uses the
+thresholds in \code{nf2.1.logic}.}
 
 \item{...}{Additional parameters}
 }
