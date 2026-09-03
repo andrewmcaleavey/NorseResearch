@@ -4,10 +4,89 @@
 \name{NorseResearch-package}
 \alias{NorseResearch}
 \alias{NorseResearch-package}
-\title{NorseResearch: Utilities for analyzing Norse Feedback data}
+\title{NorseResearch: Utilities for Analyzing Norse Feedback Data}
 \description{
-Provides basic functions and data information (not data itself) for research purposes.
+\code{NorseResearch} provides functions and documentation for working with data
+exported from \strong{Norse Feedback (NF)}, the Norwegian web-based outcome-measure
+system used in mental-health and substance-use treatment. The package lets you
+read NF exports, clean and reshape them, score the standard scales, and
+inspect or plot the resulting items and scales.
+
+The package ships the code and item documentation, but \strong{not} the patient
+data itself, which is confidential. A small set of \strong{synthetic} data is
+bundled so the examples can be run without a real export.
+
+Most functions operate on a data frame whose item columns are named like
+\code{Q42}, \code{Q102}, and so on. The bundled \code{synthetic_data} (an NF2-shaped data set
+with a few pre-computed scales such as \code{sad} and \code{cog}) is the quickest way to
+try the analysis and plotting functions; use \code{\link[=random_norse_data]{random_norse_data()}} to generate
+your own mock NF data.
 }
+\details{
+The [Introduction vignette]{NorseResearch::introduction} walks through a full
+pipeline from reading an export to scoring and plotting.
+
+A quick example:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{library(NorseResearch)
+library(tidyverse)
+data(synthetic_data)
+
+check_version_nf(synthetic_data)              # "2"
+get_nf3_nicer_name("sad")                    # "Sad Affect"
+sa <- scale_analysis2("Sad affect", sad.names, synthetic_data)
+print(sa)
+plot(sa)
+}\if{html}{\out{</div>}}
+}
+\section{Key functions by task}{
+
+\strong{Read and repair imports}
+\itemize{
+\item \code{\link[=read.csv_nf3]{read.csv_nf3()}}, \code{\link[=read.csv2_nf3]{read.csv2_nf3()}}, \code{\link[=read_excel_nf3]{read_excel_nf3()}}, \code{\link[=read_password_protected_excel]{read_password_protected_excel()}}, and \code{\link[=fix_failed_encoding]{fix_failed_encoding()}} read NF3 exports (comma- or semicolon-delimited, \code{.xlsx}, or password-protected) and repair common encoding problems.
+}
+
+\strong{Clean and reshape}
+\itemize{
+\item \code{\link[=clean_NF_names]{clean_NF_names()}}, \code{\link[=collapse_measures_wide]{collapse_measures_wide()}}, \code{\link[=combine_suffix_variables]{combine_suffix_variables()}}, \code{\link[=combine_q_vars]{combine_q_vars()}}, \code{\link[=replace_98s_99s]{replace_98s_99s()}}, \code{\link[=nicer_id_var]{nicer_id_var()}}, and \code{\link[=get_first_obs]{get_first_obs()}} standardize messy column names, widen repeated measures, and build clean respondent identifiers.
+}
+
+\strong{Versioning, lookup, and metadata}
+\itemize{
+\item \code{\link[=check_version_nf]{check_version_nf()}} detects which NF version(s) are present. \code{\link[=lookup_item]{lookup_item()}} looks up item text by \code{Q}-number (\code{\link[=get_item_text]{get_item_text()}} is a deprecated alias). \code{\link[=get_nicer_name]{get_nicer_name()}} and \code{\link[=get_nf3_nicer_name]{get_nf3_nicer_name()}} turn short scale codes (e.g. \code{"sad"}) into readable names (e.g. \code{"Sad Affect"}). \code{\link[=lookup_trigger]{lookup_trigger()}} and \code{\link[=lookup_trigger_among]{lookup_trigger_among()}} identify trigger items.
+}
+
+\strong{Score scales}
+\itemize{
+\item \code{\link[=score_all]{score_all()}} and \code{\link[=score_all_nf3]{score_all_nf3()}} score NF2 and/or NF3 scales; \code{\link[=nf_score]{nf_score()}} scores mixed-version data per row. \code{\link[=score_NORSE_trigger]{score_NORSE_trigger()}} and \code{\link[=score_NORSE_overunder]{score_NORSE_overunder()}} / \code{\link[=score_all_NORSE2_ou]{score_all_NORSE2_ou()}} handle subthreshold trigger and over/under scoring. \code{\link[=score_normed_NF]{score_normed_NF()}} computes normed scores from published norms, and \code{\link[=rename_score_vars]{rename_score_vars()}} maps exported \verb{SCORE_*} variables to consistent names.
+}
+
+\strong{Analyze and plot}
+\itemize{
+\item \code{\link[=scale_analysis2]{scale_analysis2()}} (use this; \code{\link[=scale_analysis]{scale_analysis()}} is deprecated) gives reliability (omega, alpha) and IRT summaries for a scale. \code{\link[=scale_plot]{scale_plot()}}, \code{\link[=item_plot]{item_plot()}}, and \code{\link[=trigger_plot]{trigger_plot()}} show distributions, and \code{\link[=ggplot_icc_plot]{ggplot_icc_plot()}} / \code{\link[=ggplot_information_plot]{ggplot_information_plot()}} draw item-characteristic and information-function plots for a \code{mirt}/\code{ltm} fit.
+}
+
+\strong{Generate mock NF data}
+\itemize{
+\item \code{\link[=random_norse_data]{random_norse_data()}} builds a mock NF data set from \code{\link[=random_person_generator]{random_person_generator()}} (person layer) and \code{\link[=random_tx_generator]{random_tx_generator()}} (treatment/observation layer).
+}
+}
+
+\section{Bundled data}{
+
+\itemize{
+\item \code{nf2.1.item.descriptions}, \code{nf2.1.logic} — NF 2.1 item metadata and opening/closing logic.
+\item \code{NF3.1_items} — NF 3.1 item metadata.
+\item \code{scoreNames.nf3} — mapping from exported \verb{SCORE_*} names to readable scale names.
+\item \code{summary_norms_MH_out} — published norms (mean, SD, N) for NF2 mental-health scales.
+\item \code{item_names_nf2} — vector of NF2 item names.
+\item \code{synthetic_data} — small mock NF2 data set for the examples above.
+\item \code{HF_research_data_2021}, \code{HF_research_data_2021_fscores} — codebooks for the
+Helse Førde 2021 research data, which is \strong{not} shipped with the package and
+must be obtained separately for confidentiality.
+}
+}
+
 \author{
 \strong{Maintainer}: Andrew McAleavey \email{andrew.athan.mcaleavey@helse-forde.no} (\href{https://orcid.org/0000-0001-5986-2033}{ORCID})
 
