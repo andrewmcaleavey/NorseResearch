@@ -31,10 +31,15 @@ synthetic_data
 ```
 
 Most functions operate on a data frame whose item columns are named like `Q42`,
-`Q102`, and so on. The bundled `synthetic_data` is reproducible NF2 data made
-with the current generator; it has trigger-driven `NA` values for scales that
-were not administered and pre-computed scales such as `sad` and `cog`. It is
-the quickest way to try the analysis and plotting functions.
+`Q102`, and so on. This is not the format of most raw NF data that has been 
+exported - a cleaning pipeline needs to be applied to raw data first, in order 
+to ensure proper variable names and variable similarity.  
+
+The bundled `synthetic_data` is reproducible effectively random NF2 data; it 
+has trigger-driven `NA` values for scales that were not administered and 
+pre-computed scales with names like `sad` and `cog`. It is a quick way to try 
+the analysis and plotting functions even though it will not generate plausible 
+results.  
 
 ## Key functions by task
 
@@ -82,14 +87,12 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 | [`score_all_nf3()`](?score_all_nf3) | Score the NF3 scales specifically. |
 | [`nf_score()`](?nf_score) | Deprecated mixed-version compatibility helper; use [`score_all()`](?score_all). |
 | [`score_NORSE_trigger()`](?score_NORSE_trigger) | Score a scale while keeping subthreshold trigger responses. |
-| [`score_NORSE_overunder()`](?score_NORSE_overunder), [`score_all_NORSE2_ou()`](?score_all_NORSE2_ou) | Over/under scoring for NF2 scales. |
-| [`score_normed_NF()`](?score_normed_NF) | Compute normed scores from published norms. |
-| [`rename_score_vars()`](?rename_score_vars) | Map exported `SCORE_*` variables to consistent names. |
+| [`score_normed_NF()`](?score_normed_NF) | Compute normed scores from fixed norms. |
+| [`rename_score_vars()`](?rename_score_vars) | Map exported `SCORE_*` variables to consistent names, for comparison only. |
 
 > `score_all()` and the `score_all_nf3()` family expect a data set whose item
 > columns are already cleaned to short `Q#` names. They are built around real NF
-> exports; the bundled `synthetic_data` is small, so use it mainly for the
-> lookup, analysis, and plotting functions.
+> exports.
 
 ### Analyze and plot
 
