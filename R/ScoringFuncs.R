@@ -51,6 +51,21 @@ rev_score_NORSE2 <- function(data) {mutate(data,  # note: rev_score() is defined
 # This function scores by taking mean of all items, and for cases with
 # missing values will still return the mean. That includes cases with the Trigger only.
 
+# Score an untriggered scale by taking the row mean of its available items.
+# This is used for scores, such as ONA, that have no opening trigger.
+score_NORSE_mean <- function(dat, vars = names(dat)) {
+  vars <- intersect(vars, names(dat))
+  if (length(vars) == 0L) {
+    return(rep(NA_real_, nrow(dat)))
+  }
+
+  dat %>%
+    dplyr::select(dplyr::all_of(vars)) %>%
+    dplyr::transmute(score = rowMeans(., na.rm = TRUE)) %>%
+    dplyr::mutate(score = ifelse(is.nan(score), NA_real_, score)) %>%
+    dplyr::pull(score)
+}
+
 #' Scoring NORSE scales without losing subthreshold scores to NA
 #'
 #' \code{score_NORSE_trigger} provides scores for NORSE subscales without
@@ -87,14 +102,7 @@ score_NORSE_trigger <- function(dat,
   # `item_descriptions` through convenience function `find_trigger_among()`.
   # Some cross-version scales include items that are absent from a later
   # version's item bank. Score over the columns that are present.
-  vars <- intersect(vars, names(dat))
-  if (length(vars) == 0L) {
-    return(rep(NA_real_, nrow(dat)))
-  }
-  dat <- dplyr::select(dat, vars) %>%
-    transmute(score = rowMeans(., na.rm = TRUE)) %>%
-    mutate(score = ifelse(is.nan(score), NA, score))
-  return(dat$score)
+  score_NORSE_mean(dat, vars)
 }
 
 #' Identify the trigger item for a named scale
@@ -188,7 +196,7 @@ score_all_NORSE2 <- function(dat, process_vars = TRUE){
                   suicide = score_NORSE_trigger(dat, suicide.names),
                   trauma = score_NORSE_trigger(dat, trauma.names),
                   worry = score_NORSE_trigger(dat, worry.names),
-                  ona = score_NORSE_trigger(dat, ona.names),
+                  ona = score_NORSE_mean(dat, ona.names),
                   alliance = score_NORSE_trigger(dat, alliance.names),
                   needs = score_NORSE_trigger(dat, needs.names)
     )
@@ -214,7 +222,7 @@ score_all_NORSE2 <- function(dat, process_vars = TRUE){
                   suicide      = score_NORSE_trigger(dat, suicide.names),
                   trauma       = score_NORSE_trigger(dat, trauma.names),
                   worry        = score_NORSE_trigger(dat, worry.names),
-                  ona          = score_NORSE_trigger(dat, ona.names)
+                  ona          = score_NORSE_mean(dat, ona.names)
     )
   }
   # should insert some checks here to see if range is appropriate.
@@ -571,7 +579,7 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
            subUse = score_NORSE_trigger(dat, subUse.names.nf3),
            suicide = score_NORSE_trigger(dat, suicide.names.nf3),
            worry = score_NORSE_trigger(dat, worry.names.nf3),
-           ona = score_NORSE_trigger(dat, ona.names.nf3),
+           ona = score_NORSE_mean(dat, ona.names.nf3),
            QOL = Q226)
 }
 
@@ -762,8 +770,8 @@ score_all <- function(dat,
         TRUE ~ NA
       ),
       ona = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, ona.names.nf3), ona.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, ona.names), ona.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_mean(prepare_items(dat, ona.names.nf3), ona.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_mean(prepare_items(dat, ona.names), ona.names),
         TRUE ~ NA
       ),
       QOL = Q226,
