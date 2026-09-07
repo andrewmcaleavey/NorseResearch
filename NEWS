@@ -1,0 +1,15 @@
+# NorseResearch 0.1.0
+
+This is the first public release of NorseResearch.
+
+## New features
+
+* Read and clean Norse Feedback NF2 and NF3 exports.
+* Score NF2, NF3, and mixed-version data with raw scale scores.
+* Add the cross-version Overall Negative Affect (`ona`) score. It uses the
+  canonical 26-item definition; standard NF3.1 data are scored from the 23
+  available items because `Q3`, `Q38`, and `Q141` are not in the NF3.1 item bank.
+* Inspect Norse Feedback item metadata, triggers, and scale names.
+* Analyze scale reliability and item response theory summaries.
+* Plot scale, item, trigger, item-characteristic, and information functions.
+* Generate synthetic Norse Feedback data for examples and testing.
