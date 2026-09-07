@@ -24,6 +24,11 @@ subUse.names <- c("Q59", "Q4", "Q107", "Q35")
 suicide.names <- c("Q19", "Q105", "Q77", "Q106")
 trauma.names <- c("Q111", "Q110", "Q113", "Q112")
 worry.names <- c("Q39", "Q116", "Q117")
+ona.names <- c("Q100", "Q101", "Q102", "Q111", "Q115",
+               "Q117", "Q120", "Q126", "Q127", "Q128",
+               "Q141", "Q142", "Q147", "Q149", "Q19",
+               "Q24", "Q3", "Q34", "Q38", "Q39", "Q42",
+               "Q51", "Q53", "Q64", "Q75", "Q88")
 alliance.names <- c("Q11", "Q12", "Q13", "Q14")
 needs.names <- c("Q71", "Q72", "Q74", "Q152", "Q153")
 single.items.names <- c("Q84", "Q148", "Q149", "Q150", "Q151")
@@ -32,14 +37,16 @@ names.list <- list(cog.names, control.names, eating.names, genFunc.names, hopele
                    internal.names, irritable.names, ready.names, recovEnv.names, sad.names,
                    selfCrit.names,  avoidSit.names, avoidSoc.names, socialSafety.names,
                    somAnx.names, subRecov.names, subUse.names, suicide.names, trauma.names,
-                   worry.names, alliance.names, needs.names)
+                   worry.names, ona.names, alliance.names, needs.names)
 
 scale_names <- c("cog", "control", "eating", "genFunc", "hopeless", "internal",
                  "irritable", "ready", "recovEnv", "sad", "selfCrit", "avoidSit",
                  "avoidSoc", "socialSafety", "somAnx", "subRecov", "subUse",
-                 "suicide", "trauma", "worry")
+                 "suicide", "trauma", "worry", "ona")
 
-scale_names_ou <- paste0(scale_names, "_ou")
+# ONA is a cross-version mean score and has no NF2 opening/closing thresholds,
+# so it is intentionally not included in the over-under score set.
+scale_names_ou <- paste0(setdiff(scale_names, "ona"), "_ou")
 
 nicer.nf2.names <- c("Cognitive Problems", "Need for Control", "Eating Problems",
                      "General Functioning", "Hopelessness", "Internal Avoidance",
@@ -47,13 +54,14 @@ nicer.nf2.names <- c("Cognitive Problems", "Need for Control", "Eating Problems"
                      "Sad Affect", "Self-Criticism", "Situational Avoidance",
                      "Social Avoidance", "Social Safety", "Somatic Anxiety",
                      "Substance Recovery", "Substance Use",
-                     "Suicidality", "Trauma Reaction", "Worry")
+                     "Suicidality", "Trauma Reaction", "Worry",
+                     "Overall Negative Affect")
 
 scale_names_nf3 <- c("sad", "physAnx", "eating", "suicide", "subUse",
                      "intMem", "anger", "hopeless", "worry", "selfComp",
                      "socAvoid", "intAvoid", "selfContempt", "pain",
                      "socSup", "genFunc", "cog", "impulsivity", "ready",
-                     "alliance", "pref")
+                     "alliance", "pref", "ona")
 
 nicer_names_nf3 <- c("Sad Affect", "Physical Anxiety", "Restrictive Eating",
                      "Suicidal Thoughts", "Substance Use", "Intrusive Memories",
@@ -61,7 +69,7 @@ nicer_names_nf3 <- c("Sad Affect", "Physical Anxiety", "Restrictive Eating",
                      "Social Avoidance", "Internal Avoidance", "Self-Contempt",
                      "Pain", "Social Support", "General Functioning",
                      "Cognitive Problems", "Impulsivity", "Readiness for Change",
-                     "Alliance", "Therapy Preferences")
+                     "Alliance", "Therapy Preferences", "Overall Negative Affect")
 
 cog.names.nf3 <- c("Q145", "Q142", "Q143", "Q144", "Q147")
 anger.names.nf3 <- c("Q201", "Q238", "Q218", "Q206")
@@ -92,6 +100,10 @@ QOL.name.nf3 <- "Q226"
 alliance.names.nf3 <- c("Q236", "Q235", "Q237")
 pref.names.nf3 <- c("Q71", "Q74", "Q152", "Q153")
 
+# ONA uses the same canonical item set in NF2 and NF3.1. NF3.1 does not
+# include Q3, Q38, or Q141; the scoring functions use the available items.
+ona.names.nf3 <- ona.names
+
 scoreNames.nf3 <- read.csv(file = "data-raw/ScoreNames.csv") |>
   select(ScoreName, ScaleName)
 
@@ -118,6 +130,8 @@ usethis::use_data(intMem.names.nf3, overwrite = TRUE)
 usethis::use_data(irritable.names, overwrite = TRUE)
 usethis::use_data(names.list, overwrite = TRUE)
 usethis::use_data(needs.names, overwrite = TRUE)
+usethis::use_data(ona.names, overwrite = TRUE)
+usethis::use_data(ona.names.nf3, overwrite = TRUE)
 usethis::use_data(pref.names.nf3, overwrite = TRUE)
 usethis::use_data(nicer_names_nf3, overwrite = TRUE)
 usethis::use_data(nicer.nf2.names, overwrite = TRUE)
