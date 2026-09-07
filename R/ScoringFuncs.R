@@ -100,9 +100,10 @@ score_NORSE_trigger <- function(dat,
   # vars is a vector of variable names (e.g., somAnx.names)
   # trigger is the trigger item, defaults to use the identified trigger in
   # `item_descriptions` through convenience function `find_trigger_among()`.
-  # Some cross-version scales include items that are absent from a later
-  # version's item bank. Score over the columns that are present.
-  score_NORSE_mean(dat, vars)
+  dat <- dplyr::select(dat, vars) %>%
+    transmute(score = rowMeans(., na.rm = TRUE)) %>%
+    mutate(score = ifelse(is.nan(score), NA, score))
+  return(dat$score)
 }
 
 #' Identify the trigger item for a named scale

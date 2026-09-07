@@ -23,6 +23,27 @@ test_that("score_all_NORSE2 adds the advertised NF2 scale scores", {
   expect_true(all(out$cog >= 1 & out$cog <= 7))
 })
 
+test_that("NF2 scale scores match explicit expected means", {
+  items <- unique(c(item_names_nf2, ona.names))
+  dat <- as.data.frame(
+    setNames(lapply(items, function(item) {
+      if (identical(item, "Q149")) c(7, 7, 7) else c(1, 3, 5)
+    }), items),
+    check.names = FALSE
+  )
+
+  out <- suppressWarnings(score_all_NORSE2(dat, process_vars = TRUE))
+  out_without_process <- suppressWarnings(score_all_NORSE2(dat, process_vars = FALSE))
+  expected_ona <- c(32 / 26, 82 / 26, 132 / 26)
+
+  expect_equal(out$cog, c(1, 3, 5))
+  expect_equal(out$hopeless, c(1, 3, 5))
+  expect_equal(out$sad, c(1, 3, 5))
+  expect_equal(out$worry, c(1, 3, 5))
+  expect_equal(out$ona, expected_ona)
+  expect_equal(out_without_process$ona, expected_ona)
+})
+
 test_that("ONA uses the canonical 26 NF2 items", {
   expected_items <- c(
     "Q100", "Q101", "Q102", "Q111", "Q115", "Q117", "Q120", "Q126",
@@ -63,6 +84,10 @@ test_that("score_all_nf3 calculates each NF3 score and QOL", {
   expected <- c(sub("\\.names\\.nf3$", "", object_names), "QOL")
   expect_true(all(expected %in% names(out)))
   expect_equal(out$cog, c(1, 3, 5))
+  expect_equal(out$hopeless, c(1, 3, 5))
+  expect_equal(out$sad, c(1, 3, 5))
+  expect_equal(out$worry, c(1, 3, 5))
+  expect_equal(out$ona, c(1, 3, 5))
   expect_equal(out$QOL, c(1, 3, 5))
 })
 
