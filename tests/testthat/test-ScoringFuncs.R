@@ -63,6 +63,20 @@ testthat::test_that("score_NORSE_trigger computes row means with NA handling (al
   testthat::expect_true(is.na(out[4]))
 })
 
+testthat::test_that("score_NORSE_mean scores untriggered scales without trigger lookup", {
+  score_NORSE_mean <- get_fun("score_NORSE_mean")
+
+  dat <- data.frame(
+    Q1 = c(1, NA, NA),
+    Q2 = c(3, NA, 5)
+  )
+
+  testthat::expect_no_message(
+    out <- score_NORSE_mean(dat, vars = c("Q1", "Q2"))
+  )
+  testthat::expect_equal(out, c(2, NA_real_, 5))
+})
+
 testthat::test_that("find_trigger_among identifies an NF2.1 trigger", {
   find_trigger_among <- get_fun("find_trigger_among")
 

@@ -32,7 +32,7 @@
 #'
 #' **Score scales**
 #'
-#' - [score_all()] and [score_all_nf3()] score NF2 and/or NF3 scales; [nf_score()] scores mixed-version data per row. [score_NORSE_trigger()] and [score_NORSE_overunder()] / [score_all_NORSE2_ou()] handle subthreshold trigger and over/under scoring. [score_normed_NF()] computes normed scores from published norms, and [rename_score_vars()] maps exported `SCORE_*` variables to consistent names.
+#' - [score_all()] and [score_all_nf3()] score NF2 and/or NF3 scales, including Overall Negative Affect (`ona`); [nf_score()] scores mixed-version data per row. [score_NORSE_trigger()] and [score_NORSE_overunder()] / [score_all_NORSE2_ou()] handle subthreshold trigger and over/under scoring. [score_normed_NF()] computes normed scores from published norms, and [rename_score_vars()] maps exported `SCORE_*` variables to consistent names.
 #'
 #' **Analyze and plot**
 #'

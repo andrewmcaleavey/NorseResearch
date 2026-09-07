@@ -23,6 +23,38 @@ test_that("score_all_NORSE2 adds the advertised NF2 scale scores", {
   expect_true(all(out$cog >= 1 & out$cog <= 7))
 })
 
+test_that("NF2 scale scores match explicit expected means", {
+  items <- unique(c(item_names_nf2, ona.names))
+  dat <- as.data.frame(
+    setNames(lapply(items, function(item) {
+      if (identical(item, "Q149")) c(7, 7, 7) else c(1, 3, 5)
+    }), items),
+    check.names = FALSE
+  )
+
+  out <- suppressWarnings(score_all_NORSE2(dat, process_vars = TRUE))
+  out_without_process <- suppressWarnings(score_all_NORSE2(dat, process_vars = FALSE))
+  expected_ona <- c(32 / 26, 82 / 26, 132 / 26)
+
+  expect_equal(out$cog, c(1, 3, 5))
+  expect_equal(out$hopeless, c(1, 3, 5))
+  expect_equal(out$sad, c(1, 3, 5))
+  expect_equal(out$worry, c(1, 3, 5))
+  expect_equal(out$ona, expected_ona)
+  expect_equal(out_without_process$ona, expected_ona)
+})
+
+test_that("ONA uses the canonical 26 NF2 items", {
+  expected_items <- c(
+    "Q100", "Q101", "Q102", "Q111", "Q115", "Q117", "Q120", "Q126",
+    "Q127", "Q128", "Q141", "Q142", "Q147", "Q149", "Q19", "Q24", "Q3",
+    "Q34", "Q38", "Q39", "Q42", "Q51", "Q53", "Q64", "Q75", "Q88"
+  )
+
+  expect_identical(ona.names, expected_items)
+  expect_identical(ona.names.nf3, expected_items)
+})
+
 test_that("score_all_NORSE2_ou adds over-under scores", {
   set.seed(11)
   dat <- random_assessment_generator(num_dates = 10)
@@ -52,7 +84,26 @@ test_that("score_all_nf3 calculates each NF3 score and QOL", {
   expected <- c(sub("\\.names\\.nf3$", "", object_names), "QOL")
   expect_true(all(expected %in% names(out)))
   expect_equal(out$cog, c(1, 3, 5))
+  expect_equal(out$hopeless, c(1, 3, 5))
+  expect_equal(out$sad, c(1, 3, 5))
+  expect_equal(out$worry, c(1, 3, 5))
+  expect_equal(out$ona, c(1, 3, 5))
   expect_equal(out$QOL, c(1, 3, 5))
+})
+
+test_that("ONA scores NF3 data using available canonical items", {
+  dat <- as.data.frame(
+    matrix(rep(c(1, 3, 5), each = nrow(NF3.1_items)),
+           nrow = 3, byrow = TRUE),
+    check.names = FALSE
+  )
+  names(dat) <- NF3.1_items$item
+  dat$Q226 <- c(1, 3, 5)
+
+  out <- suppressWarnings(score_all_nf3(dat))
+
+  expect_equal(out$ona, c(1, 3, 5))
+  expect_equal(length(intersect(ona.names.nf3, names(dat))), 23L)
 })
 
 test_that("score_normed_NF uses bundled norms and preserves source scores", {
@@ -86,5 +137,6 @@ test_that("score_all scores mixed NF2/NF3 rows and applies special missing codes
   expect_equal(out$cog, c(2, 1))
   expect_true(is.na(out$anger[[1]]))
   expect_equal(out$anger[[2]], 2)
+  expect_equal(out$ona, c(2, 50 / 26))
   expect_equal(out$QOL, dat$Q226)
 })
