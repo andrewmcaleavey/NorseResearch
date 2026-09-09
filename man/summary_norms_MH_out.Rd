@@ -8,11 +8,9 @@ Only includes mean, SD, and N.}
 \format{
 a table.
 \describe{
-\itemize{
-\item{\code{var}} {Variable in each row. Values: Mean, SD, and N}
-\item{\code{cog}} {Cognitive problems}
-\item{\code{ALLOTHERS}} {Other scales in NF2.1}
-}
+\item{\code{var}}{Variable in each row. Values: Mean, SD, and N}
+\item{\code{cog}}{Cognitive problems}
+\item{\code{ALLOTHERS}}{Other scales in NF2.1}
 }
 }
 \usage{

@@ -18,5 +18,7 @@ a data frame
 Read external NF3 data
 }
 \examples{
-read.csv2_nf3("HF_research_data.csv")
+example_file <- tempfile(fileext = ".csv")
+writeLines(c("Q1;Q2", "1,2"), example_file)
+read.csv2_nf3(example_file)
 }

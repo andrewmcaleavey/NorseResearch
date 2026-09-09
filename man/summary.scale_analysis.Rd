@@ -4,12 +4,12 @@
 \alias{summary.scale_analysis}
 \title{Summarizing scale_analysis objects}
 \usage{
-\method{summary}{scale_analysis}(x)
+\method{summary}{scale_analysis}(object, ...)
 }
 \arguments{
-\item{x}{fitted object.}
+\item{object}{Fitted object.}
 
-\item{lim}{limits for x-axis. Defaults to c(-4, 4).}
+\item{...}{Additional arguments passed to the summary method.}
 }
 \description{
 \code{summary.scale_analysis} takes an object from \code{scale_analysis()} and

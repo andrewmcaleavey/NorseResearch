@@ -47,6 +47,6 @@ Generate random NF-like data
 \examples{
 random_assessment_generator()
 random_assessment_generator(Sys.Date())
-random_assessment_generator(date_df = tibble("date" = c(Sys.Date(), Sys.Date() +1)))
+random_assessment_generator(date_df = tibble::tibble("date" = c(Sys.Date(), Sys.Date() +1)))
 random_assessment_generator(num_dates = 3)
 }

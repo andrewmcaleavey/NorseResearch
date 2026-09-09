@@ -16,6 +16,6 @@ A reverse-coded vector of \code{x}.
 \code{rev_score} takes a vector and returns its 1-7 revers
 }
 \examples{
-data <- data_frame(Q27 = c(1, 2, 2, 1), Q28 = c(7, 6, 6, 7))
-mutate(data, Q27 = rev_score(Q27))
+data <- data.frame(Q27 = c(1, 2, 2, 1), Q28 = c(7, 6, 6, 7))
+dplyr::mutate(data, Q27 = rev_score(Q27))
 }

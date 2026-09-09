@@ -9,6 +9,7 @@
 #'
 #'
 #' @return a character string with the English-language item text.
+#' @export
 get_item_text <- function(target,
                           table = nf2_item_table("2")){
   .Deprecated("lookup_item")
@@ -209,9 +210,9 @@ lookup_trigger_among <- function(items,
 #' Compute Item and Test Information for IRT Models
 #'
 #' This function calculates item-level and total test information for a fitted
-#' graded response model (GRM) from either the `{ltm}` or `{mirt}` package.
+#' graded response model (GRM) from either the \code{ltm} or \code{mirt} package.
 #'
-#' @param fit A fitted IRT model object from either `{ltm}` (`grm()`) or `{mirt}` (`mirt()`).
+#' @param fit A fitted IRT model object from either \code{ltm} (\code{grm()}) or \code{mirt} (\code{mirt()}).
 #' @param z A numeric vector of length 2 specifying the theta range for computing information.
 #'   Default is `c(-6, 6)`.
 #' @param n.items Optional. The number of items in the model. If `NULL`, the function
@@ -225,8 +226,8 @@ lookup_trigger_among <- function(items,
 #'   \item{PctTot}{The percentage of total test information contributed by each item.}
 #'
 #' @details
-#' - When a model from `{ltm}` is provided, the function uses `ltm::information()`.
-#' - When a model from `{mirt}` is provided, the function computes item information using `mirt::iteminfo()`
+#' - When a model from \code{ltm} is provided, the function uses \code{ltm::information()}.
+#' - When a model from \code{mirt} is provided, the function computes item information using \code{mirt::iteminfo()}.
 #'   and total test information using `mirt::testinfo()`.
 #'
 #' @examples
@@ -301,7 +302,7 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #' Conduct Scale Analysis with Classical and IRT Methods
 #'
 #' This function performs scale analysis by computing descriptive statistics, reliability,
-#' and item response theory (IRT) models using either the `{ltm}` or `{mirt}` package.
+#' and item response theory (IRT) models using either the \code{ltm} or \code{mirt} package.
 #'
 #' @param scale.name A character string specifying the name of the scale for labeling.
 #' @param item.names A character vector of item names (column names in `data`).
@@ -310,8 +311,8 @@ info <- function(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE) {
 #'   Options: `"ltm"` or `"mirt"` (default).
 #' @param print.now Logical. If `TRUE`, plots for item characteristic curves (ICC) and
 #'   test information function (TIF) are displayed immediately. Default is `FALSE`.
-#'   @param version character string specifying the version of the NF to use
-#'   when looking up item text
+#' @param version Character string specifying the version of the NF to use
+#'   when looking up item text.
 #'
 #' @return An S3 object of type `scale_analysis2` containing:
 #'   \item{new_data}{Subset of `data` containing only the selected items.}

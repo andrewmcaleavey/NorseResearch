@@ -19,9 +19,8 @@
 #'    )
 #'  )
 #'
-#'  library(dplyr)
-#'  df <- read.csv("data-raw/source_data") %>%
-#'    clean_NF_names()
+#'  df <- data.frame("raw name" = 1:3, "another-name" = 4:6)
+#'  clean_NF_names(df)
 #'
 #' @source https://drdoane.com/clean-consistent-column-names/,
 #' with some edits by AAM.
@@ -65,4 +64,3 @@ clean_NF_names <- function(.data, unique = FALSE) {
     n
   }
 }
-

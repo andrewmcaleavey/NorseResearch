@@ -17,9 +17,10 @@
 #'
 #' @param x A vector of item responses.
 #' @return A reverse-coded vector of \code{x}.
+#' @export
 #' @examples
-#' data <- data_frame(Q27 = c(1, 2, 2, 1), Q28 = c(7, 6, 6, 7))
-#' mutate(data, Q27 = rev_score(Q27))
+#' data <- data.frame(Q27 = c(1, 2, 2, 1), Q28 = c(7, 6, 6, 7))
+#' dplyr::mutate(data, Q27 = rev_score(Q27))
 rev_score <- function(x){
   x * -1 + 8
 }
@@ -93,6 +94,7 @@ score_NORSE_mean <- function(dat, vars = names(dat)) {
 #'
 #' # Can score other versions of NF using options directly in trigger parameter:
 #' score_NORSE_trigger(dat = test_data, vars =)
+#' @export
 score_NORSE_trigger <- function(dat,
                                 vars = names(dat),
                                 trigger = lookup_trigger_among(vars)){
@@ -100,7 +102,7 @@ score_NORSE_trigger <- function(dat,
   # vars is a vector of variable names (e.g., somAnx.names)
   # trigger is the trigger item, defaults to use the identified trigger in
   # `item_descriptions` through convenience function `find_trigger_among()`.
-  dat <- dplyr::select(dat, vars) %>%
+  dat <- dplyr::select(dat, dplyr::all_of(vars)) %>%
     transmute(score = rowMeans(., na.rm = TRUE)) %>%
     mutate(score = ifelse(is.nan(score), NA, score))
   return(dat$score)
@@ -108,15 +110,16 @@ score_NORSE_trigger <- function(dat,
 
 #' Identify the trigger item for a named scale
 #'
-#' @param scale The name of the scale to look up. Must be one of the NF2 coding names
+#' @param scaleName The name of the scale to look up. Must be one of the NF2 coding names
 #'
 #' @return item name of the trigger item, e.g., "Q51"
+#' @export
 #'
 #' @examples
-#' find_trigger("somAnx")  # "Q51"
+#' suppressWarnings(find_trigger("somAnx"))  # "Q51"
 #'
 #' # Can be used in concert with get_item_text():
-#' get_item_text(find_trigger("somAnx"))
+#' get_item_text(suppressWarnings(find_trigger("somAnx")))
 #' # "I have a sense of restlessness and unease in me most of the time"
 find_trigger <- function(scaleName){
   .Deprecated("lookup_trigger")
@@ -169,7 +172,8 @@ find_trigger_among <- function(items){
 #' - etc.
 #'
 #' @examples
-#' test_out <- score_all_NORSE2(data2017_18)
+#' data(synthetic_data, package = "NorseResearch")
+#' test_out <- score_all_NORSE2(synthetic_data)
 score_all_NORSE2 <- function(dat, process_vars = TRUE){
   if(!check_rev(dat)){
     warning("DATA may not be properly scored, check reversing and NA values!!!")
@@ -378,7 +382,8 @@ score_NORSE_overunder <- function(dat,
 #'
 #' @export
 #' @examples
-#' test_out <- score_all_NORSE2_ou(data2017_18)
+#' data(synthetic_data, package = "NorseResearch")
+#' test_out <- score_all_NORSE2_ou(synthetic_data)
 #'
 score_all_NORSE2_ou <- function(dat){
   mutate(dat,
@@ -484,7 +489,8 @@ compute_normed <- function(x, m_bar, sd){
 #' @export
 #'
 #' @examples
-#' testout <- score_normed_NF(hf.scored.2019, scale = "cog")
+#' data(synthetic_data, package = "NorseResearch")
+#' testout <- score_normed_NF(synthetic_data, scale = "cog")
 score_normed_NF <- function(dat,
                             scale,
                             normTable = summary_norms_MH_out,

@@ -116,38 +116,25 @@ testthat::test_that("score_NORSE_overunder: locks down current behavior for trig
   testthat::expect_equal(out, c(0, 1, 0, NA_real_))
 })
 
-testthat::test_that("score_all_NORSE2 errors if required name vectors are missing in namespace", {
+testthat::test_that("score_all_NORSE2 finds its scale vectors in the namespace", {
   score_all_NORSE2 <- get_fun("score_all_NORSE2")
+  dat <- get_fun("random_assessment_generator")(num_dates = 3)
 
-  needed <- c("cog.names", "control.names", "eating.names")
-  if (all(vapply(needed, has_obj, logical(1)))) {
-    testthat::skip("name vectors exist; this test targets the current failing build")
-  }
-
-  dat <- tibble::tibble(dummy = 1:3)
-
-  testthat::expect_error(
-    score_all_NORSE2(dat),
-    regexp = "cog\\.names|object.*not found|could not find",
-    ignore.case = TRUE
-  )
+  testthat::expect_true(all(vapply(
+    c("cog.names", "control.names", "eating.names"),
+    has_obj,
+    logical(1)
+  )))
+  out <- suppressWarnings(score_all_NORSE2(dat))
+  testthat::expect_true(all(c("cog", "control", "eating") %in% names(out)))
 })
 
-testthat::test_that("score_all_NORSE2_ou errors if required name vectors are missing in namespace", {
+testthat::test_that("score_all_NORSE2_ou finds its scale vectors in the namespace", {
   score_all_NORSE2_ou <- get_fun("score_all_NORSE2_ou")
+  dat <- get_fun("random_assessment_generator")(num_dates = 3)
 
-  needed <- c("cog.names", "control.names", "eating.names")
-  if (all(vapply(needed, has_obj, logical(1)))) {
-    testthat::skip("name vectors exist; this test targets the current failing build")
-  }
-
-  dat <- tibble::tibble(dummy = 1:3)
-
-  testthat::expect_error(
-    score_all_NORSE2_ou(dat),
-    regexp = "cog\\.names|object.*not found|could not find",
-    ignore.case = TRUE
-  )
+  out <- suppressWarnings(score_all_NORSE2_ou(dat))
+  testthat::expect_true(all(c("cog_ou", "control_ou", "eating_ou") %in% names(out)))
 })
 
 testthat::test_that("compute_normed returns z-scored values", {

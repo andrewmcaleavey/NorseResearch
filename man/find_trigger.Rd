@@ -7,7 +7,7 @@
 find_trigger(scaleName)
 }
 \arguments{
-\item{scale}{The name of the scale to look up. Must be one of the NF2 coding names}
+\item{scaleName}{The name of the scale to look up. Must be one of the NF2 coding names}
 }
 \value{
 item name of the trigger item, e.g., "Q51"
@@ -16,9 +16,9 @@ item name of the trigger item, e.g., "Q51"
 Identify the trigger item for a named scale
 }
 \examples{
-find_trigger("somAnx")  # "Q51"
+suppressWarnings(find_trigger("somAnx"))  # "Q51"
 
 # Can be used in concert with get_item_text():
-get_item_text(find_trigger("somAnx"))
+get_item_text(suppressWarnings(find_trigger("somAnx")))
 # "I have a sense of restlessness and unease in me most of the time"
 }

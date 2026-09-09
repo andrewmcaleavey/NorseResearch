@@ -130,7 +130,7 @@ random_person_generator <- function(num = 2,  # num people
 #' @examples
 #' random_assessment_generator()
 #' random_assessment_generator(Sys.Date())
-#' random_assessment_generator(date_df = tibble("date" = c(Sys.Date(), Sys.Date() +1)))
+#' random_assessment_generator(date_df = tibble::tibble("date" = c(Sys.Date(), Sys.Date() +1)))
 #' random_assessment_generator(num_dates = 3)
 random_assessment_generator <- function(date_df = NULL,
                                         num_dates = NULL,

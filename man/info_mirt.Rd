@@ -2,7 +2,7 @@
 % Please edit documentation in R/IRTFuncs.R
 \name{info_mirt}
 \alias{info_mirt}
-\title{Marginal information per item. Only works with {mirt} objects.}
+\title{Marginal information per item. Only works with \code{mirt} objects.}
 \usage{
 info_mirt(
   fit,
@@ -30,5 +30,7 @@ a table with per-item marginal information over the range supplied by \code{z}.
 information over some range of theta. Use \code{\link[=info]{info()}} instead.
 }
 \examples{
+\dontrun{
 info_mirt(cogGP_mirt)
+}
 }

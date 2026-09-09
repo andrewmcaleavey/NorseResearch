@@ -4,12 +4,14 @@
 \alias{item_plot}
 \title{Plot histogram of NORSE items.}
 \usage{
-item_plot(item, ..., data = data.joined)
+item_plot(item, ..., data = NULL)
 }
 \arguments{
 \item{item}{The name of the item to plot.}
 
-\item{data}{A dataframe.}
+\item{...}{Additional arguments, currently ignored.}
+
+\item{data}{A data frame containing the item responses.}
 }
 \value{
 Not much, just a plot.
@@ -18,10 +20,10 @@ Not much, just a plot.
 \code{item_plot} plots histogram of item responses from a dataframe.
 }
 \examples{
-item_plot("Q71", data.joined)
-item_plot(Q71, data.joined)  # error
+data(synthetic_data, package = "NorseResearch")
+item_plot("Q71", data = synthetic_data)
 
 # Can be done in lapply:
 needs.names <- c("Q71", "Q72", "Q74", "Q152", "Q153")
-lapply(needs.names, item_plot)
+lapply(needs.names, item_plot, data = synthetic_data)
 }

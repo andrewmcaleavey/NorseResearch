@@ -6,7 +6,9 @@
 #' @export
 #'
 #' @examples
-#' ggplot(aes(x = 1:5, y = 2:6)) + geom_line() + theme_norse_bw()
+#' ggplot2::ggplot(data.frame(x = 1:5, y = 2:6),
+#'                 ggplot2::aes(x = x, y = y)) +
+#'   ggplot2::geom_line() + theme_norse_bw()
 theme_norse_bw <- function(){
   # font <- "Georgia"   #assign font family up front
 

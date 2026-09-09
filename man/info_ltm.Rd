@@ -2,7 +2,7 @@
 % Please edit documentation in R/IRTFuncs.R
 \name{info_ltm}
 \alias{info_ltm}
-\title{Marginal information per item. Only works with {ltm} objects.}
+\title{Marginal information per item. Only works with \code{ltm} objects.}
 \usage{
 info_ltm(
   fit,
@@ -28,7 +28,4 @@ a table with per-item marginal information over the range supplied by \code{z}.
 
 \code{info_ltm} provides a quick summary of item performance in terms of marginal
 information over some range of theta. Use \code{\link[=info]{info()}} instead.
-}
-\examples{
-TK.
 }

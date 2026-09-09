@@ -11,8 +11,9 @@
 #' @export
 #'
 #' @examples
-#' check_rev(data.joined)
-#' check_rev(data.joined, verbose = TRUE)
+#' data(synthetic_data, package = "NorseResearch")
+#' check_rev(synthetic_data)
+#' check_rev(synthetic_data, verbose = TRUE)
 #'
 check_rev <- function(.data, verbose = FALSE, version = "NF2") {
   # check to see if all values are between 1 and 7 first

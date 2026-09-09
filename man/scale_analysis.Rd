@@ -28,29 +28,24 @@ to \code{'ltm'}, for backwards compatibility. May also be \code{'mirt'}.}
 }
 \value{
 a list with the following named values:
-\itemize{
-\item{\code{new_data}}{: The data set used for analysis}
-\item{\code{histogram}} {Item response histogram}
-\item{\code{min}} {Observed minimum item response mean}
-\item{\code{max}} {Observed maximum item response mean}
-\item{\code{zmin}} {Standardized obsered minimum item response mean}
-\item{\code{zmax}} {Standardized obsered maximum item response mean}
-\item{\code{floor}} {Percent of individuals at absolute minimum}
-\item{\code{ceiling}} {Percent of individuals at absolute maximum}
-\item{\code{grm}} {An object of type \code{grm} or \code{mirt} for scale analysis}
-\item{\code{ICC}} {Item Characteristic Curves. One per item, faceted if \code{irt.package = 'mirt'}.
-Either a plot object or the plot information,
-depending on the value of \code{print.now}}
-\item{\code{TIF}} {Either a plot object or the plot information,
-depending on the value of \code{print.now}}
-\item{\code{IIC}} {Either a plot object or the plot information,
-depending on the value of \code{print.now}}
-\item{\code{printed}} {logial; Were the IRT plots printed on run?}
-\item{\code{info}} {Relative marginal information contribution table. Currently not working
+\item{\code{new_data}}{The data set used for analysis}
+\item{\code{histogram}}{Item response histogram}
+\item{\code{min}}{Observed minimum item response mean}
+\item{\code{max}}{Observed maximum item response mean}
+\item{\code{zmin}}{Standardized obsered minimum item response mean}
+\item{\code{zmax}}{Standardized obsered maximum item response mean}
+\item{\code{floor}}{Percent of individuals at absolute minimum}
+\item{\code{ceiling}}{Percent of individuals at absolute maximum}
+\item{\code{grm}}{An object of type \code{grm} or \code{mirt} for scale analysis}
+\item{\code{ICC}}{Item Characteristic Curves. One per item, faceted if \code{irt.package = 'mirt'}.
+Either a plot object or the plot information, depending on the value of \code{print.now}.}
+\item{\code{TIF}}{Either a plot object or the plot information, depending on the value of \code{print.now}.}
+\item{\code{IIC}}{Either a plot object or the plot information, depending on the value of \code{print.now}.}
+\item{\code{printed}}{Logical; were the IRT plots printed on run?}
+\item{\code{info}}{Relative marginal information contribution table. Currently not working
 for \code{irt.package = 'mirt'} (2020 AUG 25).}
-\item{\code{tables}} {A list of tables if item response frequency, of length k items}
-\item{\code{cor}} {A polychoric correlation table of item responses}
-}
+\item{\code{tables}}{A list of tables of item response frequencies, of length k items}
+\item{\code{cor}}{A polychoric correlation table of item responses}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
@@ -66,7 +61,11 @@ depend on having all observed levels of all items. Use \code{irt.package = 'mirt
 in that case.
 }
 \examples{
-internal.out <- scale_analysis("Internal Avoidance", internal.names, data = data2017_18)
+\dontrun{
+data(synthetic_data, package = "NorseResearch")
+internal.out <- scale_analysis("Internal Avoidance", internal.names,
+                               data = synthetic_data)
+}
 
 
 }

@@ -13,7 +13,9 @@
 #' @export
 #'
 #' @examples
-#' read.csv_nf3("HF_research_data.csv")
+#' example_file <- tempfile(fileext = ".csv")
+#' writeLines(c("Q1,Q2", "1,2"), example_file)
+#' read.csv_nf3(example_file)
 read.csv_nf3 <- function(file, ...){
   output <- read.csv(file = file, header = TRUE, sep = ",", quote = "\"",
            dec = ".", fill = TRUE, comment.char = "",
@@ -30,7 +32,9 @@ read.csv_nf3 <- function(file, ...){
 #' @export
 #'
 #' @examples
-#' read.csv2_nf3("HF_research_data.csv")
+#' example_file <- tempfile(fileext = ".csv")
+#' writeLines(c("Q1;Q2", "1,2"), example_file)
+#' read.csv2_nf3(example_file)
 read.csv2_nf3 <- function(file, ...){
   read.csv2(file = file, header = TRUE, sep = ";", quote = "\"",
            dec = ",", fill = TRUE, comment.char = "",
@@ -46,7 +50,9 @@ read.csv2_nf3 <- function(file, ...){
 #' @export
 #'
 #' @examples
-#' read_excel_nf3("HF_research_data.csv")
+#' \dontrun{
+#' read_excel_nf3("NF3_export.xlsx")
+#' }
 read_excel_nf3 <- function(file, ...){
   readxl::read_excel(path = file,
                      na = c("NA", "", "-99"),

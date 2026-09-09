@@ -2,7 +2,7 @@
 #' create a better-named patient_id variable in NF-like data
 #'
 #' @param .data Data frame
-#' @param id Existing patient id variable name. Default is \code{`respondent id`},
+#' @param id Existing patient id variable name. Default is "respondent id",
 #' a particularly terrible instance.
 #' @param keep_old_vars Logical. Should the returned dataset include the
 #' existing id variable? Defaults to \code{TRUE}. Implemented using \code{dplyr::mutate()}
@@ -12,9 +12,10 @@
 #' @export
 #'
 #' @examples
-#' nicer_id_var(hf.scored.2019)
+#' data(synthetic_data, package = "NorseResearch")
+#' nicer_id_var(synthetic_data, id = "anon_id")
 nicer_id_var <- function(.data,
-                         id = `respondent id`,
+                         id = "respondent id",
                          keep_old_vars = TRUE) {
   id_name <- rlang::as_string(rlang::ensym(id))
   if (!id_name %in% names(.data)) stop("id variable not found in .data.")
@@ -43,11 +44,8 @@ nicer_id_var <- function(.data,
 #' @description Note: This function does not sort the data by date.
 #'
 #' @examples
-#' get_first_obs(hf.scored.2019)
-#'
-#' get_first_obs(HM_2020.02, id = "Pasientid")
-#' # identical:
-#' get_first_obs(HM_2020.02, id = Pasientid)
+#' data(synthetic_data, package = "NorseResearch")
+#' get_first_obs(synthetic_data, id = "anon_id")
 get_first_obs <- function(.data,
                           id = 'respondent id'){
 
@@ -294,4 +292,3 @@ rename_score_vars <- function(df,
 
   return(df)
 }
-

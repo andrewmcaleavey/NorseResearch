@@ -5,19 +5,25 @@
 #' \code{item_plot} plots histogram of item responses from a dataframe.
 #'
 #' @param item The name of the item to plot.
-#' @param data A dataframe.
+#' @param ... Additional arguments, currently ignored.
+#' @param data A data frame containing the item responses.
 #' @return Not much, just a plot.
 #'
 #' @export
 #'
 #' @examples
-#' item_plot("Q71", data.joined)
-#' item_plot(Q71, data.joined)  # error
+#' data(synthetic_data, package = "NorseResearch")
+#' item_plot("Q71", data = synthetic_data)
 #'
 #' # Can be done in lapply:
 #' needs.names <- c("Q71", "Q72", "Q74", "Q152", "Q153")
-#' lapply(needs.names, item_plot)
-item_plot <- function(item, ..., data = data.joined) {
+#' lapply(needs.names, item_plot, data = synthetic_data)
+item_plot <- function(item, ..., data = NULL) {
+
+  if (is.null(data)) {
+    stop("Please supply `data`, a data frame containing the item responses.",
+         call. = FALSE)
+  }
 
   suppressWarnings(ggplot(data = data %>%
                             ungroup(),
@@ -41,7 +47,8 @@ item_plot <- function(item, ..., data = data.joined) {
 #' @export
 #'
 #' @examples
-#' scale_plot(hb.scored.2019, cog.names, "Cognitive Problems")
+#' data(synthetic_data, package = "NorseResearch")
+#' scale_plot(synthetic_data, cog.names, "Cognitive Problems")
 scale_plot <- function(data, item.names, title_obj){
   items <- dplyr::select(data, dplyr::all_of(item.names))
   scores <- rowMeans(items, na.rm = TRUE)
@@ -76,7 +83,7 @@ scale_plot <- function(data, item.names, title_obj){
 #'
 #' @param scaleName A quoted simple scale name, e.g., \code{"somAnx"}.
 #' Suitable for use with \code{scale.names}.
-#' @param data A data set on which to test triggers.
+#' @param mirt_obj A fitted `mirt` `SingleGroupClass` object.
 #' @param lim Interval for plotting, as a vector of two values.
 #'
 #' @importFrom  ggplot2 ggplot aes stat_function ggtitle
@@ -84,11 +91,11 @@ scale_plot <- function(data, item.names, title_obj){
 #' @return ggplot object, printed by default.
 #' @export
 #'
-#' @examples
-#' TK
 trigger_plot <- function(scaleName,
                          mirt_obj,
                          lim = c(-3,3)){
+
+  item_descriptions <- nf2_item_table("2.1")
 
   nitems <- item_descriptions %>%
     filter(scale == scaleName) %>%
@@ -101,7 +108,8 @@ trigger_plot <- function(scaleName,
     pull()
 
   if(!"SingleGroupClass" %in% class(mirt_obj)){
-    mirt_obj <- cogGP_sa_mirt[[scaleName]]$mirt
+    stop("`mirt_obj` must be a fitted mirt SingleGroupClass object.",
+         call. = FALSE)
   }
 
   n.trig.resp <- ncol(coef(mirt_obj)[[1]])
@@ -157,7 +165,7 @@ trigger_plot <- function(scaleName,
                   color = "deeppink") +
     ggtitle(paste(niceName, "trigger responses")) +
     labs(caption = "generated with NORSEpkg::trigger_plot()") +
-    theme_bw_norse
+    theme_norse_bw()
 }
 
 # trigger_plot("cog", cogGP_mirt)

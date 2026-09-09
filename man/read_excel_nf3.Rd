@@ -18,5 +18,7 @@ a data.frame
 Read external NF3 data
 }
 \examples{
-read_excel_nf3("HF_research_data.csv")
+\dontrun{
+read_excel_nf3("NF3_export.xlsx")
+}
 }

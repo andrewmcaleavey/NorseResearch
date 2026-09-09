@@ -19,9 +19,6 @@ A tibble.
 Note: This function does not sort the data by date.
 }
 \examples{
-get_first_obs(hf.scored.2019)
-
-get_first_obs(HM_2020.02, id = "Pasientid")
-# identical:
-get_first_obs(HM_2020.02, id = Pasientid)
+data(synthetic_data, package = "NorseResearch")
+get_first_obs(synthetic_data, id = "anon_id")
 }

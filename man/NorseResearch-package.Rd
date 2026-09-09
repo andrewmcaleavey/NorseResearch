@@ -23,7 +23,7 @@ try the analysis and plotting functions; use \code{\link[=random_norse_data]{ran
 your own mock NF data.
 }
 \details{
-The [Introduction vignette]{NorseResearch::introduction} walks through a full
+The introduction vignette walks through a full
 pipeline from reading an export to scoring and plotting.
 
 A quick example:

@@ -13,9 +13,9 @@ trigger_plot(scaleName, mirt_obj, lim = c(-3, 3))
 \item{scaleName}{A quoted simple scale name, e.g., \code{"somAnx"}.
 Suitable for use with \code{scale.names}.}
 
-\item{lim}{Interval for plotting, as a vector of two values.}
+\item{mirt_obj}{A fitted \code{mirt} \code{SingleGroupClass} object.}
 
-\item{data}{A data set on which to test triggers.}
+\item{lim}{Interval for plotting, as a vector of two values.}
 }
 \value{
 ggplot object, printed by default.
@@ -25,7 +25,4 @@ Plotting trigger item predicted distributions.
 NEEDS options to allow mirt objects with name,
 picking from list of SA objects, or new computation from data.
 Also to assign a new trigger item. Right now it does the first item.
-}
-\examples{
-TK
 }

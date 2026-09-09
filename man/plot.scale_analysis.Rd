@@ -4,12 +4,12 @@
 \alias{plot.scale_analysis}
 \title{Plotting scale_analysis objects}
 \usage{
-\method{plot}{scale_analysis}(x)
+\method{plot}{scale_analysis}(x, ...)
 }
 \arguments{
 \item{x}{fitted scale analysis object (named list).}
 
-\item{lim}{limits for x-axis. Defaults to c(-4, 4).}
+\item{...}{Additional arguments passed to the plotting method.}
 }
 \description{
 \code{plot.scale_analysis} takes an object from \code{scale_analysis()} and

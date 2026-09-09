@@ -6,6 +6,11 @@
 \usage{
 replot.grm(fit, type = "ICC")
 }
+\arguments{
+\item{fit}{An object returned by \code{ltm::plot.grm(plot = FALSE)}.}
+
+\item{type}{Character plot type. Currently, \code{"ICC"} is supported.}
+}
 \description{
 \code{replot.grm} takes plot information derived from
 \code{ltm::plot.grm(plot = FALSE)}, and returns a \code{ggplot}-based series of plots

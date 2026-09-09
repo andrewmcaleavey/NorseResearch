@@ -3,7 +3,7 @@
 
 
 
-#' Marginal information per item. Only works with {ltm} objects.
+#' Marginal information per item. Only works with \code{ltm} objects.
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -19,8 +19,6 @@
 #' @return a table with per-item marginal information over the range supplied by \code{z}.
 #'
 #' @export
-#' @examples
-#' TK.
 info_ltm <- function(fit,
                  z = c(-6,6),
                  n.items = length(names(fit$coefficients)),
@@ -48,7 +46,7 @@ info_ltm <- function(fit,
 }
 
 
-#' Marginal information per item. Only works with {mirt} objects.
+#' Marginal information per item. Only works with \code{mirt} objects.
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -66,7 +64,9 @@ info_ltm <- function(fit,
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' info_mirt(cogGP_mirt)
+#' }
 info_mirt <- function(fit,
                       z = c(-6,6),
                       n.items = length(dimnames(fit@Data$data)[[2]]),
@@ -120,34 +120,33 @@ info_mirt <- function(fit,
 #' in that case.
 #'
 #' @return a list with the following named values:
-#'   \itemize{
-#'     \item{\code{new_data}}{: The data set used for analysis}
-#'     \item{\code{histogram}} {Item response histogram}
-#'     \item{\code{min}} {Observed minimum item response mean}
-#'     \item{\code{max}} {Observed maximum item response mean}
-#'     \item{\code{zmin}} {Standardized obsered minimum item response mean}
-#'     \item{\code{zmax}} {Standardized obsered maximum item response mean}
-#'     \item{\code{floor}} {Percent of individuals at absolute minimum}
-#'     \item{\code{ceiling}} {Percent of individuals at absolute maximum}
-#'     \item{\code{grm}} {An object of type \code{grm} or \code{mirt} for scale analysis}
-#'     \item{\code{ICC}} {Item Characteristic Curves. One per item, faceted if \code{irt.package = 'mirt'}.
-#'     Either a plot object or the plot information,
-#'     depending on the value of \code{print.now}}
-#'     \item{\code{TIF}} {Either a plot object or the plot information,
-#'     depending on the value of \code{print.now}}
-#'     \item{\code{IIC}} {Either a plot object or the plot information,
-#'     depending on the value of \code{print.now}}
-#'     \item{\code{printed}} {logial; Were the IRT plots printed on run?}
-#'     \item{\code{info}} {Relative marginal information contribution table. Currently not working
-#'     for \code{irt.package = 'mirt'} (2020 AUG 25).}
-#'     \item{\code{tables}} {A list of tables if item response frequency, of length k items}
-#'     \item{\code{cor}} {A polychoric correlation table of item responses}
-#'   }
+#'   \item{\code{new_data}}{The data set used for analysis}
+#'   \item{\code{histogram}}{Item response histogram}
+#'   \item{\code{min}}{Observed minimum item response mean}
+#'   \item{\code{max}}{Observed maximum item response mean}
+#'   \item{\code{zmin}}{Standardized obsered minimum item response mean}
+#'   \item{\code{zmax}}{Standardized obsered maximum item response mean}
+#'   \item{\code{floor}}{Percent of individuals at absolute minimum}
+#'   \item{\code{ceiling}}{Percent of individuals at absolute maximum}
+#'   \item{\code{grm}}{An object of type \code{grm} or \code{mirt} for scale analysis}
+#'   \item{\code{ICC}}{Item Characteristic Curves. One per item, faceted if \code{irt.package = 'mirt'}.
+#'   Either a plot object or the plot information, depending on the value of \code{print.now}.}
+#'   \item{\code{TIF}}{Either a plot object or the plot information, depending on the value of \code{print.now}.}
+#'   \item{\code{IIC}}{Either a plot object or the plot information, depending on the value of \code{print.now}.}
+#'   \item{\code{printed}}{Logical; were the IRT plots printed on run?}
+#'   \item{\code{info}}{Relative marginal information contribution table. Currently not working
+#'   for \code{irt.package = 'mirt'} (2020 AUG 25).}
+#'   \item{\code{tables}}{A list of tables of item response frequencies, of length k items}
+#'   \item{\code{cor}}{A polychoric correlation table of item responses}
 #'
 #' @export
 #'
 #' @examples
-#' internal.out <- scale_analysis("Internal Avoidance", internal.names, data = data2017_18)
+#' \dontrun{
+#' data(synthetic_data, package = "NorseResearch")
+#' internal.out <- scale_analysis("Internal Avoidance", internal.names,
+#'                                data = synthetic_data)
+#' }
 #'
 #'
 scale_analysis <- function(scale.name,
@@ -327,7 +326,7 @@ scale_analysis <- function(scale.name,
   )
 }
 
-#' Plotting Test Information Functions in {ltm}
+#' Plotting Test Information Functions in \code{ltm}
 #'
 #' \code{tif.grm} takes a fitted ltm model and plots its Test Information Function
 #'
@@ -376,10 +375,10 @@ tif.mirt <- function(x, lim = c(-4, 4)) {
 #' provides several printed plots, for fast visual analysis.
 #'
 #' @param x fitted scale analysis object (named list).
-#' @param lim limits for x-axis. Defaults to c(-4, 4).
+#' @param ... Additional arguments passed to the plotting method.
 #'
 #' @export
-plot.scale_analysis <- function(x){
+plot.scale_analysis <- function(x, ...){
   # x is a scale_analysis output
   print(x$histogram)
   if(x$irt.package == "ltm"){
@@ -405,11 +404,12 @@ plot.scale_analysis <- function(x){
 #' \code{summary.scale_analysis} takes an object from \code{scale_analysis()} and
 #' provides several summaries, but no plots.
 #'
-#' @param x fitted object.
-#' @param lim limits for x-axis. Defaults to c(-4, 4).
+#' @param object Fitted object.
+#' @param ... Additional arguments passed to the summary method.
 #'
 #' @export
-summary.scale_analysis <- function(x){
+summary.scale_analysis <- function(object, ...){
+  x <- object
   print(paste(
     "Min: ", x$min), quote = FALSE
   )
@@ -447,6 +447,9 @@ summary.scale_analysis <- function(x){
 #'
 #' \code{replot.grm} takes plot information derived from
 #' \code{ltm::plot.grm(plot = FALSE)}, and returns a \code{ggplot}-based series of plots
+#'
+#' @param fit An object returned by \code{ltm::plot.grm(plot = FALSE)}.
+#' @param type Character plot type. Currently, \code{"ICC"} is supported.
 replot.grm <- function(fit, type = "ICC"){
   if(class(fit) == "grm"){
     if(type == "ICC"){

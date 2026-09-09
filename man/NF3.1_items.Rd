@@ -29,7 +29,7 @@ A data frame with 96 rows and 16 variables:
 Based on 'NORSE Measure Master Document.xlsx', and more proximally 'data-raw/NF3.1_items.csv'.
 }
 \usage{
-View(NF3.1_items)
+NF3.1_items
 }
 \description{
 A summary of information about the NF items, updated 2022

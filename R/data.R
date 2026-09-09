@@ -5,26 +5,22 @@
 #'
 #' A summary of information about the NF items, updated September 2020
 #' @format a data frame
-#' \describe{
-#'   \itemize{
-#'     \item{\code{assess_order}} {Numeric. Order in assessment.}
-#'     \item{\code{item}} {Character. Item name (e.g., "Q14").}
-#'     \item{\code{reverse}} {Logical. Is item reverse scored?}
-#'     \item{\code{trigger}} {Logical. Is the item used as an opening trigger?}
-#'     \item{\code{item_text_e}} {Character. Text of the item in English.}
-#'     \item{\code{simple_scale}} {Character. Scale name for programming.}
-#'     \item{\code{scale_e}} {Character. Scale name for presentation.}
-#'     \item{\code{domain_e}} {Character. Domain name in English.}
-#'     \item{\code{item_text_n}} {Character. Text of the item in Nynorsk.}
-#'     \item{\code{scale_n}} {Character. Scale name in Nynorsk.}
-#'     \item{\code{domain_n}} {Character. Domain name in Nynorsk.}
-#'     \item{\code{item_text_b}} {Character. Text of the item in Bokmål.}
-#'     \item{\code{scale_b}} {Character. Scale name in Bokmål.}
-#'     \item{\code{domain_b}} {Character. Domain name in Bokmål.}
+#'   \describe{
+#'     \item{\code{assess_order}}{Numeric. Order in assessment.}
+#'     \item{\code{item}}{Character. Item name (e.g., "Q14").}
+#'     \item{\code{reverse}}{Logical. Is item reverse scored?}
+#'     \item{\code{trigger}}{Logical. Is the item used as an opening trigger?}
+#'     \item{\code{item_text_e}}{Character. Text of the item in English.}
+#'     \item{\code{simple_scale}}{Character. Scale name for programming.}
+#'     \item{\code{scale_e}}{Character. Scale name for presentation.}
+#'     \item{\code{domain_e}}{Character. Domain name in English.}
+#'     \item{\code{item_text_n}}{Character. Text of the item in Nynorsk.}
+#'     \item{\code{scale_n}}{Character. Scale name in Nynorsk.}
+#'     \item{\code{domain_n}}{Character. Domain name in Nynorsk.}
+#'     \item{\code{item_text_b}}{Character. Text of the item in Bokmål.}
+#'     \item{\code{scale_b}}{Character. Scale name in Bokmål.}
+#'     \item{\code{domain_b}}{Character. Domain name in Bokmål.}
 #'   }
-#' }
-#' @usage View(nf2.1.item.descriptions)
-#'
 #' @details Not generally accessed directly. Use lookup functions like \code{\link{lookup_item}}.
 #'
 #' @source Based on 'NORSE Measure Master Document.xlsx', and more proximally 'NF2.1.items.xlsx'.
@@ -35,21 +31,17 @@
 #' A table to summarize opening and closing logic in NF 2.1
 #' Added 7 September 2020.
 #' @format A data frame.
-#' \describe{
-#'   \itemize{
-#'     \item{\code{simple_scale}} {Character. Scale name for programming.}
-#'     \item{\code{scale_e}} {Character. Scale name for presentation.}
-#'     \item{\code{scale_n}} {Character. Scale name in Nynorsk.}
-#'     \item{\code{trigger_item}} {Character. Item name (e.g., "Q145") of the trigger for this scale.}
-#'     \item{\code{trigger_val}} {Numeric. Value of the opening threshold. Item response
+#'   \describe{
+#'     \item{\code{simple_scale}}{Character. Scale name for programming.}
+#'     \item{\code{scale_e}}{Character. Scale name for presentation.}
+#'     \item{\code{scale_n}}{Character. Scale name in Nynorsk.}
+#'     \item{\code{trigger_item}}{Character. Item name (e.g., "Q145") of the trigger for this scale.}
+#'     \item{\code{trigger_val}}{Numeric. Value of the opening threshold. Item response
 #'     must be greater than this to open the scale.}
-#'     \item{\code{closing_threshold}} {Numeric. Value of the closing threshold.
+#'     \item{\code{closing_threshold}}{Numeric. Value of the closing threshold.
 #'     Moving average of past 3 administrations must be below this value to close
 #'     the scale.}
 #'   }
-#' }
-#' @usage View(nf2.1.logic)
-#'
 #' @details Not generally accessed directly. Use lookup functions like \code{\link{lookup_item}}.
 #' Used in scoring.
 #'
@@ -61,13 +53,11 @@
 #' Only includes mean, SD, and N.
 #'
 #' @format a table.
-#' \describe{
-#'   \itemize{
-#'     \item{\code{var}} {Variable in each row. Values: Mean, SD, and N}
-#'     \item{\code{cog}} {Cognitive problems}
-#'     \item{\code{ALLOTHERS}} {Other scales in NF2.1}
+#'   \describe{
+#'     \item{\code{var}}{Variable in each row. Values: Mean, SD, and N}
+#'     \item{\code{cog}}{Cognitive problems}
+#'     \item{\code{ALLOTHERS}}{Other scales in NF2.1}
 #'   }
-#' }
 #'
 "summary_norms_MH_out"
 
@@ -279,8 +269,6 @@
 #'   \item{\code{Changes_on_dimensions}}{character Were there dimension changes from 2.2 to 3?}
 #'}
 #'
-#' @usage View(NF3.1_items)
-#'
 #' @details Not generally accessed directly. Use lookup functions like \code{\link{lookup_item}}.
 #'
 #' @source Based on 'NORSE Measure Master Document.xlsx', and more proximally 'data-raw/NF3.1_items.csv'.
@@ -294,9 +282,75 @@
 #'   \item{\code{ScoreName}}{character. Simplified name of the SCORE variable}
 #'   \item{\code{ScaleName}}{character. Nicely formatted Scale name}
 #' }
-#' @usage View(scoreNames.nf3)
-#'
 #' @details Could be incorporated into a scoring function.
 #'
 #' @source Based on exports of data provided by NF, and more proximally `data-raw/scoring_objects_raw.R`.
 "scoreNames.nf3"
+
+#' Internal scoring and lookup data
+#'
+#' Item-name vectors, scale-name mappings, and compatibility objects used
+#' internally by NorseResearch. They are retained as package data for
+#' backwards compatibility but are not generally needed directly.
+#'
+#' @name internal_data
+#' @aliases alliance.names
+#' @aliases alliance.names.nf3
+#' @aliases anger.names.nf3
+#' @aliases avoidSit.names
+#' @aliases avoidSoc.names
+#' @aliases cog.names
+#' @aliases cog.names.nf3
+#' @aliases control.names
+#' @aliases eating.names
+#' @aliases eating.names.nf3
+#' @aliases genFunc.names
+#' @aliases genFunc.names.nf3
+#' @aliases hopeless.names
+#' @aliases hopeless.names.nf3
+#' @aliases impulsivity.names.nf3
+#' @aliases intAvoid.names.nf3
+#' @aliases internal.names
+#' @aliases internal.names.nf3
+#' @aliases intMem.names.nf3
+#' @aliases irritable.names
+#' @aliases list_objs
+#' @aliases names.list
+#' @aliases needs.names
+#' @aliases needs.names.nf3
+#' @aliases nicer_names_nf3
+#' @aliases nicer.nf2.names
+#' @aliases ona.names
+#' @aliases ona.names.nf3
+#' @aliases pain.names.nf3
+#' @aliases physAnx.names.nf3
+#' @aliases pref.names.nf3
+#' @aliases ready.names
+#' @aliases ready.names.nf3
+#' @aliases recovEnv.names
+#' @aliases sad.names
+#' @aliases sad.names.nf3
+#' @aliases scale_names
+#' @aliases scale_names_nf3
+#' @aliases scale_names_ou
+#' @aliases SDH.names.nf3
+#' @aliases selfComp.names.nf3
+#' @aliases selfContempt.names.nf3
+#' @aliases selfCrit.names
+#' @aliases single.items.names
+#' @aliases single.items.names.nf3
+#' @aliases socAvoid.names.nf3
+#' @aliases socSup.names.nf3
+#' @aliases socialSafety.names
+#' @aliases somAnx.names
+#' @aliases subRecov.names
+#' @aliases subUse.names
+#' @aliases subUse.names.nf3
+#' @aliases suicide.names
+#' @aliases suicide.names.nf3
+#' @aliases trauma.names
+#' @aliases worry.names
+#' @aliases worry.names.nf3
+#' @docType data
+#' @keywords internal
+NULL

@@ -34,8 +34,7 @@ Clean variable names of a Norse Feedback data frame
    )
  )
 
- library(dplyr)
- df <- read.csv("data-raw/source_data") \%>\%
-   clean_NF_names()
+ df <- data.frame("raw name" = 1:3, "another-name" = 4:6)
+ clean_NF_names(df)
 
 }

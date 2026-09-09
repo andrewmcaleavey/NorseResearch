@@ -26,6 +26,7 @@ Provides the following scale scores:
 }
 }
 \examples{
-test_out <- score_all_NORSE2_ou(data2017_18)
+data(synthetic_data, package = "NorseResearch")
+test_out <- score_all_NORSE2_ou(synthetic_data)
 
 }

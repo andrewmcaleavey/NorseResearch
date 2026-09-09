@@ -7,7 +7,7 @@
 info(fit, z = c(-6, 6), n.items = NULL, printAuto = TRUE)
 }
 \arguments{
-\item{fit}{A fitted IRT model object from either \code{{ltm}} (\code{grm()}) or \code{{mirt}} (\code{mirt()}).}
+\item{fit}{A fitted IRT model object from either \code{ltm} (\code{grm()}) or \code{mirt} (\code{mirt()}).}
 
 \item{z}{A numeric vector of length 2 specifying the theta range for computing information.
 Default is \code{c(-6, 6)}.}
@@ -26,12 +26,12 @@ A data frame containing:
 }
 \description{
 This function calculates item-level and total test information for a fitted
-graded response model (GRM) from either the \code{{ltm}} or \code{{mirt}} package.
+graded response model (GRM) from either the \code{ltm} or \code{mirt} package.
 }
 \details{
 \itemize{
-\item When a model from \code{{ltm}} is provided, the function uses \code{ltm::information()}.
-\item When a model from \code{{mirt}} is provided, the function computes item information using \code{mirt::iteminfo()}
+\item When a model from \code{ltm} is provided, the function uses \code{ltm::information()}.
+\item When a model from \code{mirt} is provided, the function computes item information using \code{mirt::iteminfo()}.
 and total test information using \code{mirt::testinfo()}.
 }
 }

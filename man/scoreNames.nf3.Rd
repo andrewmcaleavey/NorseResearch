@@ -15,7 +15,7 @@ A data frame with 47 rows and 2 variables:
 Based on exports of data provided by NF, and more proximally \code{data-raw/scoring_objects_raw.R}.
 }
 \usage{
-View(scoreNames.nf3)
+scoreNames.nf3
 }
 \description{
 A linking table for SCORE variables and human-readable scale names

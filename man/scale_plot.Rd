@@ -20,5 +20,6 @@ A ggplot object
 Plot an annotated histogram for NF scales
 }
 \examples{
-scale_plot(hb.scored.2019, cog.names, "Cognitive Problems")
+data(synthetic_data, package = "NorseResearch")
+scale_plot(synthetic_data, cog.names, "Cognitive Problems")
 }

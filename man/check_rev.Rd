@@ -23,7 +23,8 @@ If \code{verbose} is \code{TRUE}, returns a named list.
 check if NORSE scores are reversed
 }
 \examples{
-check_rev(data.joined)
-check_rev(data.joined, verbose = TRUE)
+data(synthetic_data, package = "NorseResearch")
+check_rev(synthetic_data)
+check_rev(synthetic_data, verbose = TRUE)
 
 }

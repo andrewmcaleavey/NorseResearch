@@ -2,7 +2,7 @@
 % Please edit documentation in R/IRTFuncs.R
 \name{tif.grm}
 \alias{tif.grm}
-\title{Plotting Test Information Functions in {ltm}}
+\title{Plotting Test Information Functions in \code{ltm}}
 \usage{
 tif.grm(x, lim = c(-4, 4))
 }

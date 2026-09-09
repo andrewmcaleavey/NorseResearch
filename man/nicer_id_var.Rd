@@ -4,12 +4,12 @@
 \alias{nicer_id_var}
 \title{create a better-named patient_id variable in NF-like data}
 \usage{
-nicer_id_var(.data, id = `respondent id`, keep_old_vars = TRUE)
+nicer_id_var(.data, id = "respondent id", keep_old_vars = TRUE)
 }
 \arguments{
 \item{.data}{Data frame}
 
-\item{id}{Existing patient id variable name. Default is \code{`respondent id`},
+\item{id}{Existing patient id variable name. Default is "respondent id",
 a particularly terrible instance.}
 
 \item{keep_old_vars}{Logical. Should the returned dataset include the
@@ -23,5 +23,6 @@ A data frame or tibble.
 create a better-named patient_id variable in NF-like data
 }
 \examples{
-nicer_id_var(hf.scored.2019)
+data(synthetic_data, package = "NorseResearch")
+nicer_id_var(synthetic_data, id = "anon_id")
 }

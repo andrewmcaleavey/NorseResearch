@@ -24,9 +24,10 @@ scale_analysis2(
 Options: \code{"ltm"} or \code{"mirt"} (default).}
 
 \item{print.now}{Logical. If \code{TRUE}, plots for item characteristic curves (ICC) and
-test information function (TIF) are displayed immediately. Default is \code{FALSE}.
-@param version character string specifying the version of the NF to use
-when looking up item text}
+test information function (TIF) are displayed immediately. Default is \code{FALSE}.}
+
+\item{version}{Character string specifying the version of the NF to use
+when looking up item text.}
 }
 \value{
 An S3 object of type \code{scale_analysis2} containing:
@@ -50,7 +51,7 @@ An S3 object of type \code{scale_analysis2} containing:
 }
 \description{
 This function performs scale analysis by computing descriptive statistics, reliability,
-and item response theory (IRT) models using either the \code{{ltm}} or \code{{mirt}} package.
+and item response theory (IRT) models using either the \code{ltm} or \code{mirt} package.
 }
 \examples{
 \dontrun{

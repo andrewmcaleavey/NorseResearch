@@ -40,5 +40,6 @@ scaleName_normed_normTable_outputFormat, such as "cog_normed_MHout_Z".
 Norm NF data
 }
 \examples{
-testout <- score_normed_NF(hf.scored.2019, scale = "cog")
+data(synthetic_data, package = "NorseResearch")
+testout <- score_normed_NF(synthetic_data, scale = "cog")
 }
