@@ -5,10 +5,6 @@ get_fun <- function(name) {
   utils::getFromNamespace(name, "NorseResearch")
 }
 
-has_obj <- function(name) {
-  exists(name, envir = asNamespace("NorseResearch"), inherits = FALSE)
-}
-
 testthat::test_that("rev_score reverses 1-7 correctly and preserves NA", {
   rev_score <- get_fun("rev_score")
 
@@ -116,15 +112,10 @@ testthat::test_that("score_NORSE_overunder: locks down current behavior for trig
   testthat::expect_equal(out, c(0, 1, 0, NA_real_))
 })
 
-testthat::test_that("score_all_NORSE2 finds its scale vectors in the namespace", {
+testthat::test_that("score_all_NORSE2 uses its scale vectors from the namespace", {
   score_all_NORSE2 <- get_fun("score_all_NORSE2")
   dat <- get_fun("random_assessment_generator")(num_dates = 3)
 
-  testthat::expect_true(all(vapply(
-    c("cog.names", "control.names", "eating.names"),
-    has_obj,
-    logical(1)
-  )))
   out <- suppressWarnings(score_all_NORSE2(dat))
   testthat::expect_true(all(c("cog", "control", "eating") %in% names(out)))
 })

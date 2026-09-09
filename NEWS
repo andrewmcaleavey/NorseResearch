@@ -1,3 +1,16 @@
+# NorseResearch 0.1.2
+
+## Maintenance
+
+* Make package functions and scoring workflows work when NorseResearch is used
+  through `requireNamespace()` by bundling internal scoring and lookup data
+  in the package namespace.
+* Make `fix_failed_encoding()` conservative for ambiguous text and invalid
+  UTF-8, and add coverage for mojibake patterns, clean text, invalid bytes,
+  and idempotent repairs.
+* Repair package examples and documentation so the source package builds and
+  checks without errors or warnings.
+
 # NorseResearch 0.1.1
 
 ## Maintenance
