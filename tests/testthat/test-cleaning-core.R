@@ -55,6 +55,58 @@ test_that("fix_failed_encoding repairs mojibake only in selected character colum
   expect_error(fix_failed_encoding("not a data frame"), "must be a data.frame")
 })
 
+test_that("fix_failed_encoding repairs all default mojibake signal families", {
+  bad <- c(
+    intToUtf8(c(0x00c3, 0x00a5)),
+    intToUtf8(c(0x00c3, 0x00b8)),
+    intToUtf8(c(0x00c3, 0x00a6)),
+    intToUtf8(c(0x00c3, 0x2026)),
+    intToUtf8(c(0x00c3, 0x02dc)),
+    intToUtf8(c(0x00c3, 0x2020)),
+    intToUtf8(c(0x00c2, 0x00a9)),
+    intToUtf8(c(0x00e2, 0x20ac, 0x2122)),
+    intToUtf8(c(0x00e2, 0x20ac, 0x0153)),
+    intToUtf8(c(0x00e2, 0x20ac, 0x009d)),
+    intToUtf8(c(0x00e2, 0x20ac, 0x201c)),
+    intToUtf8(c(0x00e2, 0x20ac, 0x201d)),
+    intToUtf8(c(0x00e2, 0x20ac, 0x00a6))
+  )
+  expected <- c(
+    "\u00e5", "\u00f8", "\u00e6", "\u00c5", "\u00d8", "\u00c6", "\u00a9",
+    "\u2019", "\u201c", "\u201d", "\u2013", "\u2014", "\u2026"
+  )
+
+  out <- fix_failed_encoding(data.frame(x = bad), report = "none")
+
+  expect_equal(out$x, expected)
+  expect_true(all(utf8::utf8_valid(out$x)))
+})
+
+test_that("fix_failed_encoding preserves clean and ambiguous text", {
+  dat <- data.frame(
+    x = c("A\u00f1o", "S\u00e3o Paulo", "M\u00e3nana", "F\u00f8rde", "\u00c3gua"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- expect_no_error(fix_failed_encoding(dat, report = "none"))
+
+  expect_identical(out$x, dat$x)
+  expect_true(all(utf8::utf8_valid(out$x)))
+  expect_identical(fix_failed_encoding(out, report = "none"), out)
+})
+
+test_that("fix_failed_encoding does not fail on invalid UTF-8 values", {
+  # The valid prefix makes sanitize_vec detect the mojibake signal, while the
+  # trailing invalid byte exercises the guarded conversion path.
+  invalid <- rawToChar(as.raw(c(0xc3, 0x83, 0xc3, 0x28)))
+  Encoding(invalid) <- "bytes"
+  dat <- data.frame(x = invalid, stringsAsFactors = FALSE)
+
+  out <- expect_no_error(fix_failed_encoding(dat, report = "none"))
+
+  expect_identical(charToRaw(out$x), charToRaw(dat$x))
+})
+
 test_that("make_english_export renames known fields without overwriting targets", {
   dat <- data.frame(Pasientid = 1:2, Skjema = c("A", "B"), Varighet = 3:4)
   out <- make_english_export(dat)

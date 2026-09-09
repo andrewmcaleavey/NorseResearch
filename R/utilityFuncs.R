@@ -607,7 +607,8 @@ fa_table <- function(x, varlabels = NULL, title = "Factor analysis results", dif
 #' @param max_unique Maximum number of unique change rows to print (most frequent first).
 #' @param sanitize_invalid If \code{TRUE} (default), attempts to sanitize invalid
 #'   UTF-8 strings for safer processing using \code{iconv(sub="byte")}.
-#'   This is conservative: it preserves problematic bytes as <xx> escapes.
+#'   This is conservative: it preserves problematic bytes as <xx> escapes and
+#'   leaves values unchanged when a safe repair cannot be established.
 #'
 #' @return A data.frame of the same class as \code{data} with repaired character columns.
 #'
@@ -624,8 +625,10 @@ fix_failed_encoding <- function(data,
                                 cols = NULL,
                                 from = c("latin1", "Windows-1252"),
                                 patterns = c(
-                                  "Ã.", "Â.", "â€™", "â€œ", "â€\u009D", "â€“", "â€”", "â€¦",
-                                  "Ã¥", "Ã¸", "Ã¦", "Ã…", "Ã˜", "Ã†"
+                                  "\u00c3.", "\u00c2.", "\u00e2\u20ac\u2122", "\u00e2\u20ac\u0153",
+                                  "\u00e2\u20ac\u009d", "\u00e2\u20ac\u201c", "\u00e2\u20ac\u201d",
+                                  "\u00e2\u20ac\u00a6", "\u00c3\u00a5", "\u00c3\u00b8",
+                                  "\u00c3\u00a6", "\u00c3\u2026", "\u00c3\u02dc", "\u00c3\u2020"
                                 ),
                                 quiet = FALSE,
                                 report = c("unique", "columns", "both", "none"),
@@ -683,11 +686,16 @@ fix_failed_encoding <- function(data,
     ))
   }
 
+  valid_utf8 <- function(x) {
+    if (!length(x)) return(logical(0))
+    tryCatch(
+      utf8::utf8_valid(x),
+      error = function(e) rep(FALSE, length(x))
+    )
+  }
+
   byte_roundtrip <- function(x, enc) {
     if (all(is.na(x))) return(x)
-
-    `%||%` <- function(a, b) if (is.null(a)) b else a
-
 
     # CP1252 special mapping (Unicode code point -> byte), incl. U+02DC -> 0x98
     cp1252_map <- c(
@@ -701,7 +709,13 @@ fix_failed_encoding <- function(data,
     )
 
     cp1252_bytes_to_utf8 <- function(s) {
-      ints <- utf8ToInt(s)
+      # Do not try to reinterpret an invalid UTF-8 string as code points.
+      # Such strings cannot be repaired reliably without knowing their source
+      # byte encoding, so the caller will preserve them unchanged.
+      if (!isTRUE(valid_utf8(s))) return(s)
+      ints <- tryCatch(utf8ToInt(s), error = function(e) integer(0))
+      if (anyNA(ints)) return(s)
+      if (!length(ints)) return(s)
       rawv <- raw(0)
 
       for (u in ints) {
@@ -715,9 +729,9 @@ fix_failed_encoding <- function(data,
         }
       }
 
-      out <- rawToChar(rawv)
+      out <- tryCatch(rawToChar(rawv), error = function(e) s)
       Encoding(out) <- "UTF-8"
-      out
+      if (isTRUE(valid_utf8(out))) out else s
     }
 
     out <- x
@@ -733,11 +747,14 @@ fix_failed_encoding <- function(data,
     out[idx] <- vapply(
       x[idx],
       FUN = function(s) {
-        s_sb <- iconv(s, from = "", to = enc, sub = NA)
+        s_sb <- tryCatch(
+          iconv(s, from = "", to = enc, sub = NA),
+          error = function(e) NA_character_
+        )
         if (is.na(s_sb)) return(s)
-        out2 <- rawToChar(charToRaw(s_sb))
+        out2 <- tryCatch(rawToChar(charToRaw(s_sb)), error = function(e) s)
         Encoding(out2) <- "UTF-8"
-        out2
+        if (isTRUE(valid_utf8(out2))) out2 else s
       },
       FUN.VALUE = character(1),
       USE.NAMES = FALSE
@@ -764,22 +781,31 @@ fix_failed_encoding <- function(data,
     before_signals <- count_signals(x)
     if (before_signals == 0L) next
 
-    best <- list(enc = NA_character_, x = x, signals = before_signals, changed = 0L)
+    best <- list(
+      enc = NA_character_,
+      x = x,
+      signals = before_signals,
+      changed = 0L
+    )
 
     for (enc in from) {
       x2 <- byte_roundtrip(x, enc)
       # Require valid UTF-8 after conversion
-      valid_prop <- if (length(x2)) mean(utf8::utf8_valid(x2[!is.na(x2)])) else 1
+      non_na <- !is.na(x)
+      if (any(is.na(x2[non_na]))) next
+      valid <- valid_utf8(x2[non_na])
+      valid_prop <- if (length(valid)) mean(valid) else 1
 
       after_signals <- count_signals(x2)
       changed_n <- sum(!is.na(x) & !is.na(x2) & x != x2)
 
-      # Prefer: (1) more valid UTF-8, then (2) fewer signals, then (3) more changes
-      best_score <- c(best$valid_prop %||% -1, -best$signals, best$changed)
-      cand_score <- c(valid_prop, -after_signals, changed_n)
-
-      if (changed_n > 0L && (is.null(best$valid_prop) || any(cand_score > best_score))) {
-        best <- list(enc = enc, x = x2, signals = after_signals, changed = changed_n, valid_prop = valid_prop)
+      # Only accept a complete, valid conversion that reduces the signal count.
+      # This prevents a legitimate string such as "Ãgua" from being treated
+      # as mojibake merely because it matches the broad "Ã." heuristic.
+      if (changed_n > 0L &&
+          valid_prop == 1 &&
+          after_signals < best$signals) {
+        best <- list(enc = enc, x = x2, signals = after_signals, changed = changed_n)
       }
 
     }
@@ -793,18 +819,6 @@ fix_failed_encoding <- function(data,
       }
 
       out[[col]] <- best$x
-
-      # Row-level fallback: if any values are still invalid UTF-8, try the other encoding just for those
-      bad <- !is.na(out[[col]]) & !utf8::utf8_valid(out[[col]])
-      if (any(bad)) {
-        other <- setdiff(from, best$enc)
-        if (length(other)) {
-          x_bad_fixed <- byte_roundtrip(out[[col]][bad], other[1])
-          # only accept fallback where it becomes valid UTF-8
-          ok <- !is.na(x_bad_fixed) & utf8::utf8_valid(x_bad_fixed)
-          out[[col]][bad][ok] <- x_bad_fixed[ok]
-        }
-      }
 
       col_report[[col]] <- list(
         enc = best$enc,
@@ -862,7 +876,7 @@ fix_failed_encoding <- function(data,
 
       n_show <- min(nrow(counts), max_unique)
       for (i in seq_len(n_show)) {
-        message(sprintf('- %d× "%s"  ->  "%s"', counts$n[i], counts$before[i], counts$after[i]))
+        message(sprintf('- %d\u00d7 "%s"  ->  "%s"', counts$n[i], counts$before[i], counts$after[i]))
       }
       if (nrow(counts) > n_show) {
         message(sprintf("... (%d more unique change(s) not shown; increase `max_unique` to print more)",
