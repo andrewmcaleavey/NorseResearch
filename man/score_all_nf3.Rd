@@ -18,7 +18,7 @@ A data frame with additional variables
 Score the NF3 scales
 }
 \examples{
-/dontrun{
+\dontrun{
 score_all_nf3(HF_research_data_2021)
 }
 }

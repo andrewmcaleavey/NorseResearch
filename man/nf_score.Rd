@@ -38,7 +38,7 @@ This function should take a dataset and add new variables as needed.
 It is obsolete and should be replaced with \code{score_all()}.
 }
 \examples{
-/dontrun{
+\dontrun{
 nf_score()
 }
 }

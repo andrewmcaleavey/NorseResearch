@@ -116,4 +116,7 @@ HF_research_data_2021_fscores <- HF_research_data_2021 %>%
          trauma_fs_first_pt = first(trauma_fscore, order_by = date),
          worry_fs_first_pt = first(worry_fscore, order_by = date)) %>%
   ungroup()
-usethis::use_data(HF_research_data_2021_fscores, overwrite = TRUE)
+
+# Do not write package data at this intermediate stage. The object is further
+# anonymized by `anonymize_fscores_dates.R`, which writes the authoritative
+# package dataset after the timestamps have been shifted.

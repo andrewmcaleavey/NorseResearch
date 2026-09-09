@@ -29,7 +29,6 @@ pipeline from reading an export to scoring and plotting.
 A quick example:
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{library(NorseResearch)
-library(tidyverse)
 data(synthetic_data)
 
 check_version_nf(synthetic_data)              # "2"
@@ -58,7 +57,7 @@ plot(sa)
 
 \strong{Score scales}
 \itemize{
-\item \code{\link[=score_all]{score_all()}} and \code{\link[=score_all_nf3]{score_all_nf3()}} score NF2 and/or NF3 scales; \code{\link[=nf_score]{nf_score()}} scores mixed-version data per row. \code{\link[=score_NORSE_trigger]{score_NORSE_trigger()}} and \code{\link[=score_NORSE_overunder]{score_NORSE_overunder()}} / \code{\link[=score_all_NORSE2_ou]{score_all_NORSE2_ou()}} handle subthreshold trigger and over/under scoring. \code{\link[=score_normed_NF]{score_normed_NF()}} computes normed scores from published norms, and \code{\link[=rename_score_vars]{rename_score_vars()}} maps exported \verb{SCORE_*} variables to consistent names.
+\item \code{\link[=score_all]{score_all()}} and \code{\link[=score_all_nf3]{score_all_nf3()}} score NF2 and/or NF3 scales, including Overall Negative Affect (\code{ona}); \code{\link[=nf_score]{nf_score()}} scores mixed-version data per row. \code{\link[=score_NORSE_trigger]{score_NORSE_trigger()}} and \code{\link[=score_NORSE_overunder]{score_NORSE_overunder()}} / \code{\link[=score_all_NORSE2_ou]{score_all_NORSE2_ou()}} handle subthreshold trigger and over/under scoring. \code{\link[=score_normed_NF]{score_normed_NF()}} computes normed scores from published norms, and \code{\link[=rename_score_vars]{rename_score_vars()}} maps exported \verb{SCORE_*} variables to consistent names.
 }
 
 \strong{Analyze and plot}

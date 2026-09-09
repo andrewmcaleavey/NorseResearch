@@ -1,10 +1,10 @@
 ## code to prepare `NF3.1_items` dataset goes here
 
-NF3.1_items <- read.csv("data-raw/NF3.1_items.csv",
-                        colClasses = c("CODE..prefixed.with.Q." = "character")) %>%
-  NorseResearch::clean_NF_names() %>%
-  select(-starts_with("X")) %>%
-  mutate(assess_order = Order_in_Assessment,
+NF3.1_items <- utils::read.csv("data-raw/NF3.1_items.csv",
+                               colClasses = c("CODE..prefixed.with.Q." = "character")) |>
+  NorseResearch::clean_NF_names() |>
+  dplyr::select(-dplyr::starts_with("X")) |>
+  dplyr::mutate(assess_order = Order_in_Assessment,
          item = paste0("Q", CODE_prefixed_with_Q),
          reverse = Reverse_score,
          trigger = TriggerQ,
@@ -19,8 +19,8 @@ NF3.1_items <- read.csv("data-raw/NF3.1_items.csv",
          scale_b = Bokm_l_dimension_subscale,
          domain_b = Bokm_l_domain,
          .before = 1,
-         .keep = "unused") %>%
-  mutate(simple_scale = case_when(scale_e == "Sad Affect" ~ "sad",
+         .keep = "unused") |>
+  dplyr::mutate(simple_scale = dplyr::case_when(scale_e == "Sad Affect" ~ "sad",
                                   scale_e == "Physical Anxiety" ~ "physAnx",
                                   scale_e == "Restrictive Eating" ~ "eating",
                                   scale_e == "Suicidal thoughts" ~ "suicide",
@@ -53,9 +53,9 @@ NF3.1_items <- read.csv("data-raw/NF3.1_items.csv",
                                   scale_e == "Alliance (Task)" ~ "alliance",
                                   scale_e == "Medication" ~ NA,
                                   scale_e == "Norse" ~ NA,
-                                  scale_e == "Therapy Preferences" ~ "pref")) %>%
+                                  scale_e == "Therapy Preferences" ~ "pref")) |>
   # need to remove trailing .1 from item names
-  mutate(item = str_remove(item, "\\.1$"))
+  dplyr::mutate(item = stringr::str_remove(item, "\\.1$"))
 # once simple_scale is taken care of, can delete rest of items
 
 unique(NF3.1_items$scale_e)

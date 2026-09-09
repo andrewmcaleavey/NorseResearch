@@ -471,10 +471,6 @@ make_english_export <- function(dat) {
 #' @export
 fa_table <- function(x, varlabels = NULL, title = "Factor analysis results", diffuse = .10, small = .30, cross = .20, sort = TRUE) {
   #get sorted loadings
-  require(dplyr)
-  require(purrr)
-  require(tibble)
-  require(gt)
   if(sort == TRUE) {
     x <- psych::fa.sort(x)
   }

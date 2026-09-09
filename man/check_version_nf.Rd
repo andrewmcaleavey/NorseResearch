@@ -17,7 +17,7 @@ If no matching items are found, will return "No NF items found."
 Should not require the data to already have clean names. But needs to work when that is the case.
 }
 \examples{
-/dontrun{
+\dontrun{
 check_version_nf(dataGoesHere)
 }
 }

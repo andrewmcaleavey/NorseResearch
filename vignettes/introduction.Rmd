@@ -1,6 +1,9 @@
 ---
 title: "Introduction to NorseResearch"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    math_method: null
+    pandoc_args: ["--math-method=mathjax"]
 vignette: >
    %\VignetteIndexEntry{Introduction to NorseResearch}
    %\VignetteEngine{knitr::rmarkdown}
@@ -26,7 +29,6 @@ data itself, which is confidential. A small set of **synthetic** data
 
 ```{r}
 library(NorseResearch)
-library(tidyverse)
 ```
 
 ## Functions at a glance
@@ -215,7 +217,7 @@ mixed_mock <- random_norse_data(
 )
 
 check_version_nf(mixed_mock)
-count(mixed_mock, Ver_10)
+dplyr::count(mixed_mock, Ver_10)
 ```
 
 For NF3, `nf3_trigger_threshold` controls the simulated opening threshold

@@ -26,7 +26,7 @@
 #' @export
 #'
 #' @examples
-#' /dontrun{
+#' \dontrun{
 #' nf_score()
 #' }
 nf_score <- function(dat,

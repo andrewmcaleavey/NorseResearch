@@ -52,7 +52,7 @@ test_data <- data.frame(Q1 = c(1, 2, 3, 5, 3, 2, NA, NA),
 
 score_NORSE_overunder(dat = test_data, vars = c("Q1", "Q2", "Q3"))
 
-# NOTE use of (.) in pipes
-test_data \%>\% mutate(subscale_score = score_NORSE_trigger(.))
-test_data \%>\% mutate(subscale_score = score_NORSE_trigger(., trigger = "Q3"))
+# The same calculation can be used inside a dplyr::mutate() call.
+dplyr::mutate(test_data, subscale_score = score_NORSE_trigger(test_data))
+dplyr::mutate(test_data, subscale_score = score_NORSE_trigger(test_data, trigger = "Q3"))
 }

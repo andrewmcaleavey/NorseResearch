@@ -87,9 +87,9 @@ score_NORSE_mean <- function(dat, vars = names(dat)) {
 #'
 #' score_NORSE_trigger(dat = test_data, vars = c("Q1", "Q2", "Q3"))
 #'
-#' # NOTE use of (.) in pipes
-#' test_data %>% mutate(subscale_score = score_NORSE_trigger(.))
-#' test_data %>% mutate(subscale_score = score_NORSE_trigger(., trigger = "Q3"))
+#' # The same calculation can be used inside a dplyr::mutate() call.
+#' dplyr::mutate(test_data, subscale_score = score_NORSE_trigger(test_data))
+#' dplyr::mutate(test_data, subscale_score = score_NORSE_trigger(test_data, trigger = "Q3"))
 #'
 #' # Can score other versions of NF using options directly in trigger parameter:
 #' score_NORSE_trigger(dat = test_data, vars =)
@@ -315,9 +315,9 @@ score_all_NORSE2 <- function(dat, process_vars = TRUE){
 #'
 #' score_NORSE_overunder(dat = test_data, vars = c("Q1", "Q2", "Q3"))
 #'
-#' # NOTE use of (.) in pipes
-#' test_data %>% mutate(subscale_score = score_NORSE_trigger(.))
-#' test_data %>% mutate(subscale_score = score_NORSE_trigger(., trigger = "Q3"))
+#' # The same calculation can be used inside a dplyr::mutate() call.
+#' dplyr::mutate(test_data, subscale_score = score_NORSE_trigger(test_data))
+#' dplyr::mutate(test_data, subscale_score = score_NORSE_trigger(test_data, trigger = "Q3"))
 score_NORSE_overunder <- function(dat,
                                   vars = names(dat),
                                   trigger = vars[1],
@@ -556,7 +556,7 @@ item_norm <- function(item,
 #' @export
 #'
 #' @examples
-#' /dontrun{
+#' \dontrun{
 #' score_all_nf3(HF_research_data_2021)
 #' }
 score_all_nf3 <- function(dat, process_vars = TRUE){
@@ -595,7 +595,7 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
 #' @export
 #'
 #' @examples
-#' /dontrun{
+#' \dontrun{
 #' check_version_nf(dataGoesHere)
 #' }
 check_version_nf <- function(dat){

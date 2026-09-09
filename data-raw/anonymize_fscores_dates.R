@@ -34,7 +34,6 @@
 ## offset is applied to every datetime column. Run this script *after* the
 ## `HF_research_data_2021_fscores` object has been built.
 
-# require(tidyverse)
 # require(lubridate)
 
 ## --- tunables: adjust to make the data unrecognizable while staying valid -----

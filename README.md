@@ -23,7 +23,6 @@ devtools::install_github("andrewmcaleavey/NorseResearch")
 
 ```r
 library(NorseResearch)
-library(tidyverse)
 
 # Synthetic (random) data, similar in shape to a real NF export.
 data(synthetic_data)
@@ -115,7 +114,6 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 
 ```r
 library(NorseResearch)
-library(tidyverse)
 data(synthetic_data)
 
 # Which NF version is this?

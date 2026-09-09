@@ -179,8 +179,6 @@ get_nf3_nicer_name <- function(simplename,
 combine_q_vars <- function(df,
                            pattern_pre = "^Q\\d+$",
                            pattern_suff = "_1") {
-  library(dplyr)
-
   # Identify base Q-variables matching pattern_pre.
   base_vars <- names(df)[grepl(pattern = pattern_pre, names(df))]
   # Select only those base_vars that have a companion variable.
@@ -296,5 +294,4 @@ rename_score_vars <- function(df,
 
   return(df)
 }
-
 

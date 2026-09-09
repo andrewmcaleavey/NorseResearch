@@ -62,7 +62,6 @@
 #'
 #' ```r
 #' library(NorseResearch)
-#' library(tidyverse)
 #' data(synthetic_data)
 #'
 #' check_version_nf(synthetic_data)              # "2"
@@ -77,5 +76,18 @@
 
 ## usethis namespace: start
 #' @importFrom lifecycle deprecated
+#' @importFrom magrittr %>%
+#' @importFrom data.table :=
+#' @importFrom dplyr across all_of arrange bind_cols coalesce cur_column everything filter group_by group_by_at if_else left_join mutate pick pull rename select slice starts_with transmute ungroup where
+#' @importFrom ggplot2 aes aes_string element_blank facet_wrap geom_histogram geom_line geom_vline ggplot ggtitle labs scale_y_continuous stat_function theme theme_bw theme_minimal xlab ylab %+replace%
+#' @importFrom gt cell_fill cell_text cells_body gt tab_header tab_style
+#' @importFrom mirt fscores
+#' @importFrom purrr map map2 set_names
+#' @importFrom rlang .data ensym syms
+#' @importFrom stringr str_detect str_extract
+#' @importFrom tibble as_tibble rownames_to_column tibble
+#' @importFrom tidyr gather
+#' @importFrom stats aggregate coef cor dnorm rpois sd setNames
+#' @importFrom utils read.csv read.csv2
 ## usethis namespace: end
 NULL

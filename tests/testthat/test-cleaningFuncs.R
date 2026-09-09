@@ -7,9 +7,9 @@ test_that("get_nicer_name() works with NF2", {
 
 test_that("get_nicer_name() returns message and simplename when no match found", {
   testthat::expect_message(get_nicer_name("foo"))
-  expect_equal(quietly(get_nicer_name)("foo")[[1]], "foo")
+  expect_equal(purrr::quietly(get_nicer_name)("foo")[[1]], "foo")
   testthat::expect_message(get_nicer_name(c("sad", "foo")))
-  expect_equal(quietly(get_nicer_name)(c("sad", "foo"))[[1]],
+  expect_equal(purrr::quietly(get_nicer_name)(c("sad", "foo"))[[1]],
                c("Sad Affect", "foo"))
 })
 
@@ -24,9 +24,9 @@ test_that("get_nf3_nicer_name() works with NF3", {
 
 test_that("get_nf3_nicer_name() returns message and simplename when no match found", {
   testthat::expect_message(get_nf3_nicer_name("foo"))
-  expect_equal(quietly(get_nf3_nicer_name)("foo")[[1]], "foo")
+  expect_equal(purrr::quietly(get_nf3_nicer_name)("foo")[[1]], "foo")
   testthat::expect_message(get_nf3_nicer_name(c("sad", "foo")))
-  expect_equal(quietly(get_nf3_nicer_name)(c("sad", "foo"))[[1]],
+  expect_equal(purrr::quietly(get_nf3_nicer_name)(c("sad", "foo"))[[1]],
                c("Sad Affect", "foo"))
 })
 
