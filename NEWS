@@ -1,3 +1,14 @@
+# NorseResearch 0.1.1
+
+## Maintenance
+
+* Remove the `tidyverse` dependency from `Depends` and declare the package
+  imports explicitly, avoiding namespace pollution when NorseResearch is
+  attached.
+* Keep the anonymized `HF_research_data_2021_fscores` data write as the single
+  authoritative data-generation step.
+* Update vignette rendering for current Pandoc versions.
+
 # NorseResearch 0.1.0
 
 This is the first public release of NorseResearch.
