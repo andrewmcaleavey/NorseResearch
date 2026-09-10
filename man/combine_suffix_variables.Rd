@@ -4,13 +4,21 @@
 \alias{combine_suffix_variables}
 \title{Combine Suffix Variables with the Same Base Name}
 \usage{
-combine_suffix_variables(dat, sep = "_")
+combine_suffix_variables(
+  dat,
+  sep = "_",
+  conflict = c("highest_suffix", "error")
+)
 }
 \arguments{
 \item{dat}{A data frame containing the variables to be merged.}
 
 \item{sep}{A character string specifying the separator between the base name and the suffix.
-Default is \code{"_"}}
+Default is \code{"_"}. It is treated literally.}
+
+\item{conflict}{Conflict policy for rows with multiple non-missing versions.
+The default, \code{"highest_suffix"}, preserves the historical compatibility
+behavior. Use \code{"error"} to reject such rows.}
 }
 \value{
 A data frame with merged variables, where redundant suffix columns are removed.
@@ -20,6 +28,12 @@ This function merges columns that share the same base name but have different su
 (e.g., \code{Q140}, \code{Q140_1}, \code{Q140_2}). If a row contains \code{NA} in one column but a value in another,
 the function combines them, keeping the non-NA value. The function only considers variable names
 that start with a single letter followed by numbers.
+}
+\details{
+This compatibility wrapper delegates to \code{\link[=collapse_versioned_columns]{collapse_versioned_columns()}}
+and applies numeric ordering to suffixes. For example, \verb{_10} takes
+priority over \verb{_2} when both contain values. The \code{sep} argument is now
+honored literally.
 }
 \examples{
 df <- data.frame(

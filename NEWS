@@ -1,3 +1,14 @@
+# NorseResearch (development)
+
+* Add `collapse_versioned_columns()` for deterministic numeric-suffix
+  collapsing, with explicit conflict and type-coercion policies.
+* Make suffix and paired-Q helpers delegate to the shared collapse primitive;
+  add `get_first_nonmissing_obs()`, `check_nf_range()`, and `reverse_items()`.
+* Normalize scoring version labels, use exact version matching, and centralize
+  range and reverse-item validation.
+* Fix ID resolution for names containing spaces and prevent duplicate target
+  columns when translating Norwegian export aliases.
+
 # NorseResearch 0.1.2
 
 ## Maintenance

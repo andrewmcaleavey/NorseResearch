@@ -1,4 +1,28 @@
 
+# Resolve a column name supplied either as a string (including a dynamically
+# stored string) or as an unquoted column symbol.
+resolve_id_name <- function(id) {
+  expression <- if (rlang::is_quosure(id)) id else rlang::enquo(id)
+  evaluation_failed <- FALSE
+  evaluated <- tryCatch(
+    rlang::eval_tidy(expression),
+    error = function(e) {
+      evaluation_failed <<- TRUE
+      NULL
+    }
+  )
+  if (!evaluation_failed) {
+    if (!is.character(evaluated) || length(evaluated) != 1L || is.na(evaluated)) {
+      if (rlang::is_symbol(rlang::get_expr(expression))) {
+        return(rlang::as_name(rlang::get_expr(expression)))
+      }
+      stop("id must identify one column name.", call. = FALSE)
+    }
+    return(evaluated)
+  }
+  rlang::as_name(rlang::get_expr(expression))
+}
+
 #' create a better-named patient_id variable in NF-like data
 #'
 #' @param .data Data frame
@@ -17,7 +41,7 @@
 nicer_id_var <- function(.data,
                          id = "respondent id",
                          keep_old_vars = TRUE) {
-  id_name <- rlang::as_string(rlang::ensym(id))
+  id_name <- resolve_id_name(rlang::enquo(id))
   if (!id_name %in% names(.data)) stop("id variable not found in .data.")
 
   if(!keep_old_vars){
@@ -41,48 +65,89 @@ nicer_id_var <- function(.data,
 #' @return A tibble.
 #' @export
 #'
-#' @description Note: This function does not sort the data by date.
+#' @description The first row is the first row in the input data for each ID;
+#' the function does not sort by date or any other column. Arrange the data
+#' before calling this function when a chronological first observation is
+#' required. The ID may contain spaces and may be supplied quoted or unquoted.
 #'
 #' @examples
 #' data(synthetic_data, package = "NorseResearch")
 #' get_first_obs(synthetic_data, id = "anon_id")
 get_first_obs <- function(.data,
                           id = 'respondent id'){
-
-  id.is.char <- FALSE
-  try(id.is.char <- is.character(id),
-      silent = TRUE)
-
-  if(id.is.char){
-    if(grepl(" ", id)){
-      # this is only for cases where the id variable is the oddly quoted version I hate.
-      tempout <- .data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup()
-    }
-    else {
-      tempout <- .data %>%
-        group_by_at(id) %>%
-        slice(1) %>%
-        ungroup()
-    }
+  if (!is.data.frame(.data)) {
+    stop(".data must be a data frame or tibble.", call. = FALSE)
+  }
+  id_name <- resolve_id_name(rlang::enquo(id))
+  if (length(id_name) != 1L || !id_name %in% names(.data)) {
+    stop("id variable not found in .data.", call. = FALSE)
   }
 
-  else if(!id.is.char){
-    # this is for cases where the id variable is an unquoted string.
-    tempout <- .data %>%
-      group_by( {{ id }} ) %>%
-      slice(1) %>%
-      ungroup()
+  .data %>%
+    dplyr::group_by(.data[[id_name]]) %>%
+    dplyr::slice_head(n = 1L) %>%
+    dplyr::ungroup()
+}
+
+#' Pick out the first non-missing observation per patient
+#'
+#' @param .data Data set on which to select rows.
+#' @param id Name of the variable representing the patient ID. It may be
+#'   supplied quoted or unquoted, and may contain spaces.
+#' @param vars Character vector of columns used to identify a usable
+#'   observation. Defaults to every column except `id`.
+#' @param require Whether a usable row must contain a non-missing value in
+#'   `"any"` or `"all"` of `vars`. The default is `"any"`.
+#'
+#' @return A tibble containing at most one row per ID. IDs with no qualifying
+#'   row are omitted. Rows are considered in their existing input order; sort
+#'   the data first if “first” should mean chronological order.
+#' @export
+#'
+#' @examples
+#' dat <- data.frame(
+#'   `respondent id` = c("a", "a", "b"),
+#'   score = c(NA, 2, NA),
+#'   stringsAsFactors = FALSE,
+#'   check.names = FALSE
+#' )
+#' get_first_nonmissing_obs(dat, "respondent id", vars = "score")
+get_first_nonmissing_obs <- function(.data,
+                                     id = "respondent id",
+                                     vars = NULL,
+                                     require = c("any", "all")) {
+  if (!is.data.frame(.data)) {
+    stop(".data must be a data frame or tibble.", call. = FALSE)
+  }
+  id_name <- resolve_id_name(rlang::enquo(id))
+  if (length(id_name) != 1L || !id_name %in% names(.data)) {
+    stop("id variable not found in .data.", call. = FALSE)
   }
 
-  if(nrow(tempout) == 1){
-    stop("\nOnly one row in output data. Likely because of a misspecified
-         id variable.\n")
+  require <- match.arg(require)
+  if (is.null(vars)) {
+    vars <- setdiff(names(.data), id_name)
+  } else if (!is.character(vars)) {
+    stop("vars must be a character vector of column names.", call. = FALSE)
+  }
+  if (!length(vars)) {
+    stop("vars must identify at least one column.", call. = FALSE)
+  }
+  missing_vars <- setdiff(vars, names(.data))
+  if (length(missing_vars)) {
+    stop("Unknown vars: ", paste(missing_vars, collapse = ", "), call. = FALSE)
   }
 
-  return(tempout)
+  usable <- if (require == "all") {
+    rowSums(!is.na(.data[vars])) == length(vars)
+  } else {
+    rowSums(!is.na(.data[vars])) > 0L
+  }
+
+  .data[usable, , drop = FALSE] %>%
+    dplyr::group_by(.data[[id_name]]) %>%
+    dplyr::slice_head(n = 1L) %>%
+    dplyr::ungroup()
 }
 
 #' Swap the short name of a scale for the nicer name of a scale.
@@ -145,23 +210,30 @@ get_nf3_nicer_name <- function(simplename,
 #' This function combines paired Q-variables in a data frame. A paired Q-variable consists of a
 #' base variable and a companion variable whose name is formed by appending a suffix (default: "_1")
 #' to the base variable name. For each row, the function first checks that at most one of the two
-#' values is non-missing. If both are non-missing, an error is thrown indicating the conflicting rows.
-#' Otherwise, it updates the base variable with the companion value if the base variable is missing,
-#' and then removes the companion variable from the data frame.
+#' values is non-missing. By default, if both are non-missing, an error is
+#' thrown indicating the conflicting rows. The explicit `conflict =
+#' "highest_suffix"` mode is available for legacy exports that need a
+#' deterministic compatibility rule. Otherwise, it updates the base variable
+#' with the companion value if the base variable is missing and removes the
+#' companion variable from the data frame.
 #'
 #' @param df A data frame containing the Q-variables to be combined.
 #' @param pattern_pre A regular expression pattern to identify the base Q-variables. Default is
 #'   `"^Q\\d+$"`.
 #' @param pattern_suff A suffix string to identify the companion variable. Default is `"_1"`.
+#' @param conflict Conflict policy for rows in which both paired values are
+#'   present. The default, `"error"`, keeps this function a strict paired-column
+#'   validator. `"highest_suffix"` is an explicit compatibility mode that
+#'   delegates to [collapse_versioned_columns()].
 #'
 #' @return A data frame with the Q-variables combined. The base variables are updated with the
 #'   combined values and the companion variables are dropped.
 #'
 #' @details The function first identifies all base Q-variables that match \code{pattern_pre} and
 #'   then finds those for which a companion variable (with name equal to the base variable plus
-#'   \code{pattern_suff}) exists. It uses \code{dplyr::mutate(across())} to process these variables:
-#'   for each row, if the base variable is \code{NA} the function replaces it with the companion
-#'   value. If both are non-\code{NA} for any row, the function stops with an error.
+#'   \code{pattern_suff}) exists. It delegates the merge to
+#'   [collapse_versioned_columns()]. In the default strict mode, if both are
+#'   non-\code{NA} for any row, the function stops with an error.
 #'
 #' @examples
 #' \dontrun{
@@ -176,39 +248,32 @@ get_nf3_nicer_name <- function(simplename,
 #' @export
 combine_q_vars <- function(df,
                            pattern_pre = "^Q\\d+$",
-                           pattern_suff = "_1") {
+                           pattern_suff = "_1",
+                           conflict = c("error", "highest_suffix")) {
+  if (!is.data.frame(df)) {
+    stop("df must be a data frame or tibble.", call. = FALSE)
+  }
+  if (!is.character(pattern_pre) || length(pattern_pre) != 1L ||
+      is.na(pattern_pre) || !is.character(pattern_suff) ||
+      length(pattern_suff) != 1L || is.na(pattern_suff) ||
+      !nzchar(pattern_suff)) {
+    stop("pattern_pre and pattern_suff must be single character strings.",
+         call. = FALSE)
+  }
+  conflict <- match.arg(conflict)
   # Identify base Q-variables matching pattern_pre.
   base_vars <- names(df)[grepl(pattern = pattern_pre, names(df))]
   # Select only those base_vars that have a companion variable.
   pairs <- base_vars[paste0(base_vars, pattern_suff) %in% names(df)]
 
-  # Function to combine a base column with its companion column.
-  combine_fun <- function(x) {
-    col <- cur_column()
-    comp_name <- paste0(col, pattern_suff)
-    # Use pick() to access the full data mask and pull the companion column.
-    comp <- pick(all_of(comp_name))[[1]]
-    # Check that each row has at most one non-NA value in the pair.
-    conflict <- ((!is.na(x)) + (!is.na(comp))) > 1
-    if (any(conflict)) {
-      stop(paste("Conflict in variable pair", col, "and", comp_name,
-                 "in rows:", paste(which(conflict), collapse = ", ")))
-    }
-    # Combine: if base value is NA, use companion value.
-    if_else(is.na(x), comp, x)
-  }
-
-  df_updated <- df %>%
-    mutate(across(
-      .cols = all_of(pairs),
-      .fns = combine_fun
-    ))
-
-  # Remove the companion columns.
-  companion_columns <- paste0(pairs, pattern_suff)
-  df_updated <- df_updated %>% select(-all_of(companion_columns))
-
-  return(df_updated)
+  suffix_pattern <- paste0(stringr::str_escape(pattern_suff), "$")
+  collapse_versioned_columns(
+    df,
+    suffix_pattern = suffix_pattern,
+    conflict = conflict,
+    coerce = "common",
+    base_names = pairs
+  )
 }
 
 #' Rename SCORE Variables Using a Mapping Table

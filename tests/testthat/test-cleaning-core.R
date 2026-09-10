@@ -29,6 +29,39 @@ test_that("get_first_obs retains the first row for each id", {
   expect_false(dplyr::is_grouped_df(out_character))
 })
 
+test_that("get_first_obs resolves character IDs containing spaces", {
+  dat <- tibble::tibble(
+    `respondent id` = c("b", "a", "b", "a"),
+    value = 1:4
+  )
+
+  out <- get_first_obs(dat, "respondent id")
+  id_name <- "respondent id"
+
+  expect_equal(out$`respondent id`, c("a", "b"))
+  expect_equal(out$value, c(2L, 1L))
+  expect_equal(get_first_obs(dat, id_name), out)
+  expect_equal(nrow(get_first_obs(dat[1, ], "respondent id")), 1L)
+})
+
+test_that("get_first_nonmissing_obs selects the first usable row in input order", {
+  dat <- tibble::tibble(
+    id = c("b", "a", "b", "a", "c"),
+    score = c(NA, NA, 3, 2, NA),
+    other = c(1, NA, NA, 4, NA)
+  )
+
+  out <- get_first_nonmissing_obs(dat, "id", vars = "score")
+  expect_equal(out$id, c("a", "b"))
+  expect_equal(out$score, c(2, 3))
+
+  out_all <- get_first_nonmissing_obs(
+    dat, "id", vars = c("score", "other"), require = "all"
+  )
+  expect_equal(out_all$id, "a")
+  expect_equal(out_all$score, 2)
+})
+
 test_that("replace_98s_99s and drop_variable preserve ordinary values", {
   dat <- tibble::tibble(a = c(1, -98, -99), b = c(4, 5, 6))
   out <- replace_98s_99s(dat)
@@ -114,6 +147,16 @@ test_that("make_english_export renames known fields without overwriting targets"
 
   with_target <- data.frame(Pasientid = 1:2, Respondent_ID = c("x", "y"))
   expect_named(make_english_export(with_target), c("Pasientid", "Respondent_ID"))
+
+  with_aliases <- data.frame(
+    Skjema = "preferred",
+    Skjemanavn = "alternate",
+    Varigheit = 10
+  )
+  aliases_out <- make_english_export(with_aliases)
+  expect_equal(aliases_out$Measure_name, "preferred")
+  expect_equal(aliases_out$Skjemanavn, "alternate")
+  expect_equal(aliases_out$Duration, 10)
 })
 
 test_that("rename_score_vars validates mappings and makes duplicate names unique", {

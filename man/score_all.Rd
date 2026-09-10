@@ -18,7 +18,10 @@ only item indicators. For example, \code{M53_Q142_1} should instead be \code{Q14
 \item{process_vars}{Logical. Should the process variables be included?}
 
 \item{versions}{Which versions of the NF do you want to score? Includes both
-2.x and 3.x by default.}
+versions 2.x and 3.x by default. Stable labels are \code{"2"} and \code{"3"};
+compatible aliases such as \code{"NF2"}, \code{"2.1"}, \code{"NF3"}, and \code{"3.1"} are
+accepted. Values in \code{version_variable} are matched to the selected
+versions exactly after the same normalization.}
 
 \item{version_variable}{Character name of the variable encoding the version
 to use for each row.}

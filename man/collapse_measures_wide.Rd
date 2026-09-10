@@ -12,7 +12,8 @@ collapse_measures_wide(
   fun.aggregate = NULL,
   return_tibble = TRUE,
   coerce_wide_numeric = FALSE,
-  respondent_col = "Respondent_ID"
+  respondent_col = "Respondent_ID",
+  conflict = c("highest_suffix", "error")
 )
 }
 \arguments{
@@ -32,6 +33,10 @@ collapse_measures_wide(
 \item{coerce_wide_numeric}{Logical; try to coerce wide columns to numeric. Default FALSE.}
 
 \item{respondent_col}{Name of the respondent identifier column. Default \code{"Respondent_ID"}.}
+
+\item{conflict}{Conflict policy for suffix collisions. Defaults to
+\code{"highest_suffix"} for compatibility with existing NF exports; use
+\code{"error"} to reject rows containing more than one non-missing version.}
 }
 \value{
 A tibble (default) or data.frame with suffixed columns collapsed, measures widened by item,

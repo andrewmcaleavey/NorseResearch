@@ -3,11 +3,14 @@
 #' @param .data The data to clean.
 #' @param verbose Logical. Default is FALSE. If TRUE, will
 #' return the list of correlations tested with their values.
-#' @param version Which version of NF is being used. Acceptable values
-#' are "NF2" and "NF3".
+#' @param version Which version of NF is being used. Stable labels are `"NF2"`
+#' and `"NF3"`; compatible short and minor-version forms such as `"2"`,
+#' `"2.1"`, `"3"`, and `"3.1"` are also accepted.
 #'
-#' @return logical. Is data likely reversed? TRUE if yes.
-#' If \code{verbose} is \code{TRUE}, returns a named list.
+#' @return Logical. Is data likely already reversed? `TRUE` means the checked
+#' correlations are non-negative. If \code{verbose} is `TRUE`, returns a named
+#' list with the decision and each correlation. A data set with no complete
+#' observations for any check returns `NA`.
 #' @export
 #'
 #' @examples
@@ -16,86 +19,58 @@
 #' check_rev(synthetic_data, verbose = TRUE)
 #'
 check_rev <- function(.data, verbose = FALSE, version = "NF2") {
-  # check to see if all values are between 1 and 7 first
-  # qs is data from items only (the regex says it must
-  # begin with "Q"
-  # then have at least one number
-  # then anything or nothing
-  # and it must end with a number)
-  qs <- .data %>%
-    dplyr::select(tidyselect::matches("^Q\\d*.*\\d$")) %>%
-    # manually dropping Q226
-    drop_variable("Q226")
-  # this then drops variables for process analysis.
-  try(qs <- qs %>%
-        drop_variable("Q71") %>%
-        drop_variable("Q72") %>%
-        drop_variable("Q152") %>%
-        drop_variable("Q153") %>%
-        drop_variable("Q74"),
-      silent = TRUE)
-
-
-  if(any(qs < 1 | qs > 7, na.rm = TRUE)){
-    stop("Some NF values outside scoring range. Check that all NA values
-  are properly coded and all item responses are between 1 and 7.")
+  if (!is.data.frame(.data)) {
+    stop(".data must be a data frame or tibble.", call. = FALSE)
   }
-  if(version == "NF2"){
-    val1 <- with(.data, cor(Q15, Q115, use = "complete.obs"))
-    val2 <- with(.data, cor(Q27, Q141, use = "complete.obs"))
-    val3 <- with(.data, cor(Q140, Q141, use = "complete.obs"))
-    val4 <- with(.data, cor(Q10, Q123, use = "complete.obs"))
-    val5 <- with(.data, cor(Q67, Q126, use = "complete.obs"))
-
-    if(!verbose){
-      output <- ifelse(any(mget(ls(pattern = "val")) < 0),
-                       FALSE,
-                       TRUE)
-    } else {
-      output = list("reversed" = ifelse(any(mget(ls(pattern = "val")) < 0),
-                                        FALSE,
-                                        TRUE),
-                    "rQ15.Q115" = val1,
-                    "rQ27.Q141" = val2,
-                    "rQ140.Q141" = val3,
-                    "rQ10.Q123" = val4,
-                    "rQ67.Q126" = val5)
+  version <- tryCatch(
+    normalize_nf_versions(version),
+    error = function(e) {
+      stop("Incorrect version provided. Only use either NF2 or NF3.", call. = FALSE)
     }
-
-  } else if(version == "NF3"){
-    val1 <- with(.data, cor(Q202, Q215, use = "complete.obs"))
-    # val2 <- with(.data, cor(Q204, Q141, use = "complete.obs"))
-    # social support is all reversed, no obvious opposites.
-    val3 <- with(.data, cor(Q140_1, Q207, use = "complete.obs"))
-    # val4 <- with(.data, cor(Q43, Q123, use = "complete.obs"))
-    val5 <- with(.data, cor(Q211, Q215, use = "complete.obs"))
-    # val6 <- with(.data, cor(Q212, Q126, use = "complete.obs"))
-    val7 <- with(.data, cor(Q217, Q207, use = "complete.obs"))
-    # val8 <- with(.data, cor(Q222, Q141, use = "complete.obs"))
-    val9 <- with(.data, cor(Q223, Q205, use = "complete.obs"))
-    val10 <- with(.data, cor(Q220, Q207, use = "complete.obs"))
-    # val11 <- with(.data, cor(Q221, Q126, use = "complete.obs"))
-    # val12 <- with(.data, cor(Q84, Q126, use = "complete.obs"))
-
-    if (!verbose) {
-      output <- ifelse(any(mget(ls(pattern = "val")) < 0),
-                       FALSE,
-                       TRUE)
-    } else {
-      output = list("reversed" = ifelse(any(mget(ls(pattern = "val")) < 0),
-                                        FALSE,
-                                        TRUE),
-                    "rQ202.Q215" = val1,
-                    "rQ140.Q207" = val3,
-                    "rQ211.Q215" = val5,
-                    "rQ217.Q207" = val7,
-                    "rQ223.Q225" = val9,
-                    "rQ220.Q207" = val10)
-    }
-  } else if (!version %in% c("NF2", "NF3")){
-    stop("Incorrect version provided. Only use either NF2 or NF3")
+  )
+  if (length(version) != 1L) {
+    stop("Incorrect version provided. Supply exactly one of NF2 or NF3.", call. = FALSE)
   }
-  return(output)
+
+  q_vars <- names(.data)[grepl("^Q[0-9]+(?:[._][0-9]+)?$", names(.data), perl = TRUE)]
+  q_vars <- setdiff(q_vars, c("Q226", "Q71", "Q72", "Q152", "Q153", "Q74"))
+  check_nf_range(.data, vars = q_vars, action = "error")
+
+  pair_names <- if (version == "2") {
+    c("rQ15.Q115" = "Q15|Q115",
+      "rQ27.Q141" = "Q27|Q141",
+      "rQ140.Q141" = "Q140|Q141",
+      "rQ10.Q123" = "Q10|Q123",
+      "rQ67.Q126" = "Q67|Q126")
+  } else {
+    c("rQ202.Q215" = "Q202|Q215",
+      "rQ140.Q207" = "Q140|Q207",
+      "rQ211.Q215" = "Q211|Q215",
+      "rQ217.Q207" = "Q217|Q207",
+      "rQ223.Q205" = "Q223|Q205",
+      "rQ220.Q207" = "Q220|Q207")
+  }
+  pair_vars <- strsplit(unname(pair_names), "\\|", fixed = FALSE)
+  missing <- unique(unlist(lapply(pair_vars, setdiff, names(.data))))
+  if (length(missing)) {
+    stop("Missing item columns required for reversal check: ",
+         paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  correlations <- vapply(pair_vars, function(pair) {
+    x <- suppressWarnings(as.numeric(as.character(.data[[pair[[1L]]]])))
+    y <- suppressWarnings(as.numeric(as.character(.data[[pair[[2L]]]])))
+    suppressWarnings(stats::cor(x, y, use = "complete.obs"))
+  }, numeric(1))
+  names(correlations) <- names(pair_names)
+
+  reversed <- if (all(is.na(correlations))) {
+    NA
+  } else {
+    !any(correlations < 0, na.rm = TRUE)
+  }
+  if (!verbose) return(reversed)
+  c(list(reversed = reversed), as.list(correlations))
 }
 
 # need a function to find and properly treat any -98 or -99 values

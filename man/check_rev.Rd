@@ -12,12 +12,15 @@ check_rev(.data, verbose = FALSE, version = "NF2")
 \item{verbose}{Logical. Default is FALSE. If TRUE, will
 return the list of correlations tested with their values.}
 
-\item{version}{Which version of NF is being used. Acceptable values
-are "NF2" and "NF3".}
+\item{version}{Which version of NF is being used. Stable labels are \code{"NF2"}
+and \code{"NF3"}; compatible short and minor-version forms such as \code{"2"},
+\code{"2.1"}, \code{"3"}, and \code{"3.1"} are also accepted.}
 }
 \value{
-logical. Is data likely reversed? TRUE if yes.
-If \code{verbose} is \code{TRUE}, returns a named list.
+Logical. Is data likely already reversed? \code{TRUE} means the checked
+correlations are non-negative. If \code{verbose} is \code{TRUE}, returns a named
+list with the decision and each correlation. A data set with no complete
+observations for any check returns \code{NA}.
 }
 \description{
 check if NORSE scores are reversed

@@ -45,11 +45,12 @@ any function (for example, `?score_all`).
 **Clean and reshape**
 
 - [`clean_NF_names()`](?clean_NF_names) standardizes NF export variable names.
+- [`collapse_versioned_columns()`](?collapse_versioned_columns) deterministically collapses numeric suffix versions.
 - [`collapse_measures_wide()`](?collapse_measures_wide) collapses `_A#` suffix columns and widens multi-measure items.
 - [`combine_suffix_variables()`](?combine_suffix_variables) and [`combine_q_vars()`](?combine_q_vars) merge related columns.
 - [`replace_98s_99s()`](?replace_98s_99s) replaces sentinel `-98`/`-99` with `1`/`NA`.
 - [`nicer_id_var()`](?nicer_id_var) creates a readable ID column.
-- [`get_first_obs()`](?get_first_obs) selects the first observation per respondent.
+- [`get_first_obs()`](?get_first_obs) and [`get_first_nonmissing_obs()`](?get_first_nonmissing_obs) select respondent observations.
 
 **Versioning, lookup, and metadata**
 
@@ -132,6 +133,81 @@ Plot a scale-score distribution or a single item's responses directly:
 scale_plot(synthetic_data, item.names = sad.names, title_obj = "Sad Affect")
 item_plot("Q42", data = synthetic_data)
 ```
+
+## Reshaping an export with multiple M-coded measures
+
+NF exports can contain one row per measure code, with item responses stored in
+columns such as `M100_Q10` and `M200_Q20`. The following small example
+mimics that structure. It has two M-coded measures for each respondent/date,
+an `_A1` duplicate that must be collapsed, and a `Q11_1` paired item that
+must be combined after widening.
+
+```{r}
+raw_measures <- data.frame(
+  Respondent_ID = c("p01", "p01", "p02", "p02"),
+  Submitted = as.Date(c("2026-01-02", "2026-01-02",
+                        "2026-01-05", "2026-01-05")),
+  Short_code = c("M100", "M200", "M100", "M200"),
+  M100_Q10 = c(NA, NA, 3, NA),
+  M100_Q10_A1 = c("1", NA, NA, NA),
+  M100_Q11 = c(NA, NA, 4, NA),
+  M100_Q11_1 = c(2, NA, NA, NA),
+  M200_Q20 = c(NA, 3, NA, 5),
+  M200_Q21 = c(NA, 4, NA, 6),
+  check.names = FALSE
+)
+
+# The primitive orders numeric suffixes and converts the numeric-like
+# character duplicate to numeric. collapse_measures_wide() calls this
+# internally for the same _A# step.
+collapsed_columns <- collapse_versioned_columns(
+  raw_measures, suffix_pattern = "_A\\d+$", coerce = "common"
+)
+collapsed_columns[c("Short_code", "M100_Q10", "M100_Q11")]
+```
+
+Now widen the measure columns. `collapse_measures_wide()` uses `Short_code`
+to select the matching `M####_` columns and returns one row per respondent,
+date, and measure code. It also delegates the final `Q#_1` merge to the same
+suffix primitive.
+
+```{r}
+wide_by_measure <- collapse_measures_wide(
+  collapsed_columns,
+  item_keep_pattern = "^Q\\d+$",
+  coerce_wide_numeric = TRUE
+)
+wide_by_measure
+```
+
+If the analysis needs one row per respondent/date rather than one row per
+M-coded measure, consolidate the measure rows after widening. This explicit
+aggregator preserves missingness and stops if two measures provide different
+values for the same Q item.
+
+```{r}
+first_nonmissing_checked <- function(x) {
+  values <- x[!is.na(x)]
+  if (length(unique(values)) > 1L) {
+    stop("Conflicting non-missing values for one respondent/date.")
+  }
+  if (length(values)) values[[1L]] else NA_real_
+}
+
+combined_items <- wide_by_measure |>
+  dplyr::group_by(Respondent_ID, Submitted) |>
+  dplyr::summarise(
+    dplyr::across(dplyr::starts_with("Q"), first_nonmissing_checked),
+    .groups = "drop"
+  )
+combined_items
+```
+
+For a real export, use `collapse_measures_wide(raw_nf)` directly: it performs
+the `_A#` collapse and `Q#_1` merge internally. Call
+`collapse_versioned_columns()` separately when you need to inspect or stage
+the column collapse, or when applying the same deterministic suffix policy to
+another set of exported columns.
 
 ## Scoring a real NF export
 

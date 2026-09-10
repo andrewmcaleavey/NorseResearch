@@ -24,11 +24,11 @@
 #'
 #' **Clean and reshape**
 #'
-#' - [clean_NF_names()], [collapse_measures_wide()], [combine_suffix_variables()], [combine_q_vars()], [replace_98s_99s()], [nicer_id_var()], and [get_first_obs()] standardize messy column names, widen repeated measures, and build clean respondent identifiers.
+#' - [clean_NF_names()], [collapse_versioned_columns()], [collapse_measures_wide()], [combine_suffix_variables()], [combine_q_vars()], [replace_98s_99s()], [nicer_id_var()], [get_first_obs()], and [get_first_nonmissing_obs()] standardize messy column names, widen repeated measures, and build clean respondent identifiers.
 #'
 #' **Versioning, lookup, and metadata**
 #'
-#' - [check_version_nf()] detects which NF version(s) are present. [lookup_item()] looks up item text by `Q`-number ([get_item_text()] is a deprecated alias). [get_nicer_name()] and [get_nf3_nicer_name()] turn short scale codes (e.g. `"sad"`) into readable names (e.g. `"Sad Affect"`). [lookup_trigger()] and [lookup_trigger_among()] identify trigger items.
+#' - [check_version_nf()] detects which NF version(s) are present, [check_nf_range()] validates item and score ranges, and [reverse_items()] exposes the authoritative reverse-item definitions. [lookup_item()] looks up item text by `Q`-number ([get_item_text()] is a deprecated alias). [get_nicer_name()] and [get_nf3_nicer_name()] turn short scale codes (e.g. `"sad"`) into readable names (e.g. `"Sad Affect"`). [lookup_trigger()] and [lookup_trigger_among()] identify trigger items.
 #'
 #' **Score scales**
 #'

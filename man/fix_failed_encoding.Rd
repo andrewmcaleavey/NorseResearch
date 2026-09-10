@@ -36,7 +36,8 @@ Defaults to \code{c("latin1", "Windows-1252")}.}
 
 \item{sanitize_invalid}{If \code{TRUE} (default), attempts to sanitize invalid
 UTF-8 strings for safer processing using \code{iconv(sub="byte")}.
-This is conservative: it preserves problematic bytes as \if{html}{\out{<xx>}} escapes.}
+This is conservative: it preserves problematic bytes as \if{html}{\out{<xx>}} escapes and
+leaves values unchanged when a safe repair cannot be established.}
 }
 \value{
 A data.frame of the same class as \code{data} with repaired character columns.

@@ -193,7 +193,7 @@ testthat::test_that("combine_suffix_variables coalesces suffix columns and drops
 
   testthat::expect_true("Q140" %in% names(out))
   testthat::expect_false(any(c("Q140_1", "Q140_2") %in% names(out)))
-  testthat::expect_equal(out$Q140, c(1, 2, 3, 4))
+  testthat::expect_equal(out$Q140, c(1, 2, 5, 4))
   testthat::expect_equal(out$Q141, df$Q141)
 })
 
@@ -214,4 +214,30 @@ testthat::test_that("combine_suffix_variables ignores non-matching base patterns
   testthat::expect_true("Q1" %in% names(out))
   testthat::expect_false("Q1_1" %in% names(out))
   testthat::expect_equal(out$Q1, c(2, 1))
+})
+
+testthat::test_that("combine_suffix_variables can create a base from multiple suffixed columns", {
+  combine_suffix_variables <- get_fun("combine_suffix_variables")
+  dat <- data.frame(Q1_1 = NA, Q1_2 = 2, check.names = FALSE)
+
+  out <- combine_suffix_variables(dat)
+
+  testthat::expect_equal(out$Q1, 2)
+  testthat::expect_false(any(c("Q1_1", "Q1_2") %in% names(out)))
+})
+
+testthat::test_that("combine_suffix_variables uses sep and numeric suffix priority", {
+  combine_suffix_variables <- get_fun("combine_suffix_variables")
+
+  dat <- data.frame(
+    Q1 = NA,
+    Q1.2 = 2,
+    Q1.10 = 10,
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  out <- combine_suffix_variables(dat, sep = ".")
+  testthat::expect_equal(out$Q1, 10)
+  testthat::expect_false(any(c("Q1.2", "Q1.10") %in% names(out)))
 })

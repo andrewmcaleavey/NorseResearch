@@ -57,6 +57,10 @@ test_that("combine_q_vars errors on conflict", {
   )
 
   expect_error(combine_q_vars(df_conflict), "Conflict")
+  expect_equal(
+    combine_q_vars(df_conflict, conflict = "highest_suffix")$Q140,
+    c(2, 3)
+  )
 })
 
 # Create a small mapping table for testing.

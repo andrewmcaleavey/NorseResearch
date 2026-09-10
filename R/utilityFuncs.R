@@ -1,5 +1,173 @@
 # utility functions, mostly developed for HV analysis 2025.
 
+#' Collapse columns that contain numeric version suffixes
+#'
+#' Collapse columns such as `Q140`, `Q140_1`, and `Q140_10` into the unsuffixed
+#' base column. Numeric suffixes are ordered numerically, so `_10` is preferred
+#' to `_2` when both contain a value. The unsuffixed column, when present, is
+#' treated as the lowest-priority version.
+#'
+#' @param dat A data frame or tibble.
+#' @param suffix_pattern Regular expression matching the numeric suffix at the
+#'   end of a column name. The default matches `_1`, `_2`, and so on. Custom
+#'   patterns such as `"_A\\d+$"` are supported; the matched names must still
+#'   end in digits.
+#' @param conflict Conflict policy when more than one version is non-missing in
+#'   a row. `"highest_suffix"` (the default) keeps the value from the highest
+#'   numeric suffix. `"error"` stops and reports the affected rows.
+#' @param coerce Type coercion policy. With `"common"` (the default),
+#'   numeric-like character values are converted to numeric and otherwise
+#'   participating values are converted to character. Date/POSIX values are
+#'   preserved when all participating columns have the same class. With
+#'   `"none"`, incompatible participating column types cause an error.
+#' @param base_names Optional character vector restricting which base names are
+#'   collapsed. By default every base identified by `suffix_pattern` is used.
+#'
+#' @return `dat` with the selected suffixed columns collapsed into their base
+#'   names. If all values in a row are missing, the result is missing; its type
+#'   follows the common-type rules described under `coerce`.
+#' @export
+#'
+#' @examples
+#' dat <- data.frame(
+#'   Q140 = c(NA, 2, 3),
+#'   Q140_2 = c(2, NA, NA),
+#'   Q140_10 = c(10, NA, NA)
+#' )
+#' collapse_versioned_columns(dat)$Q140
+collapse_versioned_columns <- function(dat,
+                                       suffix_pattern = "_\\d+$",
+                                       conflict = c("highest_suffix", "error"),
+                                       coerce = c("common", "none"),
+                                       base_names = NULL) {
+  if (!is.data.frame(dat)) {
+    stop("dat must be a data frame or tibble.", call. = FALSE)
+  }
+  if (!is.character(suffix_pattern) || length(suffix_pattern) != 1L) {
+    stop("suffix_pattern must be a single regular expression.", call. = FALSE)
+  }
+
+  conflict <- match.arg(conflict)
+  coerce <- match.arg(coerce)
+  suffix_cols <- grep(suffix_pattern, names(dat), value = TRUE)
+  if (!length(suffix_cols)) return(dat)
+
+  if (!all(grepl("[0-9]+$", suffix_cols))) {
+    stop("suffix_pattern must identify column names ending in numeric suffixes.",
+         call. = FALSE)
+  }
+
+  suffix_bases <- sub(suffix_pattern, "", suffix_cols)
+  if (any(!nzchar(suffix_bases))) {
+    stop("suffix_pattern must leave a non-empty base column name.", call. = FALSE)
+  }
+
+  if (is.null(base_names)) {
+    base_names <- unique(suffix_bases)
+  } else {
+    if (!is.character(base_names)) {
+      stop("base_names must be a character vector.", call. = FALSE)
+    }
+    base_names <- unique(base_names)
+    keep <- suffix_bases %in% base_names
+    suffix_cols <- suffix_cols[keep]
+    suffix_bases <- suffix_bases[keep]
+    if (!length(suffix_cols)) return(dat)
+  }
+
+  coerce_values <- function(values, names_for_error) {
+    if (coerce == "none") {
+      type_groups <- vapply(values, function(x) {
+        if (is.numeric(x) || is.logical(x)) "numeric" else
+          if (inherits(x, "Date")) "Date" else
+            if (inherits(x, "POSIXt")) "POSIXt" else
+              if (is.character(x) || is.factor(x)) "character" else
+                paste(class(x), collapse = "/")
+      }, character(1))
+      if (length(unique(type_groups)) > 1L) {
+        stop("Cannot combine incompatible column types for ",
+             paste(names_for_error, collapse = ", "),
+             "; use coerce = 'common' to coerce them.", call. = FALSE)
+      }
+      return(values)
+    }
+
+    is_date <- vapply(values, inherits, logical(1), what = "Date")
+    is_posix <- vapply(values, inherits, logical(1), what = "POSIXt")
+    if (all(is_date) || all(is_posix)) return(values)
+
+    has_values <- any(vapply(values, function(x) any(!is.na(x)), logical(1)))
+    if (!has_values) {
+      # Prefer character for an all-missing mixed group. It avoids silently
+      # changing an explicitly character export while retaining numeric type
+      # when every participating column is numeric.
+      if (any(vapply(values, is.character, logical(1)))) {
+        return(lapply(values, as.character))
+      }
+      if (all(vapply(values, function(x) is.numeric(x) || is.logical(x), logical(1)))) {
+        return(lapply(values, as.numeric))
+      }
+      return(lapply(values, as.character))
+    }
+
+    numeric_like <- vapply(values, function(x) {
+      if (is.numeric(x) || is.logical(x)) return(TRUE)
+      if (is.factor(x)) x <- as.character(x)
+      if (!is.character(x)) return(FALSE)
+      y <- trimws(x)
+      y <- y[!is.na(y) & nzchar(y)]
+      !length(y) || all(!is.na(suppressWarnings(as.numeric(y))))
+    }, logical(1))
+
+    if (all(numeric_like)) {
+      return(lapply(values, function(x) {
+        if (is.factor(x)) x <- as.character(x)
+        suppressWarnings(as.numeric(x))
+      }))
+    }
+    lapply(values, as.character)
+  }
+
+  combine_values <- function(values, column_names) {
+    values <- coerce_values(values, column_names)
+    out <- values[[1L]]
+    if (length(values) > 1L) {
+      for (i in seq.int(2L, length(values))) {
+        take <- is.na(out)
+        if (any(take)) out[take] <- values[[i]][take]
+      }
+    }
+    out
+  }
+
+  out <- dat
+  drop_cols <- character(0)
+  for (base in base_names) {
+    matching <- suffix_cols[suffix_bases == base]
+    if (!length(matching)) next
+
+    suffix_numbers <- suppressWarnings(as.numeric(sub(".*?([0-9]+)$", "\\1", matching)))
+    matching <- matching[order(suffix_numbers, decreasing = TRUE)]
+    columns <- matching
+    if (base %in% names(out)) columns <- c(columns, base)
+
+    values <- lapply(columns, function(column) out[[column]])
+    nonmissing <- rowSums(do.call(
+      cbind,
+      lapply(values, function(x) !is.na(x))
+    ))
+    if (conflict == "error" && any(nonmissing > 1L)) {
+      rows <- which(nonmissing > 1L)
+      stop("Conflict while collapsing '", base, "' in rows: ",
+           paste(rows, collapse = ", "), call. = FALSE)
+    }
+    out[[base]] <- combine_values(values, columns)
+    drop_cols <- c(drop_cols, setdiff(matching, base))
+  }
+
+  out[setdiff(names(out), unique(drop_cols))]
+}
+
 #' Collapse suffixed _A# variables and widen M-measure items (stable row order)
 #'
 #' This function:
@@ -24,6 +192,9 @@
 #' @param return_tibble Logical; return tibble if TRUE, else data.frame. Default TRUE.
 #' @param coerce_wide_numeric Logical; try to coerce wide columns to numeric. Default FALSE.
 #' @param respondent_col Name of the respondent identifier column. Default `"Respondent_ID"`.
+#' @param conflict Conflict policy for suffix collisions. Defaults to
+#'   `"highest_suffix"` for compatibility with existing NF exports; use
+#'   `"error"` to reject rows containing more than one non-missing version.
 #'
 #' @return A tibble (default) or data.frame with suffixed columns collapsed, measures widened by item,
 #'   and rows ordered within each Respondent_ID by `Innsendt`/`Submitted` when available.
@@ -45,9 +216,11 @@ collapse_measures_wide <- function(
     fun.aggregate       = NULL,
     return_tibble       = TRUE,
     coerce_wide_numeric = FALSE,
-    respondent_col      = "Respondent_ID"
+    respondent_col      = "Respondent_ID",
+    conflict            = c("highest_suffix", "error")
 ) {
   stopifnot(is.data.frame(df))
+  conflict <- match.arg(conflict)
   df <- df |> dplyr::select(where(function(x) !all(is.na(x))))
 
   # ---- Step 0: Detect code column and create stable `.code` ----
@@ -60,22 +233,12 @@ collapse_measures_wide <- function(
 
   # ---- Step 1: Collapse *_A# columns into base names ----
   data <- df
-  a_vars <- grep(drop_suffix_pattern, names(data), value = TRUE)
-  if (length(a_vars) > 0) {
-    bases <- unique(stringr::str_remove(a_vars, drop_suffix_pattern))
-    for (b in bases) {
-      b_cols <- grep(paste0("^", b, drop_suffix_pattern), names(data), value = TRUE)
-      ord <- order(as.numeric(stringr::str_extract(b_cols, "(?<=_A)\\d+$")), decreasing = TRUE)
-      b_cols <- b_cols[ord]
-
-      if (b %in% names(data)) {
-        data <- dplyr::mutate(data, !!b := dplyr::coalesce(!!!rlang::syms(b_cols), .data[[b]]))
-      } else {
-        data <- dplyr::mutate(data, !!b := dplyr::coalesce(!!!rlang::syms(b_cols)))
-      }
-    }
-    data <- dplyr::select(data, -tidyselect::matches(drop_suffix_pattern))
-  }
+  data <- collapse_versioned_columns(
+    data,
+    suffix_pattern = drop_suffix_pattern,
+    conflict = conflict,
+    coerce = "common"
+  )
 
   # ---- Step 2: Melt/filter/cast per measure using `.code` ----
   DT <- data.table::as.data.table(data)
@@ -213,18 +376,14 @@ collapse_measures_wide <- function(
   # ---- Step: Merge Qxxx_1 into Qxxx, then drop Qxxx_1 ----
   q1_cols <- grep("^Q\\d+_1$", names(df_wide), value = TRUE)
   if (length(q1_cols)) {
-    for (q1 in q1_cols) {
-      base <- sub("_1$", "", q1)
-      if (base %in% names(df_wide)) {
-        # Prefer existing base; fill its gaps from *_1, then drop *_1
-        data.table::set(df_wide, j = base,
-                        value = data.table::fcoalesce(df_wide[[base]], df_wide[[q1]]))
-        data.table::set(df_wide, j = q1, value = NULL)
-      } else {
-        # No base yet: simple rename *_1 -> base
-        data.table::setnames(df_wide, q1, base)
-      }
-    }
+    q_bases <- unique(sub("_1$", "", q1_cols))
+    df_wide <- collapse_versioned_columns(
+      as.data.frame(df_wide),
+      suffix_pattern = "_1$",
+      conflict = conflict,
+      coerce = "common",
+      base_names = q_bases
+    )
   }
 
 
@@ -333,14 +492,16 @@ enforce_within_id_order <- function(DT, respondent_col = "Respondent_ID", time_o
 #'   unchanged.
 #'
 #' @details
-#' The following renamings are attempted:
+#' The following renamings are attempted. When multiple source aliases are
+#' available, the first listed alias is used and the other source columns are
+#' left unchanged. This keeps duplicate target names from being created.
 #' \itemize{
 #'   \item \code{Pasientid} → \code{Respondent_ID}
 #'   \item \code{Skjemapakke} → \code{Measurepackage}
-#'   \item \code{Skjema} → \code{Measure_name}
+#'   \item \code{Skjema} or \code{Skjemanavn} → \code{Measure_name}
 #'   \item \code{Kortkode} → \code{Short_code}
 #'   \item \code{Innsendt} → \code{Submitted}
-#'   \item \code{Varighet} → \code{Duration}
+#'   \item \code{Varighet} or \code{Varigheit} → \code{Duration}
 #' }
 #'
 #' If any of the target English names already exist in \code{dat}, those specific
@@ -357,21 +518,22 @@ enforce_within_id_order <- function(DT, respondent_col = "Respondent_ID", time_o
 #'
 #' @export
 make_english_export <- function(dat) {
-  lookup <- c(
+  lookup <- list(
     Respondent_ID = "Pasientid",
-    Measurepackage  = "Skjemapakke",
-    Measure_name = "Skjema",
-    Measure_name = "Skjemanavn",
+    Measurepackage = "Skjemapakke",
+    Measure_name = c("Skjema", "Skjemanavn"),
     Short_code = "Kortkode",
     Submitted = "Innsendt",
-    Duration = "Varighet",
-    Duration = "Varigheit"
+    Duration = c("Varighet", "Varigheit")
   )
 
-  # Drop any mappings where the target name already exists in dat
-  lookup <- lookup[!names(lookup) %in% names(dat)]
-
-  dplyr::rename(dat, dplyr::any_of(lookup))
+  out <- dat
+  for (target in names(lookup)) {
+    if (target %in% names(out)) next
+    source <- intersect(lookup[[target]], names(out))
+    if (length(source)) names(out)[match(source[[1L]], names(out))] <- target
+  }
+  out
 }
 
 #' Create formatted GT tables for factor analysis results

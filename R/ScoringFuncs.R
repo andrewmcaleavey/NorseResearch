@@ -25,25 +25,11 @@ rev_score <- function(x){
   x * -1 + 8
 }
 
-# REVERSING NORSE 2.0 Items
-rev_score_NORSE2 <- function(data) {mutate(data,  # note: rev_score() is defined above
-                  Q27 = rev_score(Q27),   Q131 = rev_score(Q131),
-                  Q140 = rev_score(Q140), Q40 = rev_score(Q40),
-                  Q15 = rev_score(Q15),   Q132 = rev_score(Q132),
-                  Q10 = rev_score(Q10),   Q62 = rev_score(Q62),
-                  Q135 = rev_score(Q135), Q50 = rev_score(Q50),
-                  Q134 = rev_score(Q134), Q109 = rev_score(Q109),
-                  Q133 = rev_score(Q133), Q154 = rev_score(Q154),
-                  Q80 = rev_score(Q80),   Q108 = rev_score(Q108),
-                  Q136 = rev_score(Q136), Q155 = rev_score(Q155),
-                  Q138 = rev_score(Q138), Q84 = rev_score(Q84),
-                  Q139 = rev_score(Q139), Q82 = rev_score(Q82),
-                  Q67 = rev_score(Q67),   Q43 = rev_score(Q43),
-                  # alliance items should be reversed too (8 Sept 2022)
-                  Q11  = rev_score(Q11),
-                  Q12  = rev_score(Q12),
-                  Q13  = rev_score(Q13),
-                  Q14  = rev_score(Q14))
+# Reverse the authoritative NF2 item list. Missing columns are ignored so this
+# helper can be used on a selected subset of an export.
+rev_score_NORSE2 <- function(data) {
+  reverse <- intersect(reverse_items("2"), names(data))
+  dplyr::mutate(data, dplyr::across(dplyr::all_of(reverse), rev_score))
 }
 
 
@@ -102,6 +88,9 @@ score_NORSE_trigger <- function(dat,
   # vars is a vector of variable names (e.g., somAnx.names)
   # trigger is the trigger item, defaults to use the identified trigger in
   # `item_descriptions` through convenience function `find_trigger_among()`.
+  vars <- intersect(vars, names(dat))
+  if (!length(vars)) return(rep(NA_real_, nrow(dat)))
+
   dat <- dplyr::select(dat, dplyr::all_of(vars)) %>%
     transmute(score = rowMeans(., na.rm = TRUE)) %>%
     mutate(score = ifelse(is.nan(score), NA, score))
@@ -230,55 +219,8 @@ score_all_NORSE2 <- function(dat, process_vars = TRUE){
                   ona          = score_NORSE_mean(dat, ona.names)
     )
   }
-  # should insert some checks here to see if range is appropriate.
-  if(any(c(dat$cog          < 1,
-           dat$control      < 1,
-           dat$eating       < 1,
-           dat$genFunc      < 1,
-           dat$hopeless     < 1,
-           dat$internal     < 1,
-           dat$irritable    < 1,
-           dat$ready        < 1,
-           dat$recovEnv     < 1,
-           dat$sad          < 1,
-           dat$selfCrit     < 1,
-           dat$avoidSit     < 1,
-           dat$avoidSoc     < 1,
-           dat$socialSafety < 1,
-           dat$somAnx       < 1,
-           dat$subRecov     < 1,
-           dat$subUse       < 1,
-           dat$suicide      < 1,
-           dat$trauma       < 1,
-           dat$worry        < 1,
-           dat$ona          < 1),
-         na.rm = TRUE)){
-    warning("Some values below 1. Scale scores not valid. Check item data.")
-  }
-  if(any(c(dat$cog          > 7,
-           dat$control      > 7,
-           dat$eating       > 7,
-           dat$genFunc      > 7,
-           dat$hopeless     > 7,
-           dat$internal     > 7,
-           dat$irritable    > 7,
-           dat$ready        > 7,
-           dat$recovEnv     > 7,
-           dat$sad          > 7,
-           dat$selfCrit     > 7,
-           dat$avoidSit     > 7,
-           dat$avoidSoc     > 7,
-           dat$socialSafety > 7,
-           dat$somAnx       > 7,
-           dat$subRecov     > 7,
-           dat$subUse       > 7,
-           dat$suicide      > 7,
-           dat$trauma       > 7,
-           dat$worry        > 7,
-           dat$ona          > 7),
-         na.rm = TRUE)){
-    warning("Some values above 7. Scale scores not valid. Check item data.")
-  }
+  score_vars <- intersect(c(scale_names, "alliance", "needs"), names(dat))
+  check_nf_range(dat, vars = score_vars, action = "warn")
   dat
 }
 
@@ -587,7 +529,22 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
            suicide = score_NORSE_trigger(dat, suicide.names.nf3),
            worry = score_NORSE_trigger(dat, worry.names.nf3),
            ona = score_NORSE_mean(dat, ona.names.nf3),
-           QOL = Q226)
+           QOL = if ("Q226" %in% names(dat)) dat[["Q226"]] else rep(NA_real_, nrow(dat)))
+
+  if (isTRUE(process_vars)) {
+    dat <- dplyr::mutate(
+      dat,
+      alliance = score_NORSE_mean(dat, alliance.names.nf3),
+      pref = score_NORSE_mean(dat, pref.names.nf3)
+    )
+  }
+
+  check_nf_range(
+    dat,
+    vars = intersect(c(scale_names_nf3, "QOL"), names(dat)),
+    action = "warn"
+  )
+  dat
 }
 
 #' Check which version(s) of the NF are present in a data set.
@@ -596,8 +553,10 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
 #'
 #' @param dat a data.frame
 #'
-#' @return a character vector containing one or more of the following: "2", "3".
-#' If no matching items are found, will return "No NF items found."
+#' @return A character vector containing one or more of the stable version
+#' identifiers `"2"` and `"3"`, in that order. If no matching items are found,
+#' returns `"No NF items found."`. Raw export names are supported when they
+#' contain an item token such as `M1172_Q142`.
 #' @export
 #'
 #' @examples
@@ -605,16 +564,31 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
 #' check_version_nf(dataGoesHere)
 #' }
 check_version_nf <- function(dat){
-  if(any(grepl("Q1[0-9]{2}", names(dat))) &
-     any(grepl("Q2[0-9]{2}", names(dat)))){
-    return(c("2", "3"))
-  } else if(any(grepl("Q1[0-9]{2}", names(dat)))){
-    return(c("2"))
-  } else if(any(grepl("Q2[0-9]{2}", names(dat)))){
-    return(c("3"))
-  } else {
-    return("No NF items found.")
+  if (!is.data.frame(dat)) {
+    stop("dat must be a data frame or tibble.", call. = FALSE)
   }
+
+  item_tokens <- unlist(
+    regmatches(
+      names(dat),
+      gregexpr("Q[0-9]+(?:\\.[0-9]+)?", names(dat), perl = TRUE)
+    ),
+    use.names = FALSE
+  )
+  item_tokens <- unique(item_tokens)
+  if (!length(item_tokens)) return("No NF items found.")
+
+  nf2_items <- nf2.1.item.descriptions$item
+  nf3_items <- NF3.1_items$item
+  nf2_exclusive <- setdiff(nf2_items, nf3_items)
+  nf3_exclusive <- setdiff(nf3_items, nf2_items)
+  has_nf2 <- any(item_tokens %in% nf2_exclusive) ||
+    any(grepl("^Q1[0-9]{2}$", item_tokens))
+  has_nf3 <- any(item_tokens %in% nf3_exclusive) ||
+    any(grepl("^Q2[0-9]{2}$", item_tokens))
+
+  output <- c(if (has_nf2) "2", if (has_nf3) "3")
+  if (length(output) == 0L) "No NF items found." else output
 }
 
 #####
@@ -635,7 +609,10 @@ check_version_nf <- function(dat){
 #'   only item indicators. For example, `M53_Q142_1` should instead be `Q142`.
 #' @param process_vars Logical. Should the process variables be included?
 #' @param versions Which versions of the NF do you want to score? Includes both
-#'   2.x and 3.x by default.
+#'   versions 2.x and 3.x by default. Stable labels are `"2"` and `"3"`;
+#'   compatible aliases such as `"NF2"`, `"2.1"`, `"NF3"`, and `"3.1"` are
+#'   accepted. Values in `version_variable` are matched to the selected
+#'   versions exactly after the same normalization.
 #' @param version_variable Character name of the variable encoding the version
 #'   to use for each row.
 #'
@@ -650,6 +627,8 @@ score_all <- function(dat,
                       process_vars = TRUE,
                       versions = c("2", "3"),
                       version_variable = "Ver_10") {
+
+  versions <- normalize_nf_versions(versions, arg = "versions")
 
   # Helper function for non-process items: -98 becomes 1; -99 becomes NA.
   prepare_items <- function(dat, items) {
@@ -678,6 +657,15 @@ score_all <- function(dat,
   if (!any(names(dat) == version_variable)) {
     stop("The version_variable does not exist in the dataframe.\n")
   }
+
+  # Normalize version labels only while scoring. This makes matching exact
+  # (so a value such as "12" cannot be mistaken for NF2) without changing the
+  # version column returned to the caller.
+  original_version <- dat[[version_variable]]
+  dat[[version_variable]] <- normalize_nf_version_values(
+    original_version,
+    versions = versions
+  )
 
   dat <- dplyr::ungroup(dat) %>%
     dplyr::mutate(
@@ -781,7 +769,7 @@ score_all <- function(dat,
         grepl("2", .data[[version_variable]]) ~ score_NORSE_mean(prepare_items(dat, ona.names), ona.names),
         TRUE ~ NA
       ),
-      QOL = Q226,
+      QOL = if ("Q226" %in% names(dat)) .data[["Q226"]] else rep(NA_real_, nrow(dat)),
       # Scales only on NF2
       trauma = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
@@ -855,18 +843,12 @@ score_all <- function(dat,
                          ))
   }
 
-  # Check if scale scores are in valid range.
-  vals <- dat %>%
-    dplyr::select(dplyr::all_of(scale_names_nf3)) %>%
-    unlist(use.names = FALSE)
-
-  if (any(vals < 1, na.rm = TRUE)) {
-    warning("Some values below 1. Scale scores not valid. Check item data.")
-  }
-  if (any(vals > 7, na.rm = TRUE)) {
-    warning("Some values above 7. Scale scores not valid. Check item data.")
-  }
-
+  dat[[version_variable]] <- original_version
+  score_vars <- intersect(
+    c(scale_names, scale_names_nf3, "alliance", "needs", "pref", "QOL"),
+    names(dat)
+  )
+  check_nf_range(dat, vars = score_vars, action = "warn")
   dat
 }
 
@@ -885,9 +867,16 @@ score_all <- function(dat,
 #'
 #' @param dat A data frame containing the variables to be merged.
 #' @param sep A character string specifying the separator between the base name and the suffix.
-#'   Default is `"_"`
+#'   Default is `"_"`. It is treated literally.
+#' @param conflict Conflict policy for rows with multiple non-missing versions.
+#'   The default, `"highest_suffix"`, preserves the historical compatibility
+#'   behavior. Use `"error"` to reject such rows.
 #'
 #' @return A data frame with merged variables, where redundant suffix columns are removed.
+#' @details This compatibility wrapper delegates to [collapse_versioned_columns()]
+#'   and applies numeric ordering to suffixes. For example, `_10` takes
+#'   priority over `_2` when both contain values. The `sep` argument is now
+#'   honored literally.
 #' @export
 #'
 #' @examples
@@ -901,27 +890,29 @@ score_all <- function(dat,
 #'
 #' df_combined <- combine_suffix_variables(df)
 #' print(df_combined)
-combine_suffix_variables <- function(dat, sep = "_") {
-  # Identify relevant variable names
-  var_names <- names(dat)
-
-  # Extract base names (e.g., "Q140" from "Q140", "Q140_1", "Q140_2")
-  base_names <- unique(str_extract(var_names, "^[A-Za-z]\\d+"))
-  base_names <- base_names[!is.na(base_names)]  # Remove NA values
-
-  # Iterate over each base name and combine values
-  for (base in base_names) {
-    # Find all columns that start with the base name
-    matching_cols <- var_names[str_detect(var_names, paste0("^", base, "(_\\d+)?$"))]
-
-    if (length(matching_cols) > 1) {
-      # Use coalesce to merge values row-wise
-      dat[[base]] <- do.call(coalesce, dat[matching_cols])
-
-      # Remove the suffix columns after merging using base R
-      dat <- dat[, !names(dat) %in% setdiff(matching_cols, base)]
-    }
+combine_suffix_variables <- function(dat,
+                                     sep = "_",
+                                     conflict = c("highest_suffix", "error")) {
+  if (!is.character(sep) || length(sep) != 1L || is.na(sep) || !nzchar(sep)) {
+    stop("sep must be a single character string.", call. = FALSE)
   }
+  conflict <- match.arg(conflict)
 
-  return(dat)
+  # Keep the legacy scope: only base names made from one letter and digits
+  # are considered. The actual collapse and numeric suffix ordering live in
+  # collapse_versioned_columns().
+  suffix_pattern <- paste0(stringr::str_escape(sep), "\\d+$")
+  suffix_cols <- grep(suffix_pattern, names(dat), value = TRUE)
+  base_names <- unique(c(
+    names(dat)[grepl("^[A-Za-z]\\d+$", names(dat))],
+    sub(suffix_pattern, "", suffix_cols)
+  ))
+  base_names <- base_names[grepl("^[A-Za-z]\\d+$", base_names)]
+  collapse_versioned_columns(
+    dat,
+    suffix_pattern = suffix_pattern,
+    conflict = conflict,
+    coerce = "common",
+    base_names = base_names
+  )
 }

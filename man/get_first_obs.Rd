@@ -16,7 +16,10 @@ Works if variable name is quoted or not.}
 A tibble.
 }
 \description{
-Note: This function does not sort the data by date.
+The first row is the first row in the input data for each ID;
+the function does not sort by date or any other column. Arrange the data
+before calling this function when a chronological first observation is
+required. The ID may contain spaces and may be supplied quoted or unquoted.
 }
 \examples{
 data(synthetic_data, package = "NorseResearch")

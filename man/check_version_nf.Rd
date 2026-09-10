@@ -10,8 +10,10 @@ check_version_nf(dat)
 \item{dat}{a data.frame}
 }
 \value{
-a character vector containing one or more of the following: "2", "3".
-If no matching items are found, will return "No NF items found."
+A character vector containing one or more of the stable version
+identifiers \code{"2"} and \code{"3"}, in that order. If no matching items are found,
+returns \code{"No NF items found."}. Raw export names are supported when they
+contain an item token such as \code{M1172_Q142}.
 }
 \description{
 Should not require the data to already have clean names. But needs to work when that is the case.

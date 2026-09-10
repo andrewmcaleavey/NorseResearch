@@ -21,14 +21,16 @@ English name already exists in the dataset, the renaming for that variable
 is skipped to avoid overwriting.
 }
 \details{
-The following renamings are attempted:
+The following renamings are attempted. When multiple source aliases are
+available, the first listed alias is used and the other source columns are
+left unchanged. This keeps duplicate target names from being created.
 \itemize{
 \item \code{Pasientid} → \code{Respondent_ID}
 \item \code{Skjemapakke} → \code{Measurepackage}
-\item \code{Skjema} → \code{Measure_name}
+\item \code{Skjema} or \code{Skjemanavn} → \code{Measure_name}
 \item \code{Kortkode} → \code{Short_code}
 \item \code{Innsendt} → \code{Submitted}
-\item \code{Varighet} → \code{Duration}
+\item \code{Varighet} or \code{Varigheit} → \code{Duration}
 }
 
 If any of the target English names already exist in \code{dat}, those specific

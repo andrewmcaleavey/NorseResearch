@@ -19,6 +19,44 @@ test_that("collapse_measures_wide widens matching measures and orders observatio
   expect_true(is.list(attr(out, "q_numeric_coercion")))
 })
 
+test_that("collapse_versioned_columns orders numeric suffixes and handles coercion", {
+  dat <- data.frame(
+    Q1 = c(NA, "1", NA),
+    Q1_2 = c("2", NA, NA),
+    Q1_10 = c("10", NA, NA),
+    Q2_1 = as.character(c(NA, NA, NA)),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  out <- collapse_versioned_columns(dat)
+
+  expect_equal(out$Q1, c(10, 1, NA_real_))
+  expect_false(any(c("Q1_2", "Q1_10", "Q2_1") %in% names(out)))
+  expect_type(out$Q2, "character")
+  expect_true(all(is.na(out$Q2)))
+})
+
+test_that("collapse_versioned_columns exposes conflict policies", {
+  dat <- data.frame(Q1 = 1, Q1_1 = 2, check.names = FALSE)
+
+  expect_error(
+    collapse_versioned_columns(dat, conflict = "error"),
+    "Conflict"
+  )
+  expect_equal(
+    collapse_versioned_columns(dat, conflict = "highest_suffix")$Q1,
+    2
+  )
+  expect_error(
+    collapse_versioned_columns(
+      data.frame(Q1 = 1, Q1_1 = "two", check.names = FALSE),
+      coerce = "none"
+    ),
+    "incompatible"
+  )
+})
+
 test_that("collapse_measures_wide prefers higher A suffixes and validates code columns", {
   dat <- data.frame(
     Respondent_ID = 1,

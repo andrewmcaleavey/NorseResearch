@@ -79,7 +79,6 @@
 #'
 #' @format A data frame with 18620 observations of 170 variables.
 #' \describe{
-#'   \itemize{
 #'     \item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
 #'     \item{\code{anon_tx_id}} {Numeric. Unique treatment number, anonymized.}
 #'     \item{\code{date}} {Date. Date (and time) NF was completed.}
@@ -127,7 +126,6 @@
 #'     \item{\code{respondent_test_account}} {Numeric.}
 #'     \item{\code{respondent_last_login}} {Date.}
 #'     \item{\code{respondent_communication_disabled}} {Numeric.}
-#'   }
 #' }
 #'
 #' @source Processed from NORSEpkg::hf.all.scored.2021.05.10.
@@ -143,7 +141,6 @@
 #'
 #' @format A data frame with one row per synthetic assessment.
 #' \describe{
-#'   \itemize{
 #'     \item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
 #'     \item{\code{date}} {Date. Date (and time) NF was completed.}
 #'     \item{\code{pt_first_date}} {Date. First date in the data for each \code{respondent_id}.}
@@ -153,8 +150,7 @@
 #'     \item{\code{in_or_out}} {Character. Is the current \code{treatment_name} inpatient, outpatient, or unclear.}
 #'     \item{\code{birthyear}} {Character. Year of birth for each \code{respondent_id}.}
 #'     \item{\code{gender}} {Character. Options are "male" and "female".}
-#'     \item{code{OTHERS}} {Others including scale and item names.}
-#'   }
+#'     \item{\code{OTHERS}} {Others including scale and item names.}
 #' }
 #'
 #' @source See \code{data-raw/synthetic_data.R}.
@@ -179,7 +175,6 @@
 #'
 #' @format A data frame with 18620 observations of 170 variables.
 #' \describe{
-#'   \itemize{
 #'     \item{\code{anon_id}} {Numeric. Unique patient number within this data only, anonymized.}
 #'     \item{\code{anon_tx_id}} {Numeric. Unique treatment number, anonymized.}
 #'     \item{\code{date}} {Date. Date (and time) NF was completed.}
@@ -230,7 +225,6 @@
 #'     \item{\code{cog_fscore}} {Numeric. Cognitive Problems subscale, recoded with factor scoring. Same for other scale scores.}
 #'     \item{\code{cog_fscore_se}} {Numeric. Cognitive Problems subscale factor score SE. Same for other scale scores.}
 #'     \item{\code{cog_fs_first_pt}} {Numeric. First Cognitive Problems subscale score for this patient, scored as factor score. Same for other scale scores.}
-#'     }
 #' }
 #'
 #' @source Processed from \code{NORSEpkg::hf.all.scored.2021.05.10}.

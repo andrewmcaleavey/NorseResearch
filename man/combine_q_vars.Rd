@@ -4,7 +4,12 @@
 \alias{combine_q_vars}
 \title{Combine Paired Q Variables}
 \usage{
-combine_q_vars(df, pattern_pre = "^Q\\\\d+$", pattern_suff = "_1")
+combine_q_vars(
+  df,
+  pattern_pre = "^Q\\\\d+$",
+  pattern_suff = "_1",
+  conflict = c("error", "highest_suffix")
+)
 }
 \arguments{
 \item{df}{A data frame containing the Q-variables to be combined.}
@@ -13,6 +18,11 @@ combine_q_vars(df, pattern_pre = "^Q\\\\d+$", pattern_suff = "_1")
 \code{"^Q\\\\d+$"}.}
 
 \item{pattern_suff}{A suffix string to identify the companion variable. Default is \code{"_1"}.}
+
+\item{conflict}{Conflict policy for rows in which both paired values are
+present. The default, \code{"error"}, keeps this function a strict paired-column
+validator. \code{"highest_suffix"} is an explicit compatibility mode that
+delegates to \code{\link[=collapse_versioned_columns]{collapse_versioned_columns()}}.}
 }
 \value{
 A data frame with the Q-variables combined. The base variables are updated with the
@@ -22,16 +32,18 @@ combined values and the companion variables are dropped.
 This function combines paired Q-variables in a data frame. A paired Q-variable consists of a
 base variable and a companion variable whose name is formed by appending a suffix (default: "_1")
 to the base variable name. For each row, the function first checks that at most one of the two
-values is non-missing. If both are non-missing, an error is thrown indicating the conflicting rows.
-Otherwise, it updates the base variable with the companion value if the base variable is missing,
-and then removes the companion variable from the data frame.
+values is non-missing. By default, if both are non-missing, an error is
+thrown indicating the conflicting rows. The explicit \code{conflict = "highest_suffix"} mode is available for legacy exports that need a
+deterministic compatibility rule. Otherwise, it updates the base variable
+with the companion value if the base variable is missing and removes the
+companion variable from the data frame.
 }
 \details{
 The function first identifies all base Q-variables that match \code{pattern_pre} and
 then finds those for which a companion variable (with name equal to the base variable plus
-\code{pattern_suff}) exists. It uses \code{dplyr::mutate(across())} to process these variables:
-for each row, if the base variable is \code{NA} the function replaces it with the companion
-value. If both are non-\code{NA} for any row, the function stops with an error.
+\code{pattern_suff}) exists. It delegates the merge to
+\code{\link[=collapse_versioned_columns]{collapse_versioned_columns()}}. In the default strict mode, if both are
+non-\code{NA} for any row, the function stops with an error.
 }
 \examples{
 \dontrun{

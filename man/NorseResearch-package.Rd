@@ -47,12 +47,12 @@ plot(sa)
 
 \strong{Clean and reshape}
 \itemize{
-\item \code{\link[=clean_NF_names]{clean_NF_names()}}, \code{\link[=collapse_measures_wide]{collapse_measures_wide()}}, \code{\link[=combine_suffix_variables]{combine_suffix_variables()}}, \code{\link[=combine_q_vars]{combine_q_vars()}}, \code{\link[=replace_98s_99s]{replace_98s_99s()}}, \code{\link[=nicer_id_var]{nicer_id_var()}}, and \code{\link[=get_first_obs]{get_first_obs()}} standardize messy column names, widen repeated measures, and build clean respondent identifiers.
+\item \code{\link[=clean_NF_names]{clean_NF_names()}}, \code{\link[=collapse_versioned_columns]{collapse_versioned_columns()}}, \code{\link[=collapse_measures_wide]{collapse_measures_wide()}}, \code{\link[=combine_suffix_variables]{combine_suffix_variables()}}, \code{\link[=combine_q_vars]{combine_q_vars()}}, \code{\link[=replace_98s_99s]{replace_98s_99s()}}, \code{\link[=nicer_id_var]{nicer_id_var()}}, \code{\link[=get_first_obs]{get_first_obs()}}, and \code{\link[=get_first_nonmissing_obs]{get_first_nonmissing_obs()}} standardize messy column names, widen repeated measures, and build clean respondent identifiers.
 }
 
 \strong{Versioning, lookup, and metadata}
 \itemize{
-\item \code{\link[=check_version_nf]{check_version_nf()}} detects which NF version(s) are present. \code{\link[=lookup_item]{lookup_item()}} looks up item text by \code{Q}-number (\code{\link[=get_item_text]{get_item_text()}} is a deprecated alias). \code{\link[=get_nicer_name]{get_nicer_name()}} and \code{\link[=get_nf3_nicer_name]{get_nf3_nicer_name()}} turn short scale codes (e.g. \code{"sad"}) into readable names (e.g. \code{"Sad Affect"}). \code{\link[=lookup_trigger]{lookup_trigger()}} and \code{\link[=lookup_trigger_among]{lookup_trigger_among()}} identify trigger items.
+\item \code{\link[=check_version_nf]{check_version_nf()}} detects which NF version(s) are present, \code{\link[=check_nf_range]{check_nf_range()}} validates item and score ranges, and \code{\link[=reverse_items]{reverse_items()}} exposes the authoritative reverse-item definitions. \code{\link[=lookup_item]{lookup_item()}} looks up item text by \code{Q}-number (\code{\link[=get_item_text]{get_item_text()}} is a deprecated alias). \code{\link[=get_nicer_name]{get_nicer_name()}} and \code{\link[=get_nf3_nicer_name]{get_nf3_nicer_name()}} turn short scale codes (e.g. \code{"sad"}) into readable names (e.g. \code{"Sad Affect"}). \code{\link[=lookup_trigger]{lookup_trigger()}} and \code{\link[=lookup_trigger_among]{lookup_trigger_among()}} identify trigger items.
 }
 
 \strong{Score scales}

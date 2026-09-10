@@ -62,17 +62,20 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 | Function | What it does |
 |---|---|
 | [`clean_NF_names()`](?clean_NF_names) | Standardize messy export column names. |
+| [`collapse_versioned_columns()`](?collapse_versioned_columns) | Collapse numerically suffixed versions with an explicit conflict policy. |
 | [`collapse_measures_wide()`](?collapse_measures_wide) | Collapse `_A#` repeated-measure columns and widen multi-measure items. |
 | [`combine_suffix_variables()`](?combine_suffix_variables), [`combine_q_vars()`](?combine_q_vars) | Merge related columns (by suffix or `Q`-pattern). |
 | [`replace_98s_99s()`](?replace_98s_99s) | Replace sentinel `-98`/`-99` with `1`/`NA`. |
 | [`nicer_id_var()`](?nicer_id_var) | Build a readable respondent ID column. |
-| [`get_first_obs()`](?get_first_obs) | Keep the first observation per respondent. |
+| [`get_first_obs()`](?get_first_obs), [`get_first_nonmissing_obs()`](?get_first_nonmissing_obs) | Keep the first observation, or first usable observation, per respondent. |
 
 ### Versioning, lookup, and metadata
 
 | Function | What it does |
 |---|---|
 | [`check_version_nf()`](?check_version_nf) | Detect which NF version(s) (`2`, `3`, or both) are in a data set. |
+| [`check_nf_range()`](?check_nf_range) | Validate item or score values against an inclusive response range. |
+| [`reverse_items()`](?reverse_items) | Return the authoritative reverse-scored item definitions for NF2 or NF3. |
 | [`lookup_item()`](?lookup_item) | Look up an item's text by `Q`-number. |
 | [`get_item_text()`](?get_item_text) | Deprecated alias for [`lookup_item()`](?lookup_item). |
 | [`get_nicer_name()`](?get_nicer_name), [`get_nf3_nicer_name()`](?get_nf3_nicer_name) | Convert a short scale name (e.g. `"sad"`) to a readable one (e.g. `"Sad Affect"`). |

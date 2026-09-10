@@ -1,3 +1,5 @@
+source(testthat::test_path("fixtures", "scoring_api.R"), local = TRUE)
+
 test_that("check_rev detects correlation direction and validates inputs", {
   x <- rep(1:7, 2)
   nf2 <- data.frame(Q15=x, Q115=x, Q27=x, Q141=x, Q140=x,
@@ -10,6 +12,24 @@ test_that("check_rev detects correlation direction and validates inputs", {
                  "rQ10.Q123", "rQ67.Q126"))
   expect_error(check_rev(nf2, version = "NF4"), "Incorrect version")
   expect_error(check_rev(transform(nf2, Q15 = 8)), "outside scoring range")
+})
+
+test_that("reverse item definitions are centralized and fixture-backed", {
+  expect_setequal(reverse_items("NF2"), nf2_reverse_fixture)
+  expect_setequal(reverse_items("3.1"), nf3_reverse_fixture)
+  expect_equal(reverse_items("NF2"), reverse_items("2.1"))
+  expect_error(reverse_items(c("2", "3")), "exactly one")
+})
+
+test_that("check_nf_range gives a stable checking contract", {
+  expect_true(check_nf_range(data.frame(Q1 = c(1, 7)), action = "logical"))
+  expect_false(check_nf_range(data.frame(Q1 = c(1, 8)), action = "logical"))
+  expect_warning(
+    check_nf_range(data.frame(Q1 = 0), action = "warn"),
+    "outside scoring range"
+  )
+  expect_error(check_nf_range(data.frame(Q1 = "not an answer")),
+               "outside scoring range")
 })
 
 test_that("score_all_NORSE2 adds the advertised NF2 scale scores", {
@@ -89,6 +109,7 @@ test_that("score_all_nf3 calculates each NF3 score and QOL", {
   expect_equal(out$worry, c(1, 3, 5))
   expect_equal(out$ona, c(1, 3, 5))
   expect_equal(out$QOL, c(1, 3, 5))
+  expect_true(all(c("alliance", "pref") %in% names(out)))
 })
 
 test_that("ONA scores NF3 data using available canonical items", {
@@ -139,4 +160,19 @@ test_that("score_all scores mixed NF2/NF3 rows and applies special missing codes
   expect_equal(out$anger[[2]], 2)
   expect_equal(out$ona, c(2, 50 / 26))
   expect_equal(out$QOL, dat$Q226)
+})
+
+test_that("score_all respects normalized version labels and version selection", {
+  set.seed(19)
+  dat <- random_norse_data(4, versions = c("2", "3"), num_obs = 1)
+  dat$Ver_10 <- ifelse(seq_len(nrow(dat)) %% 2, "NF2.1", "3.1")
+
+  out_nf2 <- suppressWarnings(score_all(dat, versions = "NF2"))
+  expect_true(all(is.na(out_nf2$anger)))
+  expect_true(any(!is.na(out_nf2$cog)))
+  expect_identical(out_nf2$Ver_10, dat$Ver_10)
+
+  dat$Ver_10[1] <- "12"
+  out_invalid <- suppressWarnings(score_all(dat))
+  expect_true(is.na(out_invalid$cog[1]))
 })
