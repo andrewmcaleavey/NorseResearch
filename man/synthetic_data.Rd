@@ -5,18 +5,141 @@
 \alias{synthetic_data}
 \title{Synthetic NF2 Data}
 \format{
-A data frame with one row per synthetic assessment.
+A data frame with 2888 observations of 133 variables.
 \describe{
 \item{\code{anon_id}}{Numeric. Unique patient number within this data only, anonymized.}
-\item{\code{date}}{Date. Date (and time) NF was completed.}
-\item{\code{pt_first_date}}{Date. First date in the data for each \code{respondent_id}.}
-\item{\code{pt_total_obs}}{Numeric. Total number of observations (rows) of data for this patient.}
-\item{\code{tx_focus}}{Character. What was the focus of \code{treatment_name} for this observation.
-Values are "Sub", "MH", or "Unclear".}
-\item{\code{in_or_out}}{Character. Is the current \code{treatment_name} inpatient, outpatient, or unclear.}
-\item{\code{birthyear}}{Character. Year of birth for each \code{respondent_id}.}
-\item{\code{gender}}{Character. Options are "male" and "female".}
-\item{\code{OTHERS}}{Others including scale and item names.}
+\item{\code{date}}{Date. Date (and time) Norse Feedback was completed.}
+\item{\code{pt_first_date}}{Date. First date in the data for each respondent.}
+\item{\code{pt_total_obs}}{Numeric. Total number of observations for this patient.}
+\item{\code{tx_focus}}{Character. Treatment focus: Substance use, mental health, or unclear.}
+\item{\code{in_or_out}}{Character. Whether the treatment is inpatient, outpatient, or unclear.}
+\item{\code{gender}}{Character. Respondent gender.}
+\item{\code{birthyear}}{Character. Year of birth for each respondent.}
+\item{\code{Ver_10}}{Character. Norse Feedback version identifier.}
+\item{\code{Q11}}{Numeric. Response to Norse Feedback item Q11.}
+\item{\code{Q12}}{Numeric. Response to Norse Feedback item Q12.}
+\item{\code{Q13}}{Numeric. Response to Norse Feedback item Q13.}
+\item{\code{Q14}}{Numeric. Response to Norse Feedback item Q14.}
+\item{\code{Q145}}{Numeric. Response to Norse Feedback item Q145.}
+\item{\code{Q146}}{Numeric. Response to Norse Feedback item Q146.}
+\item{\code{Q143}}{Numeric. Response to Norse Feedback item Q143.}
+\item{\code{Q144}}{Numeric. Response to Norse Feedback item Q144.}
+\item{\code{Q142}}{Numeric. Response to Norse Feedback item Q142.}
+\item{\code{Q147}}{Numeric. Response to Norse Feedback item Q147.}
+\item{\code{Q26}}{Numeric. Response to Norse Feedback item Q26.}
+\item{\code{Q20}}{Numeric. Response to Norse Feedback item Q20.}
+\item{\code{Q68}}{Numeric. Response to Norse Feedback item Q68.}
+\item{\code{Q130}}{Numeric. Response to Norse Feedback item Q130.}
+\item{\code{Q63}}{Numeric. Response to Norse Feedback item Q63.}
+\item{\code{Q104}}{Numeric. Response to Norse Feedback item Q104.}
+\item{\code{Q57}}{Numeric. Response to Norse Feedback item Q57.}
+\item{\code{Q18}}{Numeric. Response to Norse Feedback item Q18.}
+\item{\code{Q46}}{Numeric. Response to Norse Feedback item Q46.}
+\item{\code{Q140}}{Numeric. Response to Norse Feedback item Q140.}
+\item{\code{Q27}}{Numeric. Response to Norse Feedback item Q27.}
+\item{\code{Q141}}{Numeric. Response to Norse Feedback item Q141.}
+\item{\code{Q115}}{Numeric. Response to Norse Feedback item Q115.}
+\item{\code{Q15}}{Numeric. Response to Norse Feedback item Q15.}
+\item{\code{Q61}}{Numeric. Response to Norse Feedback item Q61.}
+\item{\code{Q24}}{Numeric. Response to Norse Feedback item Q24.}
+\item{\code{Q88}}{Numeric. Response to Norse Feedback item Q88.}
+\item{\code{Q34}}{Numeric. Response to Norse Feedback item Q34.}
+\item{\code{Q78}}{Numeric. Response to Norse Feedback item Q78.}
+\item{\code{Q122}}{Numeric. Response to Norse Feedback item Q122.}
+\item{\code{Q123}}{Numeric. Response to Norse Feedback item Q123.}
+\item{\code{Q10}}{Numeric. Response to Norse Feedback item Q10.}
+\item{\code{Q65}}{Numeric. Response to Norse Feedback item Q65.}
+\item{\code{Q114}}{Numeric. Response to Norse Feedback item Q114.}
+\item{\code{Q37}}{Numeric. Response to Norse Feedback item Q37.}
+\item{\code{Q82}}{Numeric. Response to Norse Feedback item Q82.}
+\item{\code{Q83}}{Numeric. Response to Norse Feedback item Q83.}
+\item{\code{Q133}}{Numeric. Response to Norse Feedback item Q133.}
+\item{\code{Q134}}{Numeric. Response to Norse Feedback item Q134.}
+\item{\code{Q135}}{Numeric. Response to Norse Feedback item Q135.}
+\item{\code{Q136}}{Numeric. Response to Norse Feedback item Q136.}
+\item{\code{Q80}}{Numeric. Response to Norse Feedback item Q80.}
+\item{\code{Q138}}{Numeric. Response to Norse Feedback item Q138.}
+\item{\code{Q139}}{Numeric. Response to Norse Feedback item Q139.}
+\item{\code{Q137}}{Numeric. Response to Norse Feedback item Q137.}
+\item{\code{Q100}}{Numeric. Response to Norse Feedback item Q100.}
+\item{\code{Q102}}{Numeric. Response to Norse Feedback item Q102.}
+\item{\code{Q42}}{Numeric. Response to Norse Feedback item Q42.}
+\item{\code{Q128}}{Numeric. Response to Norse Feedback item Q128.}
+\item{\code{Q126}}{Numeric. Response to Norse Feedback item Q126.}
+\item{\code{Q67}}{Numeric. Response to Norse Feedback item Q67.}
+\item{\code{Q124}}{Numeric. Response to Norse Feedback item Q124.}
+\item{\code{Q129}}{Numeric. Response to Norse Feedback item Q129.}
+\item{\code{Q127}}{Numeric. Response to Norse Feedback item Q127.}
+\item{\code{Q101}}{Numeric. Response to Norse Feedback item Q101.}
+\item{\code{Q38}}{Numeric. Response to Norse Feedback item Q38.}
+\item{\code{Q84}}{Numeric. Response to Norse Feedback item Q84.}
+\item{\code{Q149}}{Numeric. Response to Norse Feedback item Q149.}
+\item{\code{Q150}}{Numeric. Response to Norse Feedback item Q150.}
+\item{\code{Q151}}{Numeric. Response to Norse Feedback item Q151.}
+\item{\code{Q148}}{Numeric. Response to Norse Feedback item Q148.}
+\item{\code{Q118}}{Numeric. Response to Norse Feedback item Q118.}
+\item{\code{Q17}}{Numeric. Response to Norse Feedback item Q17.}
+\item{\code{Q119}}{Numeric. Response to Norse Feedback item Q119.}
+\item{\code{Q64}}{Numeric. Response to Norse Feedback item Q64.}
+\item{\code{Q121}}{Numeric. Response to Norse Feedback item Q121.}
+\item{\code{Q120}}{Numeric. Response to Norse Feedback item Q120.}
+\item{\code{Q43}}{Numeric. Response to Norse Feedback item Q43.}
+\item{\code{Q131}}{Numeric. Response to Norse Feedback item Q131.}
+\item{\code{Q40}}{Numeric. Response to Norse Feedback item Q40.}
+\item{\code{Q132}}{Numeric. Response to Norse Feedback item Q132.}
+\item{\code{Q62}}{Numeric. Response to Norse Feedback item Q62.}
+\item{\code{Q50}}{Numeric. Response to Norse Feedback item Q50.}
+\item{\code{Q51}}{Numeric. Response to Norse Feedback item Q51.}
+\item{\code{Q103}}{Numeric. Response to Norse Feedback item Q103.}
+\item{\code{Q75}}{Numeric. Response to Norse Feedback item Q75.}
+\item{\code{Q3}}{Numeric. Response to Norse Feedback item Q3.}
+\item{\code{Q53}}{Numeric. Response to Norse Feedback item Q53.}
+\item{\code{Q109}}{Numeric. Response to Norse Feedback item Q109.}
+\item{\code{Q154}}{Numeric. Response to Norse Feedback item Q154.}
+\item{\code{Q108}}{Numeric. Response to Norse Feedback item Q108.}
+\item{\code{Q155}}{Numeric. Response to Norse Feedback item Q155.}
+\item{\code{Q59}}{Numeric. Response to Norse Feedback item Q59.}
+\item{\code{Q4}}{Numeric. Response to Norse Feedback item Q4.}
+\item{\code{Q107}}{Numeric. Response to Norse Feedback item Q107.}
+\item{\code{Q35}}{Numeric. Response to Norse Feedback item Q35.}
+\item{\code{Q19}}{Numeric. Response to Norse Feedback item Q19.}
+\item{\code{Q105}}{Numeric. Response to Norse Feedback item Q105.}
+\item{\code{Q77}}{Numeric. Response to Norse Feedback item Q77.}
+\item{\code{Q106}}{Numeric. Response to Norse Feedback item Q106.}
+\item{\code{Q71}}{Numeric. Response to Norse Feedback item Q71.}
+\item{\code{Q72}}{Numeric. Response to Norse Feedback item Q72.}
+\item{\code{Q152}}{Numeric. Response to Norse Feedback item Q152.}
+\item{\code{Q153}}{Numeric. Response to Norse Feedback item Q153.}
+\item{\code{Q74}}{Numeric. Response to Norse Feedback item Q74.}
+\item{\code{Q111}}{Numeric. Response to Norse Feedback item Q111.}
+\item{\code{Q110}}{Numeric. Response to Norse Feedback item Q110.}
+\item{\code{Q113}}{Numeric. Response to Norse Feedback item Q113.}
+\item{\code{Q112}}{Numeric. Response to Norse Feedback item Q112.}
+\item{\code{Q117}}{Numeric. Response to Norse Feedback item Q117.}
+\item{\code{Q116}}{Numeric. Response to Norse Feedback item Q116.}
+\item{\code{Q39}}{Numeric. Response to Norse Feedback item Q39.}
+\item{\code{cog}}{Numeric. Score for the Cognitive problems/concentration problems scale.}
+\item{\code{control}}{Numeric. Score for the Control scale.}
+\item{\code{eating}}{Numeric. Score for the Eating problems scale.}
+\item{\code{genFunc}}{Numeric. Score for the General functioning scale.}
+\item{\code{hopeless}}{Numeric. Score for the Hopelessness/demoralization scale.}
+\item{\code{internal}}{Numeric. Score for the Internal avoidance scale.}
+\item{\code{irritable}}{Numeric. Score for the Irritability scale.}
+\item{\code{ready}}{Numeric. Score for the Readiness for recovery scale.}
+\item{\code{recovEnv}}{Numeric. Score for the Recovery environment scale.}
+\item{\code{sad}}{Numeric. Score for the Sadness/affect scale.}
+\item{\code{selfCrit}}{Numeric. Score for the Self-criticism scale.}
+\item{\code{avoidSit}}{Numeric. Score for the Situational avoidance scale.}
+\item{\code{avoidSoc}}{Numeric. Score for the Social avoidance scale.}
+\item{\code{socialSafety}}{Numeric. Score for the Social safety scale.}
+\item{\code{somAnx}}{Numeric. Score for the Somatic anxiety scale.}
+\item{\code{subRecov}}{Numeric. Score for the Substance recovery scale.}
+\item{\code{subUse}}{Numeric. Score for the Substance use scale.}
+\item{\code{suicide}}{Numeric. Score for the Suicide scale.}
+\item{\code{trauma}}{Numeric. Score for the Trauma reaction scale.}
+\item{\code{worry}}{Numeric. Score for the Worry scale.}
+\item{\code{alliance}}{Numeric. Mean score across the alliance items.}
+\item{\code{needs}}{Numeric. Mean score across the needs items.}
 }
 }
 \source{
