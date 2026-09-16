@@ -19,6 +19,16 @@ The package is not on CRAN. Install the development version from GitHub:
 devtools::install_github("andrewmcaleavey/NorseResearch")
 ```
 
+Or install from an existing tarball: 
+
+```r
+remotes::install_local(
+  "NorseResearch_0.1.3.tar.gz",  # or the filename you have
+  dependencies = TRUE,
+  upgrade = "always"
+)
+```
+
 ## Getting started
 
 ```r
