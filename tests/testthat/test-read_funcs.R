@@ -16,20 +16,16 @@ test_that("function returns a single data frame if one file is provided", {
   skip_if_not_installed("reticulate")
   skip_if_not_installed("readxl")
 
-  # Also skip if Python environment/msoffcrypto isn't set up
-  # We'll do a simple check for reticulate's ability to run Python code
-  skip_if(isFALSE(reticulate::py_available(initialize = FALSE)),
+  # Initialize Reticulate before checking Python availability. In a fresh R
+  # session, py_available(initialize = FALSE) is always FALSE.
+  skip_if(!reticulate::py_available(initialize = TRUE),
           "No suitable Python environment available.")
 
   # (Optional) skip this test on CRAN or CI to avoid the overhead
   # skip_on_cran()
   # skip_on_ci()
 
-  # In a real scenario, you would have a small, password-protected test file
-  # stored in tests/testthat/testdata/password_protected.xlsx
-  # along with a known password.
-  #
-  # For demonstration, let's just skip if that file doesn't exist.
+  # This password-protected fixture has the known password below.
   test_file <- testthat::test_path("testdata", "password_protected.xlsx")
   if (!file.exists(test_file)) {
     skip("No test file available for decryption test.")
@@ -46,8 +42,9 @@ test_that("function returns a single data frame if one file is provided", {
 
   # Check that the result is a data frame (tibble inherits from data.frame)
   expect_s3_class(df, "data.frame")
-  # Optionally, check that it has some expected columns
-  # expect_true(all(c("colA", "colB") %in% names(df)))
+  expect_equal(names(df), c("id", "score", "note"))
+  expect_equal(df$id, c(1, 2))
+  expect_equal(df$score, c(4, -99))
 })
 
 test_that("read.csv2_nf3 handles decimal commas and NF missing-value codes", {
@@ -93,10 +90,10 @@ test_that("read_excel_nf3 forwards NF missing-value codes", {
 test_that("function returns a named list of data frames if multiple files are provided", {
   skip_if_not_installed("reticulate")
   skip_if_not_installed("readxl")
-  skip_if(isFALSE(reticulate::py_available(initialize = FALSE)),
+  skip_if(!reticulate::py_available(initialize = TRUE),
           "No suitable Python environment available.")
 
-  # Suppose we have two password-protected files in testdata/ directory
+  # These password-protected fixtures use the known passwords below.
   test_file1 <- testthat::test_path("testdata", "file1.xlsx")
   test_file2 <- testthat::test_path("testdata", "file2.xlsx")
   if (!all(file.exists(c(test_file1, test_file2)))) {
@@ -122,12 +119,14 @@ test_that("function returns a named list of data frames if multiple files are pr
     tools::file_path_sans_ext(basename(test_file2))
   )
   expect_equal(names(results_list), expected_names)
+  expect_equal(results_list$file1$id, c(11, 12))
+  expect_equal(results_list$file2$id, c(21, 22))
 })
 
 test_that("function returns error if decryption fails", {
   skip_if_not_installed("reticulate")
   skip_if_not_installed("readxl")
-  skip_if(isFALSE(reticulate::py_available(initialize = FALSE)),
+  skip_if(!reticulate::py_available(initialize = TRUE),
           "No suitable Python environment available.")
 
   # We have a test file, but the wrong password

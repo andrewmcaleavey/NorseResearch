@@ -12,6 +12,16 @@ test_that("check_rev detects correlation direction and validates inputs", {
                  "rQ10.Q123", "rQ67.Q126"))
   expect_error(check_rev(nf2, version = "NF4"), "Incorrect version")
   expect_error(check_rev(transform(nf2, Q15 = 8)), "outside scoring range")
+  expect_error(check_rev(transform(nf2, Q15 = -98)), "outside scoring range")
+  expect_error(
+    check_rev(transform(nf2, Q15 = -98), check_98s_99s = TRUE),
+    "Sentinel value"
+  )
+  expect_error(
+    check_rev(transform(nf2, Q15 = -99), check_98s_99s = TRUE),
+    "Sentinel value"
+  )
+  expect_error(check_rev(nf2, check_98s_99s = NA), "single non-missing logical")
 })
 
 test_that("reverse item definitions are centralized and fixture-backed", {

@@ -24,7 +24,7 @@
 #'
 #' **Clean and reshape**
 #'
-#' - [clean_NF_names()], [collapse_versioned_columns()], [collapse_measures_wide()], [combine_suffix_variables()], [combine_q_vars()], [replace_98s_99s()], [nicer_id_var()], [get_first_obs()], and [get_first_nonmissing_obs()] standardize messy column names, widen repeated measures, and build clean respondent identifiers.
+#' - [clean_NF_names()], [collapse_versioned_columns()], [collapse_measures_wide()], [combine_suffix_variables()], [combine_q_vars()], [has_no_98s_99s()], [replace_98s_99s()], [nicer_id_var()], [get_first_obs()], and [get_first_nonmissing_obs()] standardize messy column names, validate sentinel values, widen repeated measures, and build clean respondent identifiers.
 #'
 #' **Versioning, lookup, and metadata**
 #'

@@ -72,6 +72,40 @@ test_that("replace_98s_99s and drop_variable preserve ordinary values", {
   expect_equal(drop_variable(out, "not_present"), out)
 })
 
+test_that("has_no_98s_99s checks numeric data and works in pipes", {
+  clean <- tibble::tibble(score = c(1, 7), note = c("-98", "-99"))
+  sentinels <- tibble::tibble(score = c(1, -98), other = c(3, -99))
+
+  expect_identical(clean |> has_no_98s_99s(), clean)
+  expect_true(has_no_98s_99s(clean, action = "logical"))
+  expect_false(has_no_98s_99s(sentinels, action = "logical"))
+  expect_error(sentinels |> has_no_98s_99s(), "Sentinel value")
+  expect_warning(
+    expect_identical(has_no_98s_99s(sentinels, action = "warn"), sentinels),
+    "Sentinel value"
+  )
+})
+
+test_that("has_no_98s_99s supports selecting values and columns", {
+  dat <- tibble::tibble(a = c(1, -98), b = c(2, -99), text = c("-98", "ok"))
+
+  expect_true(has_no_98s_99s(dat, values = -99, vars = "a", action = "logical"))
+  expect_false(has_no_98s_99s(dat, values = -99, vars = "b", action = "logical"))
+  expect_true(has_no_98s_99s(dat, vars = character(), action = "logical"))
+  expect_error(has_no_98s_99s(dat, vars = "text"), "numeric columns")
+  expect_error(has_no_98s_99s(dat, vars = "missing"), "Unknown vars")
+  expect_error(has_no_98s_99s(dat, vars = 1), "character vector")
+  expect_error(has_no_98s_99s(dat, values = NA_real_), "non-empty numeric")
+  expect_error(has_no_98s_99s("not a data frame"), "must be a data frame")
+})
+
+test_that("has_no_98s_99s ignores data without numeric columns", {
+  dat <- tibble::tibble(note = c("-98", "-99"))
+
+  expect_identical(has_no_98s_99s(dat), dat)
+  expect_true(has_no_98s_99s(dat, action = "logical"))
+})
+
 test_that("fix_failed_encoding repairs mojibake only in selected character columns", {
   dat <- data.frame(
     org = c("Helse FÃ¸rde", "Helse Vest"),

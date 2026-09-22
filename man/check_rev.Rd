@@ -4,7 +4,7 @@
 \alias{check_rev}
 \title{check if NORSE scores are reversed}
 \usage{
-check_rev(.data, verbose = FALSE, version = "NF2")
+check_rev(.data, verbose = FALSE, version = "NF2", check_98s_99s = FALSE)
 }
 \arguments{
 \item{.data}{The data to clean.}
@@ -15,12 +15,19 @@ return the list of correlations tested with their values.}
 \item{version}{Which version of NF is being used. Stable labels are \code{"NF2"}
 and \code{"NF3"}; compatible short and minor-version forms such as \code{"2"},
 \code{"2.1"}, \code{"3"}, and \code{"3.1"} are also accepted.}
+
+\item{check_98s_99s}{Logical. If \code{TRUE}, error before reversal checking when
+numeric columns contain \code{-98} or \code{-99}. Defaults to \code{FALSE}.}
 }
 \value{
 Logical. Is data likely already reversed? \code{TRUE} means the checked
 correlations are non-negative. If \code{verbose} is \code{TRUE}, returns a named
 list with the decision and each correlation. A data set with no complete
 observations for any check returns \code{NA}.
+
+With \code{check_98s_99s = TRUE}, sentinel values \code{-98} and \code{-99} in numeric
+columns cause an error before reversal checking begins. Recode them with
+\code{\link[=replace_98s_99s]{replace_98s_99s()}} if that is appropriate for the analysis.
 }
 \description{
 check if NORSE scores are reversed

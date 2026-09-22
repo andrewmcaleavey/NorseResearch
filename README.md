@@ -23,7 +23,7 @@ Or install from an existing tarball:
 
 ```r
 remotes::install_local(
-  "NorseResearch_0.1.3.tar.gz",  # or the filename you have
+  "NorseResearch_0.1.4.tar.gz",  # or the filename you have
   dependencies = TRUE,
   upgrade = "always"
 )
@@ -75,6 +75,7 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 | [`collapse_versioned_columns()`](?collapse_versioned_columns) | Collapse numerically suffixed versions with an explicit conflict policy. |
 | [`collapse_measures_wide()`](?collapse_measures_wide) | Collapse `_A#` repeated-measure columns and widen multi-measure items. |
 | [`combine_suffix_variables()`](?combine_suffix_variables), [`combine_q_vars()`](?combine_q_vars) | Merge related columns (by suffix or `Q`-pattern). |
+| [`has_no_98s_99s()`](?has_no_98s_99s) | Check numeric columns for sentinel `-98`/`-99` values before continuing a pipeline. |
 | [`replace_98s_99s()`](?replace_98s_99s) | Replace sentinel `-98`/`-99` with `1`/`NA`. |
 | [`nicer_id_var()`](?nicer_id_var) | Build a readable respondent ID column. |
 | [`get_first_obs()`](?get_first_obs), [`get_first_nonmissing_obs()`](?get_first_nonmissing_obs) | Keep the first observation, or first usable observation, per respondent. |

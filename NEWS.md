@@ -1,3 +1,18 @@
+# NorseResearch 0.1.4
+
+## New features
+
+* Add `has_no_98s_99s()` to detect `-98` and `-99` sentinel values in numeric
+  columns. It can validate a data-frame pipeline, return a logical result, or
+  warn while returning the input unchanged.
+* Add the optional `check_98s_99s` argument to `check_rev()` for sentinel
+  validation before reversal checking.
+
+## Maintenance
+
+* Enable real password-protected Excel import tests by initializing Reticulate
+  correctly and adding encrypted `.xlsx` fixtures.
+
 # NorseResearch 0.1.3
 
 * Add `collapse_versioned_columns()` for deterministic numeric-suffix

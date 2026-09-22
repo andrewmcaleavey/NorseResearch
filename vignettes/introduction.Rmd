@@ -48,6 +48,7 @@ any function (for example, `?score_all`).
 - [`collapse_versioned_columns()`](?collapse_versioned_columns) deterministically collapses numeric suffix versions.
 - [`collapse_measures_wide()`](?collapse_measures_wide) collapses `_A#` suffix columns and widens multi-measure items.
 - [`combine_suffix_variables()`](?combine_suffix_variables) and [`combine_q_vars()`](?combine_q_vars) merge related columns.
+- [`has_no_98s_99s()`](?has_no_98s_99s) checks numeric columns for `-98`/`-99` sentinels before a pipeline continues.
 - [`replace_98s_99s()`](?replace_98s_99s) replaces sentinel `-98`/`-99` with `1`/`NA`.
 - [`nicer_id_var()`](?nicer_id_var) creates a readable ID column.
 - [`get_first_obs()`](?get_first_obs) and [`get_first_nonmissing_obs()`](?get_first_nonmissing_obs) select respondent observations.
