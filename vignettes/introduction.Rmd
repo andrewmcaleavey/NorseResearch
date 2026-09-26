@@ -253,7 +253,8 @@ the correlation check while `score_all()` still scores every row.
 The main symptom and resource scores in `scored` use higher = more problems.
 Alliance, Therapy Preferences/Needs, QOL, and Norse are exceptions: their
 ordinary responses are not reversed, both `-98` and `-99` become missing for
-scoring, and their original meaning is retained.
+scoring, and their original meaning is retained. QOL item Q226 remains on its
+0--10 response scale.
 
 ## Understanding the audit result
 
@@ -400,7 +401,8 @@ resource labels such as Social Support describe **lack of support** when scored
 in this direction. **Alliance, Therapy Preferences, QOL, and Norse (Q148,
 including Q148.2) are exceptions:** ordinary responses are never reversed, both
 `-98` and `-99` are missing, and these outputs retain their original meaning.
-The audit excludes these exceptions from its problem-direction verdict.
+QOL remains on its 0--10 scale. The audit excludes these exceptions from its
+problem-direction verdict.
 
 The scorer prepares an internal copy and preserves the original item columns
 in its output. If you need prepared items for item-level analysis or a

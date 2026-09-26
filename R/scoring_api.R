@@ -139,6 +139,13 @@ nf_scoring_exceptions <- function(version) {
     if ("3" %in% version) c(alliance.names.nf3, pref.names.nf3)))
 }
 
+# Ordinary response values differ for a small number of items. Keep this policy
+# next to the other shared scoring metadata so audits and scorers validate the
+# same values.
+nf_item_response_values <- function(item) {
+  if (identical(item, "Q226")) 0:10 else 1:7
+}
+
 #' Prepare NF item responses for scoring
 #'
 #' Standardize problem and resource items to higher = more problems, handling
@@ -147,7 +154,8 @@ nf_scoring_exceptions <- function(version) {
 #' exported direction and treat both -98 and -99 as missing.
 #'
 #' @param dat A data frame with short item names and numeric responses. Known
-#'   item columns must contain only 1--7, -98, -99, or `NA` on scored rows.
+#'   item columns must contain their ordinary response values, -98, -99, or
+#'   `NA` on scored rows. Most NF items use 1--7; QOL item Q226 uses 0--10.
 #' @param input_coding Required character value: `"higher_is_worse"` for already
 #'   standardized exports or `"agreement"` for original agreement responses.
 #'   May also be a vector of length `nrow(dat)` for reviewed batch/row conventions.
@@ -163,12 +171,13 @@ nf_scoring_exceptions <- function(version) {
 #'   item-by-batch exceptions, prepare separate batches.
 #'
 #' @details
-#' Ordinary positive agreement responses become `8 - x`; other ordinary
-#' responses stay unchanged. On problem-oriented items, -98 becomes 1 and -99
-#' becomes `NA`. On the named exceptions both codes become `NA`. A recoded -98
-#' is never subsequently reversed. Only metadata-defined items and explicit
-#' exception items are prepared; other columns are untouched. Items belonging
-#' only to inactive versions become missing on those rows.
+#' Ordinary 1--7 positive agreement responses become `8 - x`; other ordinary
+#' responses stay unchanged. Q226 is an unreversed 0--10 item. On
+#' problem-oriented items, -98 becomes 1 and -99 becomes `NA`. On the named
+#' exceptions both codes become `NA`. A recoded -98 is never subsequently
+#' reversed. Only metadata-defined items and explicit exception items are
+#' prepared; other columns are untouched. Items belonging only to inactive
+#' versions become missing on those rows.
 #'
 #' This function returns modified item columns. In contrast, [score_all()] and
 #' the version-specific scoring wrappers prepare an internal copy and preserve
@@ -217,11 +226,16 @@ prepare_nf_items <- function(dat, input_coding, version = "3", item_coding = NUL
       rows <- which(!is.na(v) & v == ver)
       if (!length(rows)) next
       x <- dat[[item]][rows]
-      if (!is.numeric(x) || !is.null(dim(dat[[item]])) || any(!is.na(x) & !x %in% c(1:7, -98, -99)))
-        stop("Invalid item responses in ", item, "; expected numeric 1:7, -98, -99, or NA.", call. = FALSE)
+      ordinary_values <- nf_item_response_values(item)
+      if (!is.numeric(x) || !is.null(dim(dat[[item]])) ||
+          any(!is.na(x) & !x %in% c(ordinary_values, -98, -99))) {
+        expected <- if (identical(item, "Q226")) "0:10" else "1:7"
+        stop("Invalid item responses in ", item, "; expected numeric ",
+             expected, ", -98, -99, or NA.", call. = FALSE)
+      }
       missing_code <- is.na(x) | x == -99
       no_problem <- !is.na(x) & x == -98
-      ordinary <- x %in% 1:7
+      ordinary <- x %in% ordinary_values
       direction <- coding[rows]
       if (item %in% names(item_coding)) direction[] <- item_coding[[item]]
       if (!item %in% exceptions && item %in% reverse_items(ver)) {

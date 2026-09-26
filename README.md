@@ -82,7 +82,8 @@ scored <- score_all(items, input_coding = input_coding)
 The resulting main symptom and resource scores use higher = more problems.
 Alliance, Therapy Preferences/Needs, QOL, and Norse are explicit exceptions:
 they are not reversed, both special codes become missing, and their original
-meaning is retained. For repeated observations, pass `patient_id` and
+meaning is retained. QOL item Q226 uses its original 0--10 response scale. For
+repeated observations, pass `patient_id` and
 `order_by` to `audit_nf_reverse()`; use `verbose = TRUE` only when the simple
 verdict needs investigation.
 
@@ -151,7 +152,8 @@ Problem/resource-deficit scores use higher = more problems: ordinary positive
 agreement responses are reversed, `-98` becomes `1`, and `-99` becomes `NA`.
 Alliance, Therapy Preferences/Needs, QOL, and Norse (Q148, including Q148.2) are
 exceptions: they are never reversed and both special codes become `NA`.
-Their original meaning is retained, rather than relabelled as problem severity.
+Their original meaning is retained, rather than relabelled as problem severity;
+QOL remains on its 0--10 scale.
 All scoring wrappers preserve source item columns and use a prepared internal
 copy. Use `prepare_nf_items()` when you need the standardized items themselves.
 

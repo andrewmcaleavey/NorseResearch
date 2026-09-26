@@ -597,9 +597,11 @@ score_all_nf3 <- function(dat, process_vars = TRUE,
 
   check_nf_range(
     dat,
-    vars = intersect(c(scale_names_nf3, "QOL"), names(dat)),
+    vars = intersect(scale_names_nf3, names(dat)),
     action = "error"
   )
+  check_nf_range(dat, vars = intersect("QOL", names(dat)), lower = 0,
+                 upper = 10, action = "error")
   restore_nf_source(dat, original, c(scale_names_nf3, "QOL", "alliance", "pref"))
 }
 
@@ -898,7 +900,9 @@ score_all <- function(dat,
     c(scale_names, scale_names_nf3, "alliance", "needs", "pref", "QOL"),
     names(dat)
   )
-  check_nf_range(dat, vars = score_vars, action = "error")
+  check_nf_range(dat, vars = setdiff(score_vars, "QOL"), action = "error")
+  check_nf_range(dat, vars = intersect("QOL", names(dat)), lower = 0,
+                 upper = 10, action = "error")
   restore_nf_source(dat, original, score_vars)
 }
 

@@ -8,7 +8,8 @@ prepare_nf_items(dat, input_coding, version = "3", item_coding = NULL)
 }
 \arguments{
 \item{dat}{A data frame with short item names and numeric responses. Known
-item columns must contain only 1--7, -98, -99, or \code{NA} on scored rows.}
+item columns must contain their ordinary response values, -98, -99, or
+\code{NA} on scored rows. Most NF items use 1--7; QOL item Q226 uses 0--10.}
 
 \item{input_coding}{Required character value: \code{"higher_is_worse"} for already
 standardized exports or \code{"agreement"} for original agreement responses.
@@ -37,12 +38,13 @@ Preferences, QOL (Q226), and Norse (Q148, including Q148.2) retain their
 exported direction and treat both -98 and -99 as missing.
 }
 \details{
-Ordinary positive agreement responses become \code{8 - x}; other ordinary
-responses stay unchanged. On problem-oriented items, -98 becomes 1 and -99
-becomes \code{NA}. On the named exceptions both codes become \code{NA}. A recoded -98
-is never subsequently reversed. Only metadata-defined items and explicit
-exception items are prepared; other columns are untouched. Items belonging
-only to inactive versions become missing on those rows.
+Ordinary 1--7 positive agreement responses become \code{8 - x}; other ordinary
+responses stay unchanged. Q226 is an unreversed 0--10 item. On
+problem-oriented items, -98 becomes 1 and -99 becomes \code{NA}. On the named
+exceptions both codes become \code{NA}. A recoded -98 is never subsequently
+reversed. Only metadata-defined items and explicit exception items are
+prepared; other columns are untouched. Items belonging only to inactive
+versions become missing on those rows.
 
 This function returns modified item columns. In contrast, \code{\link[=score_all]{score_all()}} and
 the version-specific scoring wrappers prepare an internal copy and preserve

@@ -109,6 +109,22 @@ test_that("preparation validates the coding contract and values", {
   expect_equal(nrow(prepare_nf_items(dat[FALSE, , drop=FALSE], "agreement")), 0)
 })
 
+test_that("QOL accepts 0 to 10 and applies its exception sentinel policy", {
+  values <- c(0, 1, 7, 8, 9, 10, -98, -99, NA_real_)
+  dat <- data.frame(Ver_10 = "3.1", Q226 = values)
+  expected <- c(0, 1, 7, 8, 9, 10, NA, NA, NA)
+
+  prepared <- prepare_nf_items(dat, "agreement", version = "3")
+  expect_equal(prepared$Q226, expected)
+  expect_equal(score_all(dat, input_coding = "agreement")$QOL, expected)
+  expect_equal(score_all_nf3(dat, input_coding = "agreement")$QOL, expected)
+  expect_identical(score_all(dat, input_coding = "agreement")$Q226, values)
+  expect_error(prepare_nf_items(data.frame(Q226 = 11), "agreement"),
+               "expected numeric 0:10")
+  expect_error(prepare_nf_items(data.frame(Q226 = -1), "agreement"),
+               "expected numeric 0:10")
+})
+
 test_that("audit exceptions neither suggest reversal nor affect the verdict", {
   x <- rep(1:7, 12)
   f <- list(metadata = data.frame(item = c("neg", "pos", "worry", "support"),

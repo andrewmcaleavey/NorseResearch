@@ -6,7 +6,8 @@
 #' diagnostic does not modify or score `dat`.
 #'
 #' @param dat A data frame of exported item responses. Item columns must be
-#'   numeric and contain only integers 1--7, -98, -99, or `NA`.
+#'   numeric and contain their ordinary response values, -98, -99, or `NA`.
+#'   Most NF items use 1--7; QOL item Q226 uses 0--10.
 #' @param metadata A data frame with columns `item` (unique item identifier),
 #'   `reverse` (logical, or blank/`R` character flags), and `scale_e` (scale name).
 #'   Defaults to the bundled NF3.1 metadata. The original NF3.1 CSV column names
@@ -229,11 +230,17 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
   if (anyDuplicated(m$column)) fail("Item-to-column mappings must be one-to-one.")
   m$present <- m$column %in% names(dat)
   if (!any(m$present)) fail("No metadata items match exported columns; check item_map.")
-  for (v in m$column[m$present]) {
+  for (j in which(m$present)) {
+    v <- m$column[j]
+    item <- m$item[j]
     x <- dat[[v]]
+    ordinary_values <- nf_item_response_values(item)
     if (!is.numeric(x) || !is.null(dim(x)) ||
-        any(!is.na(x) & !x %in% c(1:7, -98, -99)))
-      fail(paste0("Item column ", v, " must contain only numeric 1:7, -98, -99, or NA."))
+        any(!is.na(x) & !x %in% c(ordinary_values, -98, -99))) {
+      expected <- if (identical(item, "Q226")) "0:10" else "1:7"
+      fail(paste0("Item column ", v, " must contain only numeric ", expected,
+                  ", -98, -99, or NA."))
+    }
   }
   for (arg in c("group_vars", "patient_id", "order_by")) {
     v <- get(arg)
@@ -348,7 +355,8 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
         x <- if (m$present[j]) dat[[m$column[j]]][rr] else rep(NA_real_, length(rr))
         counts <- append_row(counts, data.frame(group = g, item = m$item[j],
           scope = scope, present = m$present[j], n = length(x),
-          ordinary = sum(x %in% 1:7), no_problem = sum(x == -98, na.rm = TRUE),
+          ordinary = sum(x %in% nf_item_response_values(m$item[j])),
+          no_problem = sum(x == -98, na.rm = TRUE),
           missing_code = sum(x == -99, na.rm = TRUE), missing = sum(is.na(x))))
       }
     }

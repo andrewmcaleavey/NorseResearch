@@ -22,7 +22,8 @@ audit_nf_reverse(
 }
 \arguments{
 \item{dat}{A data frame of exported item responses. Item columns must be
-numeric and contain only integers 1--7, -98, -99, or \code{NA}.}
+numeric and contain their ordinary response values, -98, -99, or \code{NA}.
+Most NF items use 1--7; QOL item Q226 uses 0--10.}
 
 \item{metadata}{A data frame with columns \code{item} (unique item identifier),
 \code{reverse} (logical, or blank/\code{R} character flags), and \code{scale_e} (scale name).

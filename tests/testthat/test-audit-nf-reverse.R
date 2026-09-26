@@ -175,6 +175,20 @@ test_that("default bundled metadata is usable without changing data", {
   expect_true(any(a$mapping$positive))
 })
 
+test_that("QOL uses its 0 to 10 response range and is not audited for reversal", {
+  qol <- c(NA, 6, 7, 4, 5, 3, 1, 2, 8, 0, 10, 9, -98, -99)
+  a <- expect_no_warning(audit_nf_reverse(data.frame(Q226 = qol), verbose = TRUE))
+  item <- subset(a$items, item == "Q226")
+  counts <- subset(a$counts, item == "Q226" & scope == "analysis")
+
+  expect_equal(item$status, "not assessed")
+  expect_equal(item$action, "KEEP")
+  expect_equal(counts$ordinary, 11)
+  expect_equal(counts$no_problem, 1)
+  expect_equal(counts$missing_code, 1)
+  expect_error(audit_nf_reverse(data.frame(Q226 = 11)), "numeric 0:10")
+})
+
 test_that("the default is one plain dataset verdict", {
   f <- audit_fixture()
   raw <- run_audit_fixture(verbose = FALSE)

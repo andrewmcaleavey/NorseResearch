@@ -38,6 +38,8 @@ already standardized to that direction.
 * Keep Alliance, Therapy Preferences/Needs, QOL, and Norse (Q148, including
   Q148.2) unreversed. For these exceptions, both `-98` and `-99` are missing;
   they retain their original meaning and are not problem-severity scores.
+* Validate QOL item Q226 and its resulting score on its actual 0--10 response
+  scale rather than applying the general 1--7 NF item range.
 * On the main problem-oriented scales, interpret `-98` as 1 (no problems) and
   `-99` as missing. Sentinel handling occurs before ordinary-response reversal,
   preventing `-98` from becoming a maximum-problem response.
