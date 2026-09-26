@@ -1,25 +1,72 @@
-# NorseResearch 0.1.4
+# NorseResearch 0.2.0
 
-## New features
+This release clarifies the NF scoring contract. Main symptom and resource
+scales are prepared so that higher scores mean more problems, regardless of
+whether an export contains original agreement responses or responses that were
+already standardized to that direction.
 
-* Add `prepare_nf_items()` and explicit `input_coding`/`item_coding` arguments
-  to the main and version-specific scorers. Agreement-coded problem/resource
-  items are reversed once; special response codes are handled separately.
-* Keep Alliance, Preferences/Needs, QOL, and Norse items unreversed, treating
-  both -98 and -99 as missing. QOL now follows the same preparation pathway.
-* Preserve source item columns while scoring prepared copies. Low-level mean,
-  trigger, over/under and reversal helpers reject unprepared special codes.
-* Exclude scoring-policy exceptions from the reverse-scoring audit. NF3 scores
-  ignore NF2-only item columns in mixed-version exports.
+## Scoring direction and audit
+
+* Add `audit_nf_reverse()` to diagnose the response direction of NF3 exports
+  before scoring. Its default result is a single dataset-level verdict:
+  `"consistent"`, `"not consistent"`, or `"mixed"`; insufficient or unresolved
+  evidence returns `NA` rather than guessing.
+* Add `verbose = TRUE` audit output with scale and item classifications,
+  correlations, sentinel counts, proposed actions, item conflicts, mappings,
+  and export-group summaries. The audit can select one observation per patient
+  and examine batches or export sources separately.
+* Compare audit conclusions both without `-98` and with `-98` interpreted as no
+  problems. Treat `-99` as missing throughout the audit and report conclusions
+  that depend on the `-98` sensitivity analysis.
+* Exclude Alliance, Therapy Preferences/Needs, QOL, and Norse items from the
+  problem-direction verdict because these items retain their exported response
+  direction under the scoring policy.
+
+## Clarified scoring API
+
+* Add `prepare_nf_items()` as the shared item-preparation API. It accepts an
+  explicit `input_coding` of `"higher_is_worse"` or `"agreement"`, including a
+  row-level vector for reviewed export batches, plus optional reviewed
+  `item_coding` overrides.
+* Add the same `input_coding` and `item_coding` contract to `score_all()`,
+  `score_all_nf3()`, `score_all_NORSE2()`, and `score_all_NORSE2_ou()`.
+  Agreement-coded positive items are reversed exactly once before scales are
+  calculated; already standardized items are kept unchanged.
+* Score the main symptom and resource scales in a common higher = more problems
+  direction. Resource-scale names therefore represent deficits when interpreted
+  as problem-oriented scores.
+* Keep Alliance, Therapy Preferences/Needs, QOL, and Norse (Q148, including
+  Q148.2) unreversed. For these exceptions, both `-98` and `-99` are missing;
+  they retain their original meaning and are not problem-severity scores.
+* On the main problem-oriented scales, interpret `-98` as 1 (no problems) and
+  `-99` as missing. Sentinel handling occurs before ordinary-response reversal,
+  preventing `-98` from becoming a maximum-problem response.
+* Preserve the caller's original item columns while scoring an internally
+  prepared copy. `prepare_nf_items()` remains available when standardized item
+  columns are needed directly.
+* Make NF2, NF3, mixed-version, mean, trigger, and over/under scoring use the
+  same preparation rules. NF3 scores ignore NF2-only items in combined exports,
+  and QOL now follows the shared sentinel policy.
+* Make low-level mean, trigger, over/under, and reversal helpers reject
+  unprepared special codes or values outside 1--7. Clarify that norm tables
+  must match the score direction, NF version, and scoring policy.
+
+## Export handling and validation
 
 * Add `has_no_98s_99s()` to detect `-98` and `-99` sentinel values in numeric
   columns. It can validate a data-frame pipeline, return a logical result, or
   warn while returning the input unchanged.
-* Add the optional `check_98s_99s` argument to `check_rev()` for sentinel
-  validation before reversal checking.
+* Add `check_98s_99s` to the legacy `check_rev()` helper. Document
+  `replace_98s_99s()` as a generic replacement utility rather than the NF
+  scoring-preparation API.
+* Document one recommended path from an NF3.1 export through cleaning, audit,
+  explicit coding selection, and `score_all()`.
 
 ## Maintenance
 
+* Expand regression coverage so equivalent agreement-coded and already
+  standardized exports produce the same scale scores, including sentinel and
+  scoring-exception cases.
 * Enable real password-protected Excel import tests by initializing Reticulate
   correctly and adding encrypted `.xlsx` fixtures.
 

@@ -24,7 +24,7 @@
 #'
 #' **Clean and reshape**
 #'
-#' - [clean_NF_names()], [collapse_versioned_columns()], [collapse_measures_wide()], [combine_suffix_variables()], [combine_q_vars()], [has_no_98s_99s()], [replace_98s_99s()], [nicer_id_var()], [get_first_obs()], and [get_first_nonmissing_obs()] standardize messy column names, validate sentinel values, widen repeated measures, and build clean respondent identifiers.
+#' - [clean_NF_names()], [collapse_versioned_columns()], [collapse_measures_wide()], [combine_suffix_variables()], [combine_q_vars()], [has_no_98s_99s()], [nicer_id_var()], [get_first_obs()], and [get_first_nonmissing_obs()] standardize messy column names, validate sentinel values, widen repeated measures, and build clean respondent identifiers. [replace_98s_99s()] is a generic replacement helper; use [prepare_nf_items()] for NF scoring.
 #'
 #' **Versioning, lookup, and metadata**
 #'
@@ -32,7 +32,7 @@
 #'
 #' **Score scales**
 #'
-#' - [score_all()] and [score_all_nf3()] score NF2 and/or NF3 scales, including Overall Negative Affect (`ona`); [nf_score()] scores mixed-version data per row. [score_NORSE_trigger()] and [score_NORSE_overunder()] / [score_all_NORSE2_ou()] handle subthreshold trigger and over/under scoring. [score_normed_NF()] computes normed scores from published norms, and [rename_score_vars()] maps exported `SCORE_*` variables to consistent names.
+#' - [audit_nf_reverse()] checks whether exported problem items consistently use higher = worse coding. [prepare_nf_items()] applies an explicit coding convention and the scoring-specific sentinel rules. [score_all()] and [score_all_nf3()] then score NF2 and/or NF3 scales, including Overall Negative Affect (`ona`), while preserving source item columns. [nf_score()] is deprecated. [score_NORSE_trigger()] and [score_NORSE_overunder()] / [score_all_NORSE2_ou()] handle subthreshold trigger and over/under scoring. [score_normed_NF()] computes normed scores from compatible published norms, and [rename_score_vars()] maps exported `SCORE_*` variables to consistent names.
 #'
 #' **Analyze and plot**
 #'

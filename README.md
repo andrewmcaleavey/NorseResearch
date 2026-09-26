@@ -23,7 +23,7 @@ Or install from an existing tarball:
 
 ```r
 remotes::install_local(
-  "NorseResearch_0.1.4.tar.gz",  # or the filename you have
+  "NorseResearch_0.2.0.tar.gz",  # or the filename you have
   dependencies = TRUE,
   upgrade = "always"
 )
@@ -49,6 +49,42 @@ has trigger-driven `NA` values for scales that were not administered and
 pre-computed scales with names like `sad` and `cog`. It is a quick way to try 
 the analysis and plotting functions even though it will not generate plausible 
 results.  
+
+## Recommended export-to-score workflow
+
+Use this as the standard path for an NF3.1 export. Do not replace the special
+codes before the audit: `read.csv_nf3()` may import `-99` as `NA`, while `-98`
+must remain available for the audit's sensitivity check. `score_all()` then
+applies the scoring-specific sentinel rules.
+
+```r
+raw_nf <- read.csv_nf3("path/to/response_data.csv")
+items <- fix_failed_encoding(raw_nf)
+items <- clean_NF_names(items)
+items <- collapse_measures_wide(items)
+
+check_version_nf(items)
+verdict <- audit_nf_reverse(items)
+
+if (is.na(verdict) || verdict == "mixed") {
+  stop("Review the audit with verbose = TRUE before scoring.")
+}
+
+input_coding <- if (verdict == "consistent") {
+  "higher_is_worse"
+} else {
+  "agreement"
+}
+
+scored <- score_all(items, input_coding = input_coding)
+```
+
+The resulting main symptom and resource scores use higher = more problems.
+Alliance, Therapy Preferences/Needs, QOL, and Norse are explicit exceptions:
+they are not reversed, both special codes become missing, and their original
+meaning is retained. For repeated observations, pass `patient_id` and
+`order_by` to `audit_nf_reverse()`; use `verbose = TRUE` only when the simple
+verdict needs investigation.
 
 ## Key functions by task
 
@@ -76,7 +112,7 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 | [`collapse_measures_wide()`](?collapse_measures_wide) | Collapse `_A#` repeated-measure columns and widen multi-measure items. |
 | [`combine_suffix_variables()`](?combine_suffix_variables), [`combine_q_vars()`](?combine_q_vars) | Merge related columns (by suffix or `Q`-pattern). |
 | [`has_no_98s_99s()`](?has_no_98s_99s) | Check numeric columns for sentinel `-98`/`-99` values before continuing a pipeline. |
-| [`replace_98s_99s()`](?replace_98s_99s) | Replace sentinel `-98`/`-99` with `1`/`NA`. |
+| [`replace_98s_99s()`](?replace_98s_99s) | Generic sentinel replacement; use `prepare_nf_items()` for NF scoring. |
 | [`nicer_id_var()`](?nicer_id_var) | Build a readable respondent ID column. |
 | [`get_first_obs()`](?get_first_obs), [`get_first_nonmissing_obs()`](?get_first_nonmissing_obs) | Keep the first observation, or first usable observation, per respondent. |
 
@@ -118,18 +154,6 @@ exceptions: they are never reversed and both special codes become `NA`.
 Their original meaning is retained, rather than relabelled as problem severity.
 All scoring wrappers preserve source item columns and use a prepared internal
 copy. Use `prepare_nf_items()` when you need the standardized items themselves.
-
-For a reviewed NF3.1 export:
-
-```r
-verdict <- audit_nf_reverse(items)
-if (is.na(verdict) || verdict == "mixed") {
-  stop("Review item/batch coding before scoring; use verbose = TRUE for details.")
-}
-# Confirm the convention also covers items outside the audit's checks.
-coding <- if (verdict == "consistent") "higher_is_worse" else "agreement"
-scored <- score_all(items, input_coding = coding)
-```
 
 For known differences across exports, `input_coding` can be supplied per row.
 Use `item_coding = c(Q223 = "higher_is_worse")` for a reviewed item exception

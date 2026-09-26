@@ -47,7 +47,7 @@ plot(sa)
 
 \strong{Clean and reshape}
 \itemize{
-\item \code{\link[=clean_NF_names]{clean_NF_names()}}, \code{\link[=collapse_versioned_columns]{collapse_versioned_columns()}}, \code{\link[=collapse_measures_wide]{collapse_measures_wide()}}, \code{\link[=combine_suffix_variables]{combine_suffix_variables()}}, \code{\link[=combine_q_vars]{combine_q_vars()}}, \code{\link[=has_no_98s_99s]{has_no_98s_99s()}}, \code{\link[=replace_98s_99s]{replace_98s_99s()}}, \code{\link[=nicer_id_var]{nicer_id_var()}}, \code{\link[=get_first_obs]{get_first_obs()}}, and \code{\link[=get_first_nonmissing_obs]{get_first_nonmissing_obs()}} standardize messy column names, validate sentinel values, widen repeated measures, and build clean respondent identifiers.
+\item \code{\link[=clean_NF_names]{clean_NF_names()}}, \code{\link[=collapse_versioned_columns]{collapse_versioned_columns()}}, \code{\link[=collapse_measures_wide]{collapse_measures_wide()}}, \code{\link[=combine_suffix_variables]{combine_suffix_variables()}}, \code{\link[=combine_q_vars]{combine_q_vars()}}, \code{\link[=has_no_98s_99s]{has_no_98s_99s()}}, \code{\link[=nicer_id_var]{nicer_id_var()}}, \code{\link[=get_first_obs]{get_first_obs()}}, and \code{\link[=get_first_nonmissing_obs]{get_first_nonmissing_obs()}} standardize messy column names, validate sentinel values, widen repeated measures, and build clean respondent identifiers. \code{\link[=replace_98s_99s]{replace_98s_99s()}} is a generic replacement helper; use \code{\link[=prepare_nf_items]{prepare_nf_items()}} for NF scoring.
 }
 
 \strong{Versioning, lookup, and metadata}
@@ -57,7 +57,7 @@ plot(sa)
 
 \strong{Score scales}
 \itemize{
-\item \code{\link[=score_all]{score_all()}} and \code{\link[=score_all_nf3]{score_all_nf3()}} score NF2 and/or NF3 scales, including Overall Negative Affect (\code{ona}); \code{\link[=nf_score]{nf_score()}} scores mixed-version data per row. \code{\link[=score_NORSE_trigger]{score_NORSE_trigger()}} and \code{\link[=score_NORSE_overunder]{score_NORSE_overunder()}} / \code{\link[=score_all_NORSE2_ou]{score_all_NORSE2_ou()}} handle subthreshold trigger and over/under scoring. \code{\link[=score_normed_NF]{score_normed_NF()}} computes normed scores from published norms, and \code{\link[=rename_score_vars]{rename_score_vars()}} maps exported \verb{SCORE_*} variables to consistent names.
+\item \code{\link[=audit_nf_reverse]{audit_nf_reverse()}} checks whether exported problem items consistently use higher = worse coding. \code{\link[=prepare_nf_items]{prepare_nf_items()}} applies an explicit coding convention and the scoring-specific sentinel rules. \code{\link[=score_all]{score_all()}} and \code{\link[=score_all_nf3]{score_all_nf3()}} then score NF2 and/or NF3 scales, including Overall Negative Affect (\code{ona}), while preserving source item columns. \code{\link[=nf_score]{nf_score()}} is deprecated. \code{\link[=score_NORSE_trigger]{score_NORSE_trigger()}} and \code{\link[=score_NORSE_overunder]{score_NORSE_overunder()}} / \code{\link[=score_all_NORSE2_ou]{score_all_NORSE2_ou()}} handle subthreshold trigger and over/under scoring. \code{\link[=score_normed_NF]{score_normed_NF()}} computes normed scores from compatible published norms, and \code{\link[=rename_score_vars]{rename_score_vars()}} maps exported \verb{SCORE_*} variables to consistent names.
 }
 
 \strong{Analyze and plot}
