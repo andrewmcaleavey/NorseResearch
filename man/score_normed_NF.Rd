@@ -39,6 +39,11 @@ scaleName_normed_normTable_outputFormat, such as "cog_normed_MHout_Z".
 \description{
 Norm NF data
 }
+\details{
+Norms must match the input scores' direction, version, and scoring
+policy. Standardization does not correct reversed or mixed item coding.
+Existing norms are not automatically recalibrated when coding changes.
+}
 \examples{
 data(synthetic_data, package = "NorseResearch")
 testout <- score_normed_NF(synthetic_data, scale = "cog")

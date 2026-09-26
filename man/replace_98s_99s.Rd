@@ -21,6 +21,12 @@ This function takes a data frame and replaces all instances of the value
 \code{-98} with \code{1}, and all instances of \code{-99} with \code{NA}. It works across both
 numeric and character variables.
 }
+\details{
+This is a generic replacement utility, not scoring preparation.
+It does not know item directions or missing-code exceptions, and applies
+replacement across all columns. Use \code{\link[=prepare_nf_items]{prepare_nf_items()}} before NF scoring;
+do not replace -98 with 1 and then reverse positive items.
+}
 \examples{
 df <- data.frame(a = c(1, -98, -99), b = c("text", "more text", "-98"),
 stringsAsFactors = FALSE)

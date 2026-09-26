@@ -13,7 +13,8 @@ score_NORSE_overunder(
 )
 }
 \arguments{
-\item{dat}{a data_frame.}
+\item{dat}{A data frame of prepared numeric items in 1--7 or \code{NA}.
+Use \code{\link[=prepare_nf_items]{prepare_nf_items()}} first; remaining special codes cause an error.}
 
 \item{vars}{the variables to score, defaults to all variables in \code{dat}.}
 
@@ -31,6 +32,10 @@ a vector of new subscale scores
 over-under closing and opening thresholds.
 }
 \details{
+Thresholds are applied after item preparation. Problem-item
+thresholds must use higher = worse units. Alliance and preference items
+retain their exported direction; the NF2 wrapper uses zero offsets for them.
+
 The principle of this scoring is that WHILE THE SCALE IS OPEN,
 scores should be centered on the closing threshold, and
 WHILE THE SCALE IS CLOSED, scores should be centered on the

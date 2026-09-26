@@ -1,7 +1,9 @@
 #' Audit the direction of exported Norse Feedback item responses
 #'
 #' Compare original agreement coding with coding in which higher values always
-#' indicate more problems. This diagnostic does not modify or score `dat`.
+#' indicate more problems. By default, return a single dataset-level verdict.
+#' Use `verbose = TRUE` for item-level results and supporting evidence. This
+#' diagnostic does not modify or score `dat`.
 #'
 #' @param dat A data frame of exported item responses. Item columns must be
 #'   numeric and contain only integers 1--7, -98, -99, or `NA`.
@@ -42,12 +44,40 @@
 #'   excludes the target item. Absent export columns count as missing items.
 #'   Must be greater than 0 and at most 1.
 #'
+#' @param verbose A single logical value, default `FALSE`. Return a detailed
+#'   audit list instead of the single overall verdict when `TRUE`.
+#'
 #' @details
+#' The default verdict is relative to higher = worse coding:
+#' `"consistent"` means all assessable positive-item scales/groups support
+#' already reversed responses; `"not consistent"` means they all support
+#' original agreement responses; `"mixed"` means supported conventions differ
+#' across scales/groups, a scale has conflicting directional evidence, or a
+#' supported scale has an item conflict. Negative items are not counted as a
+#' second convention when positive items retain original agreement coding.
+#'
+#' An assessment includes mixed-wording scales and entirely positive scales
+#' listed in `positive_scale_anchors`, provided the group's analysis sample has
+#' ordinary responses on at least one positive item in that scale. Absent or
+#' all-missing/sentinel-only scales and unconfigured positive scales do not vote.
+#' The verdict describes the available diagnostic evidence, not verification of
+#' every exported item. Items outside the assessment are marked `"not assessed"`
+#' in the verbose output. Unknown export columns are not assessed either.
+#'
+#' If any included scale is unresolved, or none can be assessed, the default
+#' returns `NA_character_` with a warning to request verbose details. Established
+#' mixed coding takes precedence over unresolved evidence. An unassessable
+#' export group prevents an otherwise uniform dataset verdict. Verbose output
+#' records these limitations without warning. Weak evidence is not called mixed.
+#'
 #' Two hypotheses are evaluated: `RAW_AGREEMENT` reverses ordinary responses
 #' on positive items with `8 - x`; `ALREADY_HIGHER_IS_WORSE` leaves ordinary
 #' responses unchanged. Both candidates therefore have higher = worse coding.
 #' Under both hypotheses, -99 becomes missing and -98 becomes 1 in the candidate
-#' dataset. In original agreement units, -98 would instead be 7 on a positive
+#' dataset, except for Alliance, Therapy Preferences/Needs, QOL, and Norse,
+#' where both codes are missing. These items retain their exported direction
+#' and are excluded from the problem-direction audit, as in [prepare_nf_items()].
+#' In original agreement units, -98 would instead be 7 on a positive
 #' item; converting that 7 to higher = worse also gives 1.
 #'
 #' Each hypothesis is checked first excluding -98 and then including its
@@ -85,9 +115,23 @@
 #' and `UNRESOLVED` otherwise. Even resolved decisions require review: an item
 #' can disagree with the rest of its scale. No automatic item-by-item search for
 #' the highest reliability is performed. When later applying a reviewed map,
-#' handle -99 as `NA` and -98 as 1 separately, before ordinary-response reversal.
+#' use [prepare_nf_items()] to handle special codes separately from reversal.
+#' The named scoring exceptions always have action `KEEP` and item status
+#' `"not assessed"`; they do not contribute to the dataset verdict.
 #'
-#' @return A list of data frames and settings:
+#' @return With `verbose = FALSE`, a character scalar: `"consistent"`,
+#'   `"not consistent"`, or `"mixed"`; `NA_character_` when the evidence cannot
+#'   establish a verdict. With `verbose = TRUE`, a list containing:
+#' \describe{
+#'   \item{status}{The same dataset-level verdict as the default return value.}
+#'   \item{items}{Per-group, per-item results: scale, item and export column,
+#'     positive wording, presence, proposed ordinary-response action,
+#'     item-conflict flag, scale classification, and status (`"consistent"`,
+#'     `"not consistent"`, `"mixed"`, `"unresolved"`, `"assumed consistent"`,
+#'     or `"not assessed"`). Item direction is inherited from the scale's
+#'     evidence; it is not an independently established encoding for every item.}
+#' }
+#'   The detailed list also retains these diagnostic components:
 #' \describe{
 #'   \item{classifications}{One row per group and metadata scale, including
 #'     scale type, primary and sensitivity decisions, and final classification.}
@@ -102,7 +146,7 @@
 #'     action, export-column presence, and a flag for negative pair or item-rest
 #'     evidence under the selected hypothesis in either special-value analysis.}
 #'   \item{groups}{Group identifiers and defining values, row and patient/sample
-#'     counts, plus possible partial reversal within a group.}
+#'     counts, a per-group `status`, and possible partial reversal within a group.}
 #'   \item{mapping}{Item metadata, mapped export columns, and presence flags.}
 #'   \item{unmapped_columns}{Export columns not mapped to an item or declared
 #'     grouping, patient, or ordering variable. These may include other metadata.}
@@ -122,8 +166,13 @@
 #'   dat, metadata, anchor_scales = "Worry",
 #'   positive_scale_anchors = list("Social Support" = "Worry")
 #' )
-#' audit$classifications
-#' audit$transformations
+#' audit # "not consistent": positive items retain agreement coding
+#' details <- audit_nf_reverse(
+#'   dat, metadata, anchor_scales = "Worry",
+#'   positive_scale_anchors = list("Social Support" = "Worry"), verbose = TRUE
+#' )
+#' details$status
+#' details$items
 #' # An untouched NF3.1 CSV can also be supplied explicitly:
 #' # metadata <- read.csv("NF3.1_items.csv", check.names = FALSE,
 #' #                      colClasses = "character")
@@ -136,8 +185,11 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
                               positive_scale_anchors = list(
                                 "Social Support" = c("Worry", "Sad Affect")),
                               min_n = 30L, min_abs_r = 0.20,
-                              conf_level = 0.95, min_fraction = 0.75) {
+                              conf_level = 0.95, min_fraction = 0.75,
+                              verbose = FALSE) {
   fail <- function(message) stop(message, call. = FALSE)
+  if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose))
+    fail("verbose must be a single non-missing logical value.")
   if (!is.data.frame(dat) || !nrow(dat) || anyDuplicated(names(dat)))
     fail("dat must be a nonempty data frame with unique column names.")
   if (!is.data.frame(metadata)) fail("metadata must be a data frame.")
@@ -165,6 +217,7 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
     if (any(!flags %in% c("", "R"))) fail("Character reverse flags must be blank or R.")
     m$positive <- flags == "R"
   }
+  m$scoring_exception <- m$item %in% nf_scoring_exceptions(c("2", "3"))
   m$column <- m$item
   if (!is.null(item_map)) {
     if (!is.character(item_map) || is.null(names(item_map)) ||
@@ -206,6 +259,8 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
   indices <- lapply(scales, function(s) which(m$scale_e == s))
   names(indices) <- scales
   kinds <- vapply(indices, function(ii) {
+    ii <- ii[!m$scoring_exception[ii]]
+    if (!length(ii)) return("exception")
     if (all(m$positive[ii])) "positive" else if (any(m$positive[ii])) "mixed" else "negative"
   }, character(1))
   if (!is.character(anchor_scales) || anyNA(anchor_scales) ||
@@ -305,7 +360,9 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
       x[!is.na(x) & x == -99] <- NA_real_
       sentinel <- !is.na(x) & x == -98
       x[sentinel] <- NA_real_
-      if (h == "RAW_AGREEMENT") x[, m$positive] <- 8 - x[, m$positive, drop = FALSE]
+      reverse <- m$positive & !m$scoring_exception
+      if (h == "RAW_AGREEMENT") x[, reverse] <- 8 - x[, reverse, drop = FALSE]
+      sentinel[, m$scoring_exception] <- FALSE
       if (include98) x[sentinel] <- 1
       add <- function(s, type, left, right, deciding, a, b) {
         local[[length(local) + 1L]] <<- cbind(data.frame(
@@ -314,6 +371,8 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
       }
       for (s in scales) {
         ii <- indices[[s]]
+        ii <- ii[!m$scoring_exception[ii]]
+        if (!length(ii)) next
         if (length(ii) > 1L) {
           pairs <- utils::combn(ii, 2)
           for (k in seq_len(ncol(pairs))) {
@@ -343,6 +402,7 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
       primary <- decide(zz[!zz$include_98, , drop = FALSE])
       sensitivity <- decide(zz[zz$include_98, , drop = FALSE])
       if (kinds[s] == "negative") primary <- sensitivity <- "ANCHOR_DIRECTION_ASSUMED"
+      if (kinds[s] == "exception") primary <- sensitivity <- "EXEMPT_FROM_PROBLEM_SCORING"
       final <- primary
       if (primary %in% hypotheses && primary != sensitivity)
         final <- "SENSITIVE_TO_NO_PROBLEM_CODES"
@@ -351,7 +411,7 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
         classification = final))
       if (final %in% hypotheses) resolved <- c(resolved, final)
       for (j in indices[[s]]) {
-        action <- if (!m$positive[j]) "KEEP" else if (final == "RAW_AGREEMENT") "REVERSE" else
+        action <- if (m$scoring_exception[j] || !m$positive[j]) "KEEP" else if (final == "RAW_AGREEMENT") "REVERSE" else
           if (final == "ALREADY_HIGHER_IS_WORSE") "KEEP" else "UNRESOLVED"
         chosen <- if (final %in% hypotheses) final else
           if (kinds[s] == "negative") "ALREADY_HIGHER_IS_WORSE" else NA_character_
@@ -372,8 +432,57 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
   decisions <- classification_table[classification_table$classification %in% hypotheses, ]
   across <- nrow(groups) > 1L && any(vapply(split(decisions$classification, decisions$scale),
                                            function(x) length(unique(x)) > 1L, logical(1)))
-  list(classifications = classification_table,
-       correlations = do.call(rbind, correlations), counts = do.call(rbind, counts),
+  correlation_table <- do.call(rbind, correlations)
+  count_table <- do.call(rbind, counts)
+  item_table <- do.call(rbind, transformations)
+  # Only ordinary responses can establish the exported response direction.
+  analysis_counts <- count_table[count_table$scope == "analysis", ]
+  observed <- analysis_counts$ordinary[match(
+    paste(item_table$group, item_table$item),
+    paste(analysis_counts$group, analysis_counts$item))] > 0L
+  eligible <- kinds %in% "mixed" | names(kinds) %in% names(positive_scale_anchors)
+  scale_key <- paste(classification_table$group, classification_table$scale)
+  item_scale_key <- paste(item_table$group, item_table$scale)
+  assessed <- scale_key %in% item_scale_key[
+    item_table$positive & observed & eligible[match(item_table$scale, names(kinds))]]
+  item_table$classification <- classification_table$classification[
+    match(item_scale_key, scale_key)]
+  item_table$status <- "not assessed"
+  in_scope <- observed & item_scale_key %in% scale_key[assessed]
+  item_table$status[observed & !item_table$positive] <- "assumed consistent"
+  item_table$status[in_scope & item_table$positive] <- "unresolved"
+  item_table$status[in_scope & item_table$positive &
+                      item_table$classification == "RAW_AGREEMENT"] <- "not consistent"
+  item_table$status[in_scope & item_table$positive &
+                      item_table$classification == "ALREADY_HIGHER_IS_WORSE"] <- "consistent"
+  item_table$status[in_scope & item_table$classification == "INCONSISTENT"] <- "mixed"
+  item_table$status[observed & item_table$item_conflict %in% TRUE] <- "mixed"
+  item_table$status[item_table$item %in% m$item[m$scoring_exception]] <- "not assessed"
+
+  summarize_status <- function(decisions, conflict = FALSE) {
+    resolved <- unique(decisions[decisions %in% hypotheses])
+    if (conflict || "INCONSISTENT" %in% decisions || length(resolved) > 1L)
+      return("mixed")
+    if (!length(decisions) || any(!decisions %in% hypotheses)) return(NA_character_)
+    if (resolved == "RAW_AGREEMENT") "not consistent" else "consistent"
+  }
+  groups$status <- vapply(groups$group, function(g) {
+    summarize_status(classification_table$classification[
+      classification_table$group == g & assessed],
+      any(item_table$group == g & item_table$status == "mixed"))
+  }, character(1))
+  known <- unique(groups$status[!is.na(groups$status)])
+  status <- if ("mixed" %in% known || length(known) > 1L) "mixed" else
+    if (anyNA(groups$status) || !length(known)) NA_character_ else known
+  if (!verbose) {
+    if (is.na(status)) warning(
+      "Insufficient or unresolved evidence for a dataset verdict; use verbose = TRUE for details.",
+      call. = FALSE)
+    return(status)
+  }
+  list(status = status, items = item_table,
+       classifications = classification_table,
+       correlations = correlation_table, counts = count_table,
        transformations = do.call(rbind, transformations), groups = groups,
        mapping = m, unmapped_columns = setdiff(names(dat), c(m$column, controls)),
        settings = list(anchor_scales = anchor_scales,

@@ -17,6 +17,11 @@ bundled version-specific item metadata.
 \description{
 Return the authoritative reverse-scored item names
 }
+\details{
+This reports historical wording flags. Scoring policy overrides
+these flags for Alliance, Therapy Preferences/Needs, QOL, and Norse items,
+which are never reversed by \code{\link[=prepare_nf_items]{prepare_nf_items()}} or the scoring wrappers.
+}
 \examples{
 reverse_items("NF2")
 }

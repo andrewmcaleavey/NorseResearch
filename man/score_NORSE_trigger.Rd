@@ -11,7 +11,8 @@ score_NORSE_trigger(
 )
 }
 \arguments{
-\item{dat}{a data_frame.}
+\item{dat}{A data frame of prepared numeric items in 1--7 or \code{NA}.
+Special codes must first be handled by \code{\link[=prepare_nf_items]{prepare_nf_items()}}.}
 
 \item{vars}{variables that make the scale, defaults to all in \code{dat}.
 Can use with e.g., "somAnx.names".}

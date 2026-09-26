@@ -180,6 +180,10 @@ has_no_98s_99s <- function(dat,
 #' `-98` with `1`, and all instances of `-99` with `NA`. It works across both
 #' numeric and character variables.
 #'
+#' @details This is a generic replacement utility, not scoring preparation.
+#' It does not know item directions or missing-code exceptions, and applies
+#' replacement across all columns. Use [prepare_nf_items()] before NF scoring;
+#' do not replace -98 with 1 and then reverse positive items.
 #' @param dat A data frame whose values will be modified. The function can
 #' handle columns containing either numeric or character types, but the
 #' replacement logic applies only to numeric-like columns (i.e., integer

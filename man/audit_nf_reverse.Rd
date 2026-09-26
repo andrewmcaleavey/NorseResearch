@@ -16,7 +16,8 @@ audit_nf_reverse(
   min_n = 30L,
   min_abs_r = 0.2,
   conf_level = 0.95,
-  min_fraction = 0.75
+  min_fraction = 0.75,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -69,9 +70,24 @@ intervals; default 0.95. Must be greater than 0 and less than 1.}
 to calculate its mean, default 0.75. For item-rest means, the denominator
 excludes the target item. Absent export columns count as missing items.
 Must be greater than 0 and at most 1.}
+
+\item{verbose}{A single logical value, default \code{FALSE}. Return a detailed
+audit list instead of the single overall verdict when \code{TRUE}.}
 }
 \value{
-A list of data frames and settings:
+With \code{verbose = FALSE}, a character scalar: \code{"consistent"},
+\code{"not consistent"}, or \code{"mixed"}; \code{NA_character_} when the evidence cannot
+establish a verdict. With \code{verbose = TRUE}, a list containing:
+\describe{
+\item{status}{The same dataset-level verdict as the default return value.}
+\item{items}{Per-group, per-item results: scale, item and export column,
+positive wording, presence, proposed ordinary-response action,
+item-conflict flag, scale classification, and status (\code{"consistent"},
+\code{"not consistent"}, \code{"mixed"}, \code{"unresolved"}, \code{"assumed consistent"},
+or \code{"not assessed"}). Item direction is inherited from the scale's
+evidence; it is not an independently established encoding for every item.}
+}
+The detailed list also retains these diagnostic components:
 \describe{
 \item{classifications}{One row per group and metadata scale, including
 scale type, primary and sensitivity decisions, and final classification.}
@@ -86,7 +102,7 @@ the selected analysis sample: ordinary responses, -98, -99, and \code{NA}.}
 action, export-column presence, and a flag for negative pair or item-rest
 evidence under the selected hypothesis in either special-value analysis.}
 \item{groups}{Group identifiers and defining values, row and patient/sample
-counts, plus possible partial reversal within a group.}
+counts, a per-group \code{status}, and possible partial reversal within a group.}
 \item{mapping}{Item metadata, mapped export columns, and presence flags.}
 \item{unmapped_columns}{Export columns not mapped to an item or declared
 grouping, patient, or ordering variable. These may include other metadata.}
@@ -96,14 +112,41 @@ for differing resolved conventions across export groups.}
 }
 \description{
 Compare original agreement coding with coding in which higher values always
-indicate more problems. This diagnostic does not modify or score \code{dat}.
+indicate more problems. By default, return a single dataset-level verdict.
+Use \code{verbose = TRUE} for item-level results and supporting evidence. This
+diagnostic does not modify or score \code{dat}.
 }
 \details{
+The default verdict is relative to higher = worse coding:
+\code{"consistent"} means all assessable positive-item scales/groups support
+already reversed responses; \code{"not consistent"} means they all support
+original agreement responses; \code{"mixed"} means supported conventions differ
+across scales/groups, a scale has conflicting directional evidence, or a
+supported scale has an item conflict. Negative items are not counted as a
+second convention when positive items retain original agreement coding.
+
+An assessment includes mixed-wording scales and entirely positive scales
+listed in \code{positive_scale_anchors}, provided the group's analysis sample has
+ordinary responses on at least one positive item in that scale. Absent or
+all-missing/sentinel-only scales and unconfigured positive scales do not vote.
+The verdict describes the available diagnostic evidence, not verification of
+every exported item. Items outside the assessment are marked \code{"not assessed"}
+in the verbose output. Unknown export columns are not assessed either.
+
+If any included scale is unresolved, or none can be assessed, the default
+returns \code{NA_character_} with a warning to request verbose details. Established
+mixed coding takes precedence over unresolved evidence. An unassessable
+export group prevents an otherwise uniform dataset verdict. Verbose output
+records these limitations without warning. Weak evidence is not called mixed.
+
 Two hypotheses are evaluated: \code{RAW_AGREEMENT} reverses ordinary responses
 on positive items with \code{8 - x}; \code{ALREADY_HIGHER_IS_WORSE} leaves ordinary
 responses unchanged. Both candidates therefore have higher = worse coding.
 Under both hypotheses, -99 becomes missing and -98 becomes 1 in the candidate
-dataset. In original agreement units, -98 would instead be 7 on a positive
+dataset, except for Alliance, Therapy Preferences/Needs, QOL, and Norse,
+where both codes are missing. These items retain their exported direction
+and are excluded from the problem-direction audit, as in \code{\link[=prepare_nf_items]{prepare_nf_items()}}.
+In original agreement units, -98 would instead be 7 on a positive
 item; converting that 7 to higher = worse also gives 1.
 
 Each hypothesis is checked first excluding -98 and then including its
@@ -141,7 +184,9 @@ items are \code{REVERSE} for raw agreement, \code{KEEP} for already reversed exp
 and \code{UNRESOLVED} otherwise. Even resolved decisions require review: an item
 can disagree with the rest of its scale. No automatic item-by-item search for
 the highest reliability is performed. When later applying a reviewed map,
-handle -99 as \code{NA} and -98 as 1 separately, before ordinary-response reversal.
+use \code{\link[=prepare_nf_items]{prepare_nf_items()}} to handle special codes separately from reversal.
+The named scoring exceptions always have action \code{KEEP} and item status
+\code{"not assessed"}; they do not contribute to the dataset verdict.
 }
 \examples{
 metadata <- data.frame(
@@ -156,8 +201,13 @@ audit <- audit_nf_reverse(
   dat, metadata, anchor_scales = "Worry",
   positive_scale_anchors = list("Social Support" = "Worry")
 )
-audit$classifications
-audit$transformations
+audit # "not consistent": positive items retain agreement coding
+details <- audit_nf_reverse(
+  dat, metadata, anchor_scales = "Worry",
+  positive_scale_anchors = list("Social Support" = "Worry"), verbose = TRUE
+)
+details$status
+details$items
 # An untouched NF3.1 CSV can also be supplied explicitly:
 # metadata <- read.csv("NF3.1_items.csv", check.names = FALSE,
 #                      colClasses = "character")

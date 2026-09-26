@@ -2,6 +2,16 @@
 
 ## New features
 
+* Add `prepare_nf_items()` and explicit `input_coding`/`item_coding` arguments
+  to the main and version-specific scorers. Agreement-coded problem/resource
+  items are reversed once; special response codes are handled separately.
+* Keep Alliance, Preferences/Needs, QOL, and Norse items unreversed, treating
+  both -98 and -99 as missing. QOL now follows the same preparation pathway.
+* Preserve source item columns while scoring prepared copies. Low-level mean,
+  trigger, over/under and reversal helpers reject unprepared special codes.
+* Exclude scoring-policy exceptions from the reverse-scoring audit. NF3 scores
+  ignore NF2-only item columns in mixed-version exports.
+
 * Add `has_no_98s_99s()` to detect `-98` and `-99` sentinel values in numeric
   columns. It can validate a data-frame pipeline, return a logical result, or
   warn while returning the input unchanged.

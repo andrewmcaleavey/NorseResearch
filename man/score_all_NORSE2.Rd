@@ -4,13 +4,24 @@
 \alias{score_all_NORSE2}
 \title{Scoring All NORSE scales without losing subthreshold scores to NA}
 \usage{
-score_all_NORSE2(dat, process_vars = TRUE)
+score_all_NORSE2(
+  dat,
+  process_vars = TRUE,
+  input_coding = "higher_is_worse",
+  item_coding = NULL
+)
 }
 \arguments{
 \item{dat}{a data_frame.}
 
 \item{process_vars}{Logical. Should process variables (Alliance and
 Expressed Needs) be computed. Defaults to TRUE.}
+
+\item{input_coding}{Input convention: \code{"higher_is_worse"} (default, for
+backward compatibility) or \code{"agreement"}. May be supplied once or per row.
+The default is an assumption, not an automatic audit. See \code{\link[=prepare_nf_items]{prepare_nf_items()}}.}
+
+\item{item_coding}{Optional named item overrides; see \code{\link[=prepare_nf_items]{prepare_nf_items()}}.}
 }
 \value{
 a data_frame with new subscale values
@@ -20,6 +31,14 @@ a data_frame with new subscale values
 trashing missing values when trigger not met.
 }
 \details{
+Items are prepared in an internal copy before scoring. Problem-oriented
+items have higher = worse direction; -98 becomes 1 and -99 becomes missing.
+Alliance, Therapy Preferences/Needs, QOL, and Norse items retain their input
+direction and both special codes become missing. Original item columns are
+preserved in the result. These exceptions are not problem-severity scores.
+Run \code{\link[=audit_nf_reverse]{audit_nf_reverse()}} before scoring when the export convention is unclear.
+Do not reverse already prepared items again.
+
 Provides the following scale scores:
 \itemize{
 \item Cognitive problems: \code{cog}

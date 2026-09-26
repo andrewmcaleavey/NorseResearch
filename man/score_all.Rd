@@ -2,13 +2,15 @@
 % Please edit documentation in R/ScoringFuncs.R
 \name{score_all}
 \alias{score_all}
-\title{Score all versions of the NF3 in raw scale form}
+\title{Score NF2 and NF3 scales with explicit input coding}
 \usage{
 score_all(
   dat,
   process_vars = TRUE,
   versions = c("2", "3"),
-  version_variable = "Ver_10"
+  version_variable = "Ver_10",
+  input_coding = "higher_is_worse",
+  item_coding = NULL
 )
 }
 \arguments{
@@ -25,6 +27,12 @@ versions exactly after the same normalization.}
 
 \item{version_variable}{Character name of the variable encoding the version
 to use for each row.}
+
+\item{input_coding}{Input convention: \code{"higher_is_worse"} (default, for
+backward compatibility) or \code{"agreement"}. May be supplied once or per row.
+The default is an assumption, not an automatic audit. See \code{\link[=prepare_nf_items]{prepare_nf_items()}}.}
+
+\item{item_coding}{Optional named item overrides; see \code{\link[=prepare_nf_items]{prepare_nf_items()}}.}
 }
 \value{
 A data.frame/tibble with new variables. The original item responses remain unchanged.
@@ -32,8 +40,17 @@ A data.frame/tibble with new variables. The original item responses remain uncha
 \description{
 This function AUTOMATICALLY treats data with -98 and -99 values. The assumption is that
 -98 means "not relevant to me" and -99 means "Prefer not to answer". For all scores,
--99s are considered NA when calculating scores. For all scales EXCEPT PROCESS VARIABLES -98s
-mean 1, the lowest possible severity. For Alliance and Preference scales, -98 means NA.
+-99s are considered NA when calculating scores. For problem-oriented scales
+-98 means 1. For Alliance, Preferences, QOL, and Norse, both codes mean NA.
+}
+\details{
+Items are prepared in an internal copy before scoring. Problem-oriented
+items have higher = worse direction; -98 becomes 1 and -99 becomes missing.
+Alliance, Therapy Preferences/Needs, QOL, and Norse items retain their input
+direction and both special codes become missing. Original item columns are
+preserved in the result. These exceptions are not problem-severity scores.
+Run \code{\link[=audit_nf_reverse]{audit_nf_reverse()}} before scoring when the export convention is unclear.
+Do not reverse already prepared items again.
 }
 \examples{
 \dontrun{

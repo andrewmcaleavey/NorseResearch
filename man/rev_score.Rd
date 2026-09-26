@@ -10,7 +10,9 @@ rev_score(x)
 \item{x}{A vector of item responses.}
 }
 \value{
-A reverse-coded vector of \code{x}.
+A reverse-coded vector of \code{x}. Values outside 1--7 cause an
+error; missing values are preserved. Use \code{\link[=prepare_nf_items]{prepare_nf_items()}} for exports
+containing special codes.
 }
 \description{
 \code{rev_score} takes a vector and returns its 1-7 revers

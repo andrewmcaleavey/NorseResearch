@@ -96,6 +96,8 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 
 | Function | What it does |
 |---|---|
+| [`audit_nf_reverse()`](?audit_nf_reverse) | Audit problem-item direction; request `verbose = TRUE` for item details. |
+| [`prepare_nf_items()`](?prepare_nf_items) | Prepare an item-level copy using explicit input coding and sentinel rules. |
 | [`score_all()`](?score_all) | Score all NF2 and/or NF3 scales in raw-scale form. |
 | [`score_all_nf3()`](?score_all_nf3) | Score the NF3 scales specifically. |
 | [`nf_score()`](?nf_score) | Deprecated mixed-version compatibility helper; use [`score_all()`](?score_all). |
@@ -105,7 +107,35 @@ help page in R: use `?function_name` (for example, `?scale_analysis2`), or use
 
 > `score_all()` and the `score_all_nf3()` family expect a data set whose item
 > columns are already cleaned to short `Q#` names. They are built around real NF
-> exports.
+> exports. Set `input_coding = "higher_is_worse"` for standardized responses
+> or `"agreement"` for original agreement responses. The default is
+> `"higher_is_worse"` for backward compatibility; coding is not guessed.
+
+Problem/resource-deficit scores use higher = more problems: ordinary positive
+agreement responses are reversed, `-98` becomes `1`, and `-99` becomes `NA`.
+Alliance, Therapy Preferences/Needs, QOL, and Norse (Q148, including Q148.2) are
+exceptions: they are never reversed and both special codes become `NA`.
+Their original meaning is retained, rather than relabelled as problem severity.
+All scoring wrappers preserve source item columns and use a prepared internal
+copy. Use `prepare_nf_items()` when you need the standardized items themselves.
+
+For a reviewed NF3.1 export:
+
+```r
+verdict <- audit_nf_reverse(items)
+if (is.na(verdict) || verdict == "mixed") {
+  stop("Review item/batch coding before scoring; use verbose = TRUE for details.")
+}
+# Confirm the convention also covers items outside the audit's checks.
+coding <- if (verdict == "consistent") "higher_is_worse" else "agreement"
+scored <- score_all(items, input_coding = coding)
+```
+
+For known differences across exports, `input_coding` can be supplied per row.
+Use `item_coding = c(Q223 = "higher_is_worse")` for a reviewed item exception
+within an otherwise agreement-coded export. Audit different versions with
+appropriate metadata; the default audit metadata describes NF3.1. Norms must
+match the score direction, NF version, and scoring policy.
 
 ### Analyze and plot
 
@@ -147,7 +177,9 @@ plot(sa)
 `random_norse_data()` can produce NF2, NF3, or a mixed export. In mixed data,
 `Ver_10` identifies the version and each patient's NF2 rows precede their NF3
 rows. The optional sentinel values are raw-export values; `score_all()` handles
-them automatically when scoring.
+them automatically when scoring. Random mock responses demonstrate the API;
+they do not establish a clinically meaningful correlation pattern or coding
+convention.
 
 ```r
 set.seed(20260903)
@@ -161,7 +193,7 @@ mock <- random_norse_data(
 )
 
 check_version_nf(mock) # c("2", "3")
-scored_mock <- score_all(mock)
+scored_mock <- score_all(mock, input_coding = "higher_is_worse")
 ```
 
 ## Learn more

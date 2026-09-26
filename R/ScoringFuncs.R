@@ -16,19 +16,22 @@
 #' \code{rev_score} takes a vector and returns its 1-7 revers
 #'
 #' @param x A vector of item responses.
-#' @return A reverse-coded vector of \code{x}.
+#' @return A reverse-coded vector of \code{x}. Values outside 1--7 cause an
+#'   error; missing values are preserved. Use [prepare_nf_items()] for exports
+#'   containing special codes.
 #' @export
 #' @examples
 #' data <- data.frame(Q27 = c(1, 2, 2, 1), Q28 = c(7, 6, 6, 7))
 #' dplyr::mutate(data, Q27 = rev_score(Q27))
 rev_score <- function(x){
+  check_nf_range(data.frame(response = x), vars = "response", action = "error")
   x * -1 + 8
 }
 
 # Reverse the authoritative NF2 item list. Missing columns are ignored so this
 # helper can be used on a selected subset of an export.
 rev_score_NORSE2 <- function(data) {
-  reverse <- intersect(reverse_items("2"), names(data))
+  reverse <- intersect(setdiff(reverse_items("2"), nf_scoring_exceptions("2")), names(data))
   dplyr::mutate(data, dplyr::across(dplyr::all_of(reverse), rev_score))
 }
 
@@ -46,6 +49,7 @@ score_NORSE_mean <- function(dat, vars = names(dat)) {
     return(rep(NA_real_, nrow(dat)))
   }
 
+  check_nf_range(dat, vars = vars, action = "error")
   dat %>%
     dplyr::select(dplyr::all_of(vars)) %>%
     dplyr::transmute(score = rowMeans(., na.rm = TRUE)) %>%
@@ -58,7 +62,8 @@ score_NORSE_mean <- function(dat, vars = names(dat)) {
 #' \code{score_NORSE_trigger} provides scores for NORSE subscales without
 #' trashing missing values when trigger not met
 #'
-#' @param dat a data_frame.
+#' @param dat A data frame of prepared numeric items in 1--7 or `NA`.
+#'   Special codes must first be handled by [prepare_nf_items()].
 #' @param vars variables that make the scale, defaults to all in \code{dat}.
 #' Can use with e.g., "somAnx.names".
 #' @param trigger the trigger item. Default uses \code{lookup_trigger_among} with
@@ -91,6 +96,7 @@ score_NORSE_trigger <- function(dat,
   vars <- intersect(vars, names(dat))
   if (!length(vars)) return(rep(NA_real_, nrow(dat)))
 
+  check_nf_range(dat, vars = vars, action = "error")
   dat <- dplyr::select(dat, dplyr::all_of(vars)) %>%
     transmute(score = rowMeans(., na.rm = TRUE)) %>%
     mutate(score = ifelse(is.nan(score), NA, score))
@@ -151,6 +157,18 @@ find_trigger_among <- function(items){
 #'
 #' @return a data_frame with new subscale values
 #'
+#' @param input_coding Input convention: `"higher_is_worse"` (default, for
+#'   backward compatibility) or `"agreement"`. May be supplied once or per row.
+#'   The default is an assumption, not an automatic audit. See [prepare_nf_items()].
+#' @param item_coding Optional named item overrides; see [prepare_nf_items()].
+#' @details
+#' Items are prepared in an internal copy before scoring. Problem-oriented
+#' items have higher = worse direction; -98 becomes 1 and -99 becomes missing.
+#' Alliance, Therapy Preferences/Needs, QOL, and Norse items retain their input
+#' direction and both special codes become missing. Original item columns are
+#' preserved in the result. These exceptions are not problem-severity scores.
+#' Run [audit_nf_reverse()] before scoring when the export convention is unclear.
+#' Do not reverse already prepared items again.
 #' @export
 #'
 #' @details
@@ -163,10 +181,10 @@ find_trigger_among <- function(items){
 #' @examples
 #' data(synthetic_data, package = "NorseResearch")
 #' test_out <- score_all_NORSE2(synthetic_data)
-score_all_NORSE2 <- function(dat, process_vars = TRUE){
-  if(!check_rev(dat)){
-    warning("DATA may not be properly scored, check reversing and NA values!!!")
-  }
+score_all_NORSE2 <- function(dat, process_vars = TRUE,
+                             input_coding = "higher_is_worse", item_coding = NULL){
+  original <- dat
+  dat <- prepare_nf_items(dat, input_coding, version = "2", item_coding = item_coding)
 
   if(process_vars){
     dat <- ungroup(dat) %>%
@@ -220,8 +238,8 @@ score_all_NORSE2 <- function(dat, process_vars = TRUE){
     )
   }
   score_vars <- intersect(c(scale_names, "alliance", "needs"), names(dat))
-  check_nf_range(dat, vars = score_vars, action = "warn")
-  dat
+  check_nf_range(dat, vars = score_vars, action = "error")
+  restore_nf_source(dat, original, score_vars)
 }
 
 
@@ -230,12 +248,16 @@ score_all_NORSE2 <- function(dat, process_vars = TRUE){
 #' \code{score_NORSE_overunder} is a general method for scoring
 #' over-under closing and opening thresholds.
 #'
-#' @param dat a data_frame.
+#' @param dat A data frame of prepared numeric items in 1--7 or `NA`.
+#'   Use [prepare_nf_items()] first; remaining special codes cause an error.
 #' @param vars the variables to score, defaults to all variables in \code{dat}.
 #' @param trigger the trigger item, defaults to the first item in \code{dat}.
 #' @param closing.thresh the closing threshold value. Default is 0.
 #' @param opening.thresh the opening threshold value. Default is 0.
 #'
+#' @details Thresholds are applied after item preparation. Problem-item
+#'   thresholds must use higher = worse units. Alliance and preference items
+#'   retain their exported direction; the NF2 wrapper uses zero offsets for them.
 #' @return a vector of new subscale scores
 #'
 #' @details
@@ -274,7 +296,8 @@ score_NORSE_overunder <- function(dat,
   # trigger is the trigger item, defaults to the first value of vars
   # closing.thresh is the closing threshold, default to 2
   # opening thresh is the opening threshold, default to 2
-  dat <- dplyr::select(dat, vars)
+  check_nf_range(dat, vars = vars, action = "error")
+  dat <- dplyr::select(dat, dplyr::all_of(vars))
 
   # values of the trigger items
   trigger_vals <- dat[, names(dat) %in% trigger][[1]]
@@ -322,13 +345,27 @@ score_NORSE_overunder <- function(dat,
 #' - Control: \code{control_ou}
 #' - etc.
 #'
+#' @param input_coding Input convention: `"higher_is_worse"` (default, for
+#'   backward compatibility) or `"agreement"`. May be supplied once or per row.
+#'   The default is an assumption, not an automatic audit. See [prepare_nf_items()].
+#' @param item_coding Optional named item overrides; see [prepare_nf_items()].
+#' @details
+#' Items are prepared in an internal copy before scoring. Problem-oriented
+#' items have higher = worse direction; -98 becomes 1 and -99 becomes missing.
+#' Alliance, Therapy Preferences/Needs, QOL, and Norse items retain their input
+#' direction and both special codes become missing. Original item columns are
+#' preserved in the result. These exceptions are not problem-severity scores.
+#' Run [audit_nf_reverse()] before scoring when the export convention is unclear.
+#' Do not reverse already prepared items again.
 #' @export
 #' @examples
 #' data(synthetic_data, package = "NorseResearch")
 #' test_out <- score_all_NORSE2_ou(synthetic_data)
 #'
-score_all_NORSE2_ou <- function(dat){
-  mutate(dat,
+score_all_NORSE2_ou <- function(dat, input_coding = "higher_is_worse", item_coding = NULL){
+  original <- dat
+  dat <- prepare_nf_items(dat, input_coding, version = "2", item_coding = item_coding)
+  out <- mutate(dat,
          cog_ou = score_NORSE_overunder(dat, cog.names,
                                         opening.thresh = 4,
                                         closing.thresh = 3),
@@ -397,6 +434,7 @@ score_all_NORSE2_ou <- function(dat){
                                           opening.thresh = 0,
                                           closing.thresh = 0)
   )
+  restore_nf_source(out, original, c(paste0(scale_names, "_ou"), "alliance_ou", "needs_ou"))
 }
 
 #########
@@ -413,6 +451,9 @@ compute_normed <- function(x, m_bar, sd){
 #'
 #' @param dat A data.frame. Data set on which to add normed variables.
 #' @param scale String. Which scale should be normed. Does one scale at a time.
+#' @details Norms must match the input scores' direction, version, and scoring
+#'   policy. Standardization does not correct reversed or mixed item coding.
+#'   Existing norms are not automatically recalibrated when coding changes.
 #' @param normTable Which norm table should be used. Defaults to the 2019
 #' MH outpatient first visit norms ("summary_norms_MH_out").
 #' A custom normTable can be supplied, or
@@ -501,13 +542,28 @@ item_norm <- function(item,
 #' @param process_vars logical. Should the process variables be included?
 #'
 #' @return A data frame with additional variables
+#' @param input_coding Input convention: `"higher_is_worse"` (default, for
+#'   backward compatibility) or `"agreement"`. May be supplied once or per row.
+#'   The default is an assumption, not an automatic audit. See [prepare_nf_items()].
+#' @param item_coding Optional named item overrides; see [prepare_nf_items()].
+#' @details
+#' Items are prepared in an internal copy before scoring. Problem-oriented
+#' items have higher = worse direction; -98 becomes 1 and -99 becomes missing.
+#' Alliance, Therapy Preferences/Needs, QOL, and Norse items retain their input
+#' direction and both special codes become missing. Original item columns are
+#' preserved in the result. These exceptions are not problem-severity scores.
+#' Run [audit_nf_reverse()] before scoring when the export convention is unclear.
+#' Do not reverse already prepared items again.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' score_all_nf3(HF_research_data_2021)
 #' }
-score_all_nf3 <- function(dat, process_vars = TRUE){
+score_all_nf3 <- function(dat, process_vars = TRUE,
+                          input_coding = "higher_is_worse", item_coding = NULL){
+  original <- dat
+  dat <- prepare_nf_items(dat, input_coding, version = "3", item_coding = item_coding)
   dat <- ungroup(dat) %>%
     mutate(anger = score_NORSE_trigger(dat, anger.names.nf3),
            cog = score_NORSE_trigger(dat, cog.names.nf3),
@@ -542,9 +598,9 @@ score_all_nf3 <- function(dat, process_vars = TRUE){
   check_nf_range(
     dat,
     vars = intersect(c(scale_names_nf3, "QOL"), names(dat)),
-    action = "warn"
+    action = "error"
   )
-  dat
+  restore_nf_source(dat, original, c(scale_names_nf3, "QOL", "alliance", "pref"))
 }
 
 #' Check which version(s) of the NF are present in a data set.
@@ -598,12 +654,12 @@ check_version_nf <- function(dat){
 # NF 3
 
 
-#' Score all versions of the NF3 in raw scale form
+#' Score NF2 and NF3 scales with explicit input coding
 #'
 #' This function AUTOMATICALLY treats data with -98 and -99 values. The assumption is that
 #' -98 means "not relevant to me" and -99 means "Prefer not to answer". For all scores,
-#' -99s are considered NA when calculating scores. For all scales EXCEPT PROCESS VARIABLES -98s
-#' mean 1, the lowest possible severity. For Alliance and Preference scales, -98 means NA.
+#' -99s are considered NA when calculating scores. For problem-oriented scales
+#' -98 means 1. For Alliance, Preferences, QOL, and Norse, both codes mean NA.
 #'
 #' @param dat A dataset. Should have clean names that have been simplified to include
 #'   only item indicators. For example, `M53_Q142_1` should instead be `Q142`.
@@ -617,6 +673,18 @@ check_version_nf <- function(dat){
 #'   to use for each row.
 #'
 #' @return A data.frame/tibble with new variables. The original item responses remain unchanged.
+#' @param input_coding Input convention: `"higher_is_worse"` (default, for
+#'   backward compatibility) or `"agreement"`. May be supplied once or per row.
+#'   The default is an assumption, not an automatic audit. See [prepare_nf_items()].
+#' @param item_coding Optional named item overrides; see [prepare_nf_items()].
+#' @details
+#' Items are prepared in an internal copy before scoring. Problem-oriented
+#' items have higher = worse direction; -98 becomes 1 and -99 becomes missing.
+#' Alliance, Therapy Preferences/Needs, QOL, and Norse items retain their input
+#' direction and both special codes become missing. Original item columns are
+#' preserved in the result. These exceptions are not problem-severity scores.
+#' Run [audit_nf_reverse()] before scoring when the export convention is unclear.
+#' Do not reverse already prepared items again.
 #' @export
 #'
 #' @examples
@@ -626,33 +694,12 @@ check_version_nf <- function(dat){
 score_all <- function(dat,
                       process_vars = TRUE,
                       versions = c("2", "3"),
-                      version_variable = "Ver_10") {
+                      version_variable = "Ver_10",
+                      input_coding = "higher_is_worse", item_coding = NULL) {
 
   versions <- normalize_nf_versions(versions, arg = "versions")
 
-  # Helper function for non-process items: -98 becomes 1; -99 becomes NA.
-  prepare_items <- function(dat, items) {
-    dat_temp <- dat
-    for (col in items) {
-      if (col %in% names(dat_temp)) {
-        dat_temp[[col]] <- ifelse(dat_temp[[col]] == -98, 1,
-                                  ifelse(dat_temp[[col]] == -99, NA, dat_temp[[col]]))
-      }
-    }
-    dat_temp
-  }
-
-  # Helper function for process variables: both -98 and -99 become NA.
-  prepare_items_process <- function(dat, items) {
-    dat_temp <- dat
-    for (col in items) {
-      if (col %in% names(dat_temp)) {
-        dat_temp[[col]] <- ifelse(dat_temp[[col]] == -98, NA,
-                                  ifelse(dat_temp[[col]] == -99, NA, dat_temp[[col]]))
-      }
-    }
-    dat_temp
-  }
+  original <- dat
 
   if (!any(names(dat) == version_variable)) {
     stop("The version_variable does not exist in the dataframe.\n")
@@ -667,178 +714,181 @@ score_all <- function(dat,
     versions = versions
   )
 
+  dat <- prepare_nf_items(dat, input_coding,
+                          version = dat[[version_variable]], item_coding = item_coding)
+
   dat <- dplyr::ungroup(dat) %>%
     dplyr::mutate(
       anger = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, anger.names.nf3), anger.names.nf3),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, anger.names.nf3),
         grepl("2", .data[[version_variable]]) ~ NA,
         TRUE ~ NA
       ),
       cog = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, cog.names.nf3), cog.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, cog.names), cog.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, cog.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, cog.names),
         TRUE ~ NA
       ),
       eating = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, eating.names.nf3), eating.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, eating.names), eating.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, eating.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, eating.names),
         TRUE ~ NA
       ),
       genFunc = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, genFunc.names.nf3), genFunc.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, genFunc.names), genFunc.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, genFunc.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, genFunc.names),
         TRUE ~ NA
       ),
       hopeless = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, hopeless.names.nf3), hopeless.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, hopeless.names), hopeless.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, hopeless.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, hopeless.names),
         TRUE ~ NA
       ),
       impulsivity = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, impulsivity.names.nf3), impulsivity.names.nf3),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, impulsivity.names.nf3),
         grepl("2", .data[[version_variable]]) ~ NA,
         TRUE ~ NA
       ),
       intAvoid = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, intAvoid.names.nf3), intAvoid.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, internal.names), internal.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, intAvoid.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, internal.names),
         TRUE ~ NA
       ),
       intMem = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, intMem.names.nf3), intMem.names.nf3),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, intMem.names.nf3),
         grepl("2", .data[[version_variable]]) ~ NA,
         TRUE ~ NA
       ),
       pain = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, pain.names.nf3), pain.names.nf3),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, pain.names.nf3),
         grepl("2", .data[[version_variable]]) ~ NA,
         TRUE ~ NA
       ),
       physAnx = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, physAnx.names.nf3), physAnx.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, somAnx.names), somAnx.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, physAnx.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, somAnx.names),
         TRUE ~ NA
       ),
       ready = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, ready.names.nf3), ready.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, ready.names), ready.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, ready.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, ready.names),
         TRUE ~ NA
       ),
       sad = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, sad.names.nf3), sad.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, sad.names), sad.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, sad.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, sad.names),
         TRUE ~ NA
       ),
       selfComp = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, selfComp.names.nf3), selfComp.names.nf3),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, selfComp.names.nf3),
         grepl("2", .data[[version_variable]]) ~ NA,
         TRUE ~ NA
       ),
       selfContempt = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, selfContempt.names.nf3), selfContempt.names.nf3),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, selfContempt.names.nf3),
         grepl("2", .data[[version_variable]]) ~ NA,
         TRUE ~ NA
       ),
       socAvoid = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, socAvoid.names.nf3), socAvoid.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, avoidSoc.names), avoidSoc.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, socAvoid.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, avoidSoc.names),
         TRUE ~ NA
       ),
       socSup = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, socSup.names.nf3), socSup.names.nf3),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, socSup.names.nf3),
         grepl("2", .data[[version_variable]]) ~ NA,
         TRUE ~ NA
       ),
       subUse = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, subUse.names.nf3), subUse.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, subUse.names), subUse.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, subUse.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, subUse.names),
         TRUE ~ NA
       ),
       suicide = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, suicide.names.nf3), suicide.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, suicide.names), suicide.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, suicide.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, suicide.names),
         TRUE ~ NA
       ),
       worry = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, worry.names.nf3), worry.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, worry.names), worry.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, worry.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, worry.names),
         TRUE ~ NA
       ),
       ona = dplyr::case_when(
-        grepl("3", .data[[version_variable]]) ~ score_NORSE_mean(prepare_items(dat, ona.names.nf3), ona.names.nf3),
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_mean(prepare_items(dat, ona.names), ona.names),
+        grepl("3", .data[[version_variable]]) ~ score_NORSE_mean(dat, ona.names.nf3),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_mean(dat, ona.names),
         TRUE ~ NA
       ),
       QOL = if ("Q226" %in% names(dat)) .data[["Q226"]] else rep(NA_real_, nrow(dat)),
       # Scales only on NF2
       trauma = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, trauma.names), trauma.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, trauma.names),
         TRUE ~ NA
       ),
       selfCrit = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, selfCrit.names), selfCrit.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, selfCrit.names),
         TRUE ~ NA
       ),
       socialSafety = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, socialSafety.names), socialSafety.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, socialSafety.names),
         TRUE ~ NA
       ),
       control = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, control.names), control.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, control.names),
         TRUE ~ NA
       ),
       internal = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, internal.names), internal.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, internal.names),
         TRUE ~ NA
       ),
       irritable = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, irritable.names), irritable.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, irritable.names),
         TRUE ~ NA
       ),
       recovEnv = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, recovEnv.names), recovEnv.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, recovEnv.names),
         TRUE ~ NA
       ),
       avoidSit = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, avoidSit.names), avoidSit.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, avoidSit.names),
         TRUE ~ NA
       ),
       subRecov = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, subRecov.names), subRecov.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, subRecov.names),
         TRUE ~ NA
       ),
       somAnx = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, somAnx.names), somAnx.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, somAnx.names),
         TRUE ~ NA
       ),
       avoidSoc = dplyr::case_when(
         grepl("3", .data[[version_variable]]) ~ NA,
-        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items(dat, avoidSoc.names), avoidSoc.names),
+        grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, avoidSoc.names),
         TRUE ~ NA
       )
     )
 
-  # Process variables: for these, treat both -98 and -99 as missing.
+  # Process variables have already been prepared with both special codes missing.
   if (process_vars) {
     dat <- dplyr::mutate(dat,
                          alliance = dplyr::case_when(
-                           grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items_process(dat, alliance.names.nf3), alliance.names.nf3),
-                           grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items_process(dat, alliance.names), alliance.names),
+                           grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, alliance.names.nf3),
+                           grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, alliance.names),
                            TRUE ~ NA
                          ),
                          pref = dplyr::case_when(
-                           grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items_process(dat, pref.names.nf3), pref.names.nf3),
-                           grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(prepare_items_process(dat, needs.names), needs.names),
+                           grepl("3", .data[[version_variable]]) ~ score_NORSE_trigger(dat, pref.names.nf3),
+                           grepl("2", .data[[version_variable]]) ~ score_NORSE_trigger(dat, needs.names),
                            TRUE ~ NA
                          ))
   }
@@ -848,8 +898,8 @@ score_all <- function(dat,
     c(scale_names, scale_names_nf3, "alliance", "needs", "pref", "QOL"),
     names(dat)
   )
-  check_nf_range(dat, vars = score_vars, action = "warn")
-  dat
+  check_nf_range(dat, vars = score_vars, action = "error")
+  restore_nf_source(dat, original, score_vars)
 }
 
 
