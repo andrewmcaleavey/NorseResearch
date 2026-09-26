@@ -9,6 +9,9 @@
 * Calculate audit scale means from one observed item by default so sparse and
   trigger-driven NF rows remain usable. Add `min_items` and retain optional
   `min_fraction` for analyses that require stricter scale completeness.
+* Lower the default minimum absolute correlation used as directional evidence
+  from 0.20 to 0.15. The audit still requires at least `min_n` complete pairs
+  and a correlation interval that excludes zero.
 
 ## QOL correction
 

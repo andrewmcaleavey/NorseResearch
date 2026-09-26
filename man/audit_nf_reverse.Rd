@@ -14,7 +14,7 @@ audit_nf_reverse(
   anchor_scales = c("Worry", "Sad Affect"),
   positive_scale_anchors = list(`Social Support` = c("Worry", "Sad Affect")),
   min_n = 30L,
-  min_abs_r = 0.2,
+  min_abs_r = 0.15,
   conf_level = 0.95,
   min_items = 1L,
   min_fraction = NULL,
@@ -63,7 +63,7 @@ higher = worse, each is expected to be positive. Use \code{list()} to disable.}
 directional evidence. An integer of at least 4; default 30.}
 
 \item{min_abs_r}{Minimum absolute Pearson correlation providing directional
-evidence; default 0.20. Must be greater than 0 and less than 1.}
+evidence; default 0.15. Must be greater than 0 and less than 1.}
 
 \item{conf_level}{Confidence level for approximate Fisher-z correlation
 intervals; default 0.95. Must be greater than 0 and less than 1.}

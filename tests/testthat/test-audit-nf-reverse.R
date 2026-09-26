@@ -73,6 +73,35 @@ test_that("weak, constant, and undersized evidence stays unresolved", {
   expect_true(all(is.na(subset(b$correlations, scale == "Mixed")$r)))
 })
 
+test_that("default threshold detects modest but precise directional correlations", {
+  set.seed(2026)
+  n <- 800
+  negative_latent <- stats::rnorm(n)
+  positive_latent <- -0.18 * negative_latent +
+    sqrt(1 - 0.18^2) * stats::rnorm(n)
+  ordinal <- function(x) as.integer(cut(
+    x, breaks = stats::quantile(x, probs = 0:7 / 7),
+    include.lowest = TRUE, labels = FALSE
+  ))
+  dat <- data.frame(negative = ordinal(negative_latent),
+                    positive = ordinal(positive_latent))
+  metadata <- data.frame(item = c("negative", "positive"),
+                         reverse = c("", "R"), scale_e = "Mixed")
+
+  default <- audit_nf_reverse(
+    dat, metadata, anchor_scales = character(),
+    positive_scale_anchors = list(), verbose = TRUE
+  )
+  stricter <- audit_nf_reverse(
+    dat, metadata, anchor_scales = character(),
+    positive_scale_anchors = list(), min_abs_r = 0.20, verbose = TRUE
+  )
+
+  expect_equal(default$settings$min_abs_r, 0.15)
+  expect_equal(default$classifications$classification, "RAW_AGREEMENT")
+  expect_equal(stricter$classifications$classification, "UNCERTAIN")
+})
+
 test_that("partial reversal and conflicting items remain visible", {
   f <- audit_fixture()
   f$dat$support <- 8 - f$dat$support

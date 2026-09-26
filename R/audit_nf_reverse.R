@@ -37,7 +37,7 @@
 #' @param min_n Minimum number of complete pairs for a correlation to provide
 #'   directional evidence. An integer of at least 4; default 30.
 #' @param min_abs_r Minimum absolute Pearson correlation providing directional
-#'   evidence; default 0.20. Must be greater than 0 and less than 1.
+#'   evidence; default 0.15. Must be greater than 0 and less than 1.
 #' @param conf_level Confidence level for approximate Fisher-z correlation
 #'   intervals; default 0.95. Must be greater than 0 and less than 1.
 #' @param min_items Minimum number of observed items needed to calculate a
@@ -193,7 +193,7 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
                               anchor_scales = c("Worry", "Sad Affect"),
                               positive_scale_anchors = list(
                                 "Social Support" = c("Worry", "Sad Affect")),
-                              min_n = 30L, min_abs_r = 0.20,
+                              min_n = 30L, min_abs_r = 0.15,
                               conf_level = 0.95, min_items = 1L,
                               min_fraction = NULL,
                               verbose = FALSE) {
