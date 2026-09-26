@@ -168,7 +168,8 @@ test_that("score_all scores mixed NF2/NF3 rows and applies special missing codes
   expect_equal(out$cog, c(2, 1))
   expect_true(is.na(out$anger[[1]]))
   expect_equal(out$anger[[2]], 2)
-  expect_equal(out$ona, c(2, 50 / 26))
+  # NF3 excludes the three NF2-only ONA items even in a combined export.
+  expect_equal(out$ona, c(2, 44 / 23))
   expect_equal(out$QOL, dat$Q226)
 })
 

@@ -34,7 +34,8 @@ testthat::test_that("rev_score_NORSE2 reverses the intended NORSE2 items", {
   out <- rev_score_NORSE2(dat)
 
   for (nm in cols) {
-    testthat::expect_equal(out[[nm]], rev_score(dat[[nm]]), info = nm)
+    expected <- if (nm %in% c("Q11", "Q12", "Q13", "Q14")) dat[[nm]] else rev_score(dat[[nm]])
+    testthat::expect_equal(out[[nm]], expected, info = nm)
   }
   testthat::expect_equal(out$other, dat$other)
 })

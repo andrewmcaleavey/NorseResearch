@@ -62,6 +62,8 @@ any function (for example, `?score_all`).
 
 **Score scales**
 
+- [`audit_nf_reverse()`](?audit_nf_reverse) checks whether positive items have already been reversed in an export.
+- [`prepare_nf_items()`](?prepare_nf_items) prepares an item-level copy with explicit input coding and sentinel handling.
 - [`score_all()`](?score_all) scores all NF2/NF3 scales in raw scale form.
 - [`score_all_nf3()`](?score_all_nf3) specifically targets NF3 scales.
 - [`nf_score()`](?nf_score) is a deprecated mixed-version compatibility helper; use [`score_all()`](?score_all) for new work.
@@ -210,19 +212,206 @@ the `_A#` collapse and `Q#_1` merge internally. Call
 the column collapse, or when applying the same deterministic suffix policy to
 another set of exported columns.
 
+## Auditing reverse scoring before scoring scales
+
+An NF export may contain original agreement ratings or values already converted
+to **higher = more problems**. Use `audit_nf_reverse()` on numeric item columns
+while the original `-98` and `-99` codes are still present. It compares both
+interpretations without changing the data.
+
+This reproducible example uses the bundled NF3.1 item definitions for
+Impulsivity (mixed wording), Social Support (all positive wording), and the
+negative-only Worry and Sad Affect anchors. The responses are synthetic and
+intentionally correlated to illustrate the diagnostic; they are not patient
+data or a model of typical NF correlations.
+
+```{r audit-example-data}
+audit_scales <- c("Impulsivity", "Social Support", "Worry", "Sad Affect")
+audit_metadata <- subset(NF3.1_items, scale_e %in% audit_scales)
+positive_items <- audit_metadata$item[trimws(audit_metadata$reverse) == "R"]
+
+set.seed(20260926)
+problem_level <- rep(1:7, each = 20)
+original_ratings <- as.data.frame(setNames(
+  lapply(audit_metadata$item, function(item) {
+    response <- pmin(7, pmax(1, problem_level +
+      sample(-1:1, length(problem_level), replace = TRUE,
+             prob = c(0.15, 0.70, 0.15))))
+    if (item %in% positive_items) 8 - response else response
+  }),
+  audit_metadata$item
+))
+
+# Retain the special export codes for the audit to interpret.
+original_ratings[1:5, ] <- -98
+original_ratings[6, ] <- -99
+
+# Simulate a second export whose positive items were already reversed.
+already_reversed <- original_ratings
+for (item in positive_items) {
+  ordinary <- already_reversed[[item]] %in% 1:7
+  already_reversed[[item]][ordinary] <-
+    8 - already_reversed[[item]][ordinary]
+}
+
+audit_exports <- rbind(
+  transform(original_ratings, export_id = "original_agreement"),
+  transform(already_reversed, export_id = "already_reversed")
+)
+```
+
+The default output is a single answer about whether higher numbers consistently
+mean more problems:
+
+```{r audit-example-results}
+audit_nf_reverse(original_ratings, metadata = audit_metadata)
+# "not consistent": positive items still use original agreement ratings
+
+audit_nf_reverse(already_reversed, metadata = audit_metadata)
+# "consistent": positive items already have higher = worse coding
+
+# Keep different exports separate when calculating their correlations.
+audit_nf_reverse(audit_exports, metadata = audit_metadata,
+                 group_vars = "export_id")
+# "mixed": the two exports use different conventions
+```
+
+`"not consistent"` here means that the tested positive items need reversal;
+it does not mean that some exports have already been reversed and others have
+not. That combination gives `"mixed"`, as do conflicting item directions within
+a scale. If the evidence is too weak or unresolved, the function returns `NA`
+with a brief warning instead of guessing. Established mixed coding takes
+precedence over unresolved evidence elsewhere.
+
+The audit handles `-99` as missing. It compares results excluding `-98` with a
+sensitivity analysis that recodes `-98` to `1` in higher = worse units. A
+positive item's no-problem value on the original agreement scale would be `7`,
+which also becomes `1` after reversal. Keep these special codes intact until
+after the audit.
+
+### Requesting item-level details
+
+Use `verbose = TRUE` only when you want to inspect the evidence. The returned
+list includes the same overall verdict in `status` and an item table in `items`:
+
+```{r audit-example-evidence}
+audit_details <- audit_nf_reverse(
+  audit_exports, metadata = audit_metadata,
+  group_vars = "export_id", verbose = TRUE
+)
+audit_details$status
+
+# Inspect one positive item from each of the two scales being checked.
+subset(audit_details$items, item %in% c("Q223", "Q204"),
+       select = c(group, scale, item, status, action, item_conflict))
+```
+
+Group 1 is the original-agreement export and group 2 is the already-reversed
+export. `REVERSE` proposes `8 - response` for ordinary 1--7 responses; `KEEP`
+proposes leaving them unchanged. `UNRESOLVED` means the evidence cannot support
+an action. The function never modifies the data. Item statuses inherit the
+scale's evidence, with conflicts flagged separately; negative items are marked
+`"assumed consistent"` because their direction is the trusted starting point.
+
+Additional detail is available in `audit_details$correlations`,
+`audit_details$classifications`, and `audit_details$counts`. For example, to
+inspect all pair and item-rest comparisons involving Q223:
+
+```{r audit-item-correlations, eval = FALSE}
+subset(audit_details$correlations, left == "Q223" | right == "Q223")
+```
+
+The verdict summarizes the available checks, not verification of every item.
+By default these check mixed-wording scales and Social Support against Worry
+and Sad Affect. Other entirely positive scales require justified relationships
+in `positive_scale_anchors`; otherwise their items are `"not assessed"`.
+Absent scales do not vote, and insufficient evidence in an included scale
+prevents a uniform verdict. Thresholds are diagnostic defaults, not validated
+NF cutoffs. See `?audit_nf_reverse` for the full decision rules.
+
+### Using your own export
+
+For a real NF3.1 export, omit `metadata` to use the complete bundled item table.
+With repeated assessments, identify patients and order observations so the
+audit uses the earliest assessment per patient within each export:
+
+```{r audit-real-export, eval = FALSE}
+# Use your export's actual column names for these arguments.
+audit_nf_reverse(nf_collapsed,
+                 patient_id = "Respondent_ID", order_by = "Submitted")
+
+# Request details if the result needs investigation.
+audit_details <- audit_nf_reverse(
+  nf_collapsed, patient_id = "Respondent_ID", order_by = "Submitted",
+  verbose = TRUE
+)
+audit_details$items
+
+# For combined exports, also supply group_vars = "export_id".
+# Check unmatched item names; use item_map to specify the correct mapping.
+subset(audit_details$mapping, !present)
+```
+
+### From the audit to scale scores
+
+Once the export convention has been reviewed, supply it explicitly to the scorer:
+`"consistent"` corresponds to `input_coding = "higher_is_worse"`, while
+`"not consistent"` corresponds to `input_coding = "agreement"`. A `"mixed"` or
+`NA` result requires review of batch/item rules before scoring. The audit does
+not certify the direction of unassessed items.
+
+The two synthetic exports above describe the same responses. Their scores
+should therefore agree after preparation:
+
+```{r audit-to-scoring}
+scored_agreement <- score_all(
+  transform(original_ratings, Ver_10 = "3.1"), input_coding = "agreement"
+)
+scored_standardized <- score_all(
+  transform(already_reversed, Ver_10 = "3.1"), input_coding = "higher_is_worse"
+)
+problem_scores <- c("impulsivity", "socSup", "worry", "sad")
+isTRUE(all.equal(scored_agreement[problem_scores],
+                 scored_standardized[problem_scores]))
+```
+
+Problem and resource-deficit scales now have higher = more problems. Positive
+resource labels such as Social Support describe **lack of support** when scored
+in this direction. **Alliance, Therapy Preferences, QOL, and Norse (Q148,
+including Q148.2) are exceptions:** ordinary responses are never reversed, both
+`-98` and `-99` are missing, and these outputs retain their original meaning.
+The audit excludes these exceptions from its problem-direction verdict.
+
+The scorer prepares an internal copy and preserves the original item columns
+in its output. If you need prepared items for item-level analysis or a
+low-level scorer, request them explicitly:
+
+```{r prepare-items-example}
+prepare_nf_items(
+  data.frame(Q223 = c(7, -98, -99), Q226 = c(7, -98, -99),
+             Q148 = c(7, -98, -99)),
+  input_coding = "agreement", version = "3"
+)
+```
+
+For Q223, the results are `1, 1, NA`; for Q226 and Q148, they are `7, NA, NA`.
+Never reverse the special codes themselves or reverse an item twice. When
+passing already prepared items to a scorer, use `input_coding = "higher_is_worse"`.
+The scoring wrappers use that convention by default for backward compatibility;
+it is an assumption, not an automatic audit.
+
 ## Scoring a real NF export
 
 The scoring functions (`score_all()` and `score_all_nf3()`) expect a
 clean data set whose item columns are already reduced to short `Q#` names. They
-are built around real NF exports, which are larger and confidential; the bundled
-`synthetic_data` is not the right input for them. A typical NF3+ workflow looks
-like this — replace the file path with your own export.
+use explicit input coding and preserve source responses. A typical NF3.1
+workflow looks like this — replace the file path with your own export.
 
 ```{r, eval = FALSE}
 # 1) Read the NF3+ export
 raw_nf <- read.csv_nf3("path/to/response_data.csv")
 
-# 2) Confirm the version (3.x or higher)
+# 2) Confirm the version (this audit example uses NF3.1)
 check_version_nf(raw_nf)
 
 # 3) Fix encoding and standardize names
@@ -232,16 +421,25 @@ raw_nf <- clean_NF_names(raw_nf)
 # 4) Collapse repeated measures and widen multi-measure items
 nf_collapsed <- collapse_measures_wide(raw_nf)
 
-# 5) Score all NF3+ scales. score_all() handles -98/-99 automatically.
-nf_scored <- score_all(nf_collapsed)
+# 5) Audit before replacing special codes; review any unassessed items.
+verdict <- audit_nf_reverse(nf_collapsed)
+if (is.na(verdict) || verdict == "mixed") {
+  stop("Review batch/item coding before scoring; request verbose audit details.")
+}
+coding <- if (verdict == "consistent") "higher_is_worse" else "agreement"
 
-# 6) Optionally compute normed scores
-nf_normed <- score_normed_NF(nf_scored)
+# 6) Score with the reviewed convention; sentinel handling is automatic.
+nf_scored <- score_all(nf_collapsed, input_coding = coding)
+
+# 7) Optionally norm ONE scale, using direction/version-compatible norms.
+nf_normed <- score_normed_NF(nf_scored, scale = "worry")
 ```
 
 ### Multiple exports
 
-When you have several exports, read and clean each one, then combine and score.
+For several NF3.1 exports, audit each one separately before combining. Resolve
+any differences within an export using reviewed `item_coding` overrides or
+smaller batches. Here each export is assumed to have one reviewed convention.
 
 ```{r, eval = FALSE}
 export_paths <- list(
@@ -258,7 +456,14 @@ collapsed <- purrr::map(raw_exports, collapse_measures_wide)
 
 combined <- dplyr::bind_rows(collapsed, .id = "export_id")
 
-combined_scored <- score_all(combined)
+verdicts <- vapply(collapsed, audit_nf_reverse, character(1))
+if (anyNA(verdicts) || any(verdicts == "mixed")) {
+  stop("Review unresolved or mixed exports before scoring.")
+}
+export_coding <- ifelse(verdicts == "consistent", "higher_is_worse", "agreement")
+combined_scored <- score_all(
+  combined, input_coding = export_coding[as.integer(combined$export_id)]
+)
 ```
 
 ## Generating your own mock data
@@ -300,9 +505,11 @@ dplyr::count(mixed_mock, Ver_10)
 For NF3, `nf3_trigger_threshold` controls the simulated opening threshold
 (default `4.5`); NF2 instead uses the documented thresholds in `nf2.1.logic`.
 `score_all()` handles these sentinel values automatically (including its
-special handling of process variables). Use `replace_98s_99s()` only when you
-need its general-purpose `-98` to `1` and `-99` to `NA` recoding before another
-analysis.
+exceptions for Alliance, Preferences, QOL, and Norse). Use `prepare_nf_items()`
+for item-level scoring preparation. `replace_98s_99s()` is a generic utility
+that does not implement these exceptions or handle item direction. The mock
+responses are random; they demonstrate the API, not evidence of coherent
+clinical correlations or an export's coding convention.
 
 ## Notes for NF3+
 

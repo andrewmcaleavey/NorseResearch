@@ -6,12 +6,12 @@ audit_fixture <- function() {
     scale_e = c("Mixed", "Mixed", "Worry", "Social Support")),
     dat = data.frame(neg = x, pos = 8 - x, worry = x, support = 8 - x))
 }
-run_audit_fixture <- function(dat = NULL, metadata = NULL, ...) {
+run_audit_fixture <- function(dat = NULL, metadata = NULL, verbose = TRUE, ...) {
   f <- audit_fixture()
   if (is.null(dat)) dat <- f$dat
   if (is.null(metadata)) metadata <- f$metadata
   audit_nf_reverse(dat, metadata, anchor_scales = "Worry",
-                   positive_scale_anchors = list("Social Support" = "Worry"), ...)
+                   positive_scale_anchors = list("Social Support" = "Worry"), verbose = verbose, ...)
 }
 
 test_that("raw and already reversed exports yield the expected actions", {
@@ -142,7 +142,7 @@ test_that("completeness counts absent metadata items and item-rest excludes targ
 test_that("single-item scales without anchors have typed empty diagnostics", {
   metadata <- data.frame(item = "x", reverse = "R", scale_e = "Readiness")
   a <- audit_nf_reverse(data.frame(x = 1:7), metadata, anchor_scales = character(),
-                        positive_scale_anchors = list())
+                        positive_scale_anchors = list(), verbose = TRUE)
   expect_equal(nrow(a$correlations), 0)
   expect_equal(a$classifications$classification, "UNCERTAIN")
   expect_equal(a$transformations$action, "UNRESOLVED")
@@ -170,7 +170,93 @@ test_that("inputs and anchor definitions are validated", {
 
 test_that("default bundled metadata is usable without changing data", {
   dat <- data.frame(Q117 = rep(1:7, 12), Q100 = rep(1:7, 12), Q204 = rep(7:1, 12))
-  a <- audit_nf_reverse(dat)
+  a <- audit_nf_reverse(dat, verbose = TRUE)
   expect_true(all(c("Q117", "Q100", "Q204") %in% a$mapping$item[a$mapping$present]))
   expect_true(any(a$mapping$positive))
+})
+
+test_that("the default is one plain dataset verdict", {
+  f <- audit_fixture()
+  raw <- run_audit_fixture(verbose = FALSE)
+  expect_identical(raw, "not consistent")
+  expect_null(attributes(raw))
+  coded <- transform(f$dat, pos = 8 - pos, support = 8 - support)
+  expect_identical(run_audit_fixture(coded, verbose = FALSE), "consistent")
+  partial <- transform(f$dat, support = 8 - support)
+  expect_identical(run_audit_fixture(partial, verbose = FALSE), "mixed")
+  expect_identical(run_audit_fixture(coded)$status,
+                   run_audit_fixture(coded, verbose = FALSE))
+  expect_error(run_audit_fixture(verbose = NA), "single non-missing logical")
+  expect_error(run_audit_fixture(verbose = 1), "single non-missing logical")
+  expect_error(run_audit_fixture(verbose = c(TRUE, FALSE)), "single non-missing logical")
+})
+
+test_that("verbose results make per-item interpretation accessible", {
+  a <- run_audit_fixture()
+  expect_identical(a$status, "not consistent")
+  expect_equal(a$items$status, c("assumed consistent", "not consistent",
+                                "assumed consistent", "not consistent"))
+  expect_equal(a$groups$status, "not consistent")
+  expect_equal(a$items$action, a$transformations$action)
+})
+
+test_that("dataset verdict combines groups without hiding unresolved evidence", {
+  f <- audit_fixture()
+  coded <- transform(f$dat, pos = 8 - pos, support = 8 - support)
+  dat <- rbind(transform(f$dat, batch = "raw"), transform(coded, batch = "coded"))
+  expect_identical(run_audit_fixture(dat, group_vars = "batch", verbose = FALSE), "mixed")
+  expect_equal(run_audit_fixture(dat, group_vars = "batch")$groups$status,
+               c("not consistent", "consistent"))
+  weak <- transform(coded, pos = 4, support = 4, batch = "weak")
+  dat <- rbind(transform(coded, batch = "coded"), weak)
+  expect_warning(status <- run_audit_fixture(dat, group_vars = "batch", verbose = FALSE),
+                 "Insufficient or unresolved evidence")
+  expect_identical(status, NA_character_)
+  expect_no_warning(details <- run_audit_fixture(dat, group_vars = "batch"))
+  expect_identical(details$status, NA_character_)
+})
+
+test_that("uncertainty is not labelled mixed or consistent", {
+  f <- audit_fixture()
+  for (dat in list(f$dat[1:7, ], transform(f$dat, pos = 4),
+                   as.data.frame(lapply(f$dat, function(x) rep(-98, length(x)))))) {
+    expect_warning(status <- run_audit_fixture(dat, verbose = FALSE), "verbose = TRUE")
+    expect_identical(status, NA_character_)
+  }
+  f$dat$neg <- rep(4:7, 21)
+  f$dat$pos <- 11 - f$dat$neg
+  extras <- f$dat[rep(1, 1000), ]
+  extras$neg <- extras$pos <- -98
+  expect_warning(status <- run_audit_fixture(rbind(f$dat, extras), verbose = FALSE),
+                 "verbose = TRUE")
+  expect_identical(status, NA_character_)
+})
+
+test_that("within-scale conflict produces a mixed dataset verdict", {
+  f <- audit_fixture()
+  f$metadata <- rbind(f$metadata, data.frame(item = "pos2", reverse = "R", scale_e = "Mixed"))
+  f$dat$pos2 <- 8 - f$dat$pos
+  expect_identical(run_audit_fixture(f$dat, f$metadata, verbose = FALSE), "mixed")
+  expect_true(all(subset(run_audit_fixture(f$dat, f$metadata)$items,
+                         scale == "Mixed")$status == "mixed"))
+  # A conflict in a negative-only scale also prevents a consistent verdict.
+  f <- audit_fixture()
+  f$metadata <- rbind(f$metadata, data.frame(item = "worry2", reverse = "", scale_e = "Worry"))
+  f$dat <- transform(f$dat, pos = 8 - pos, support = 8 - support, worry2 = 8 - worry)
+  expect_identical(run_audit_fixture(f$dat, f$metadata, verbose = FALSE), "mixed")
+})
+
+test_that("unassessed scales do not silently count as consistent votes", {
+  f <- audit_fixture()
+  f$metadata <- rbind(f$metadata,
+    data.frame(item = "readiness", reverse = "R", scale_e = "Readiness"),
+    data.frame(item = "absent", reverse = "R", scale_e = "Absent"))
+  f$dat$readiness <- rep(1:7, 12)
+  a <- run_audit_fixture(f$dat, f$metadata)
+  expect_equal(a$status, "not consistent")
+  expect_equal(tail(a$items$status, 2), rep("not assessed", 2))
+  only_negative <- data.frame(item = "x", reverse = "", scale_e = "Worry")
+  expect_warning(status <- audit_nf_reverse(data.frame(x = rep(1:7, 12)),
+    only_negative, anchor_scales = "Worry", positive_scale_anchors = list()), "verbose = TRUE")
+  expect_identical(status, NA_character_)
 })
