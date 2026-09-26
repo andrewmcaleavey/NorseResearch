@@ -16,7 +16,8 @@ audit_nf_reverse(
   min_n = 30L,
   min_abs_r = 0.2,
   conf_level = 0.95,
-  min_fraction = 0.75,
+  min_items = 1L,
+  min_fraction = NULL,
   verbose = FALSE
 )
 }
@@ -67,10 +68,15 @@ evidence; default 0.20. Must be greater than 0 and less than 1.}
 \item{conf_level}{Confidence level for approximate Fisher-z correlation
 intervals; default 0.95. Must be greater than 0 and less than 1.}
 
-\item{min_fraction}{Minimum proportion of a scale's metadata items needed
-to calculate its mean, default 0.75. For item-rest means, the denominator
-excludes the target item. Absent export columns count as missing items.
-Must be greater than 0 and at most 1.}
+\item{min_items}{Minimum number of observed items needed to calculate a
+scale or item-rest mean; default 1. For item-rest means this means one
+observed item other than the target item.}
+
+\item{min_fraction}{Optional minimum proportion of a scale's metadata items
+needed to calculate its mean. The default \code{NULL} imposes no proportional
+requirement, so \code{min_items = 1} controls the default. When supplied, it
+must be greater than 0 and at most 1. \code{min_items} and \code{min_fraction} are
+both enforced; absent export columns count as missing items.}
 
 \item{verbose}{A single logical value, default \code{FALSE}. Return a detailed
 audit list instead of the single overall verdict when \code{TRUE}.}
@@ -81,6 +87,10 @@ With \code{verbose = FALSE}, a character scalar: \code{"consistent"},
 establish a verdict. With \code{verbose = TRUE}, a list containing:
 \describe{
 \item{status}{The same dataset-level verdict as the default return value.}
+\item{issues}{A short table explaining each unresolved group or scale that
+prevents a dataset verdict. It distinguishes unavailable comparisons,
+too few complete pairs, constant responses, weak correlations,
+confidence intervals crossing zero, and dependence on -98 recoding.}
 \item{items}{Per-group, per-item results: scale, item and export column,
 positive wording, presence, proposed ordinary-response action,
 item-conflict flag, scale classification, and status (\code{"consistent"},

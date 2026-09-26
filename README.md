@@ -23,7 +23,7 @@ Or install from an existing tarball:
 
 ```r
 remotes::install_local(
-  "NorseResearch_0.2.0.tar.gz",  # or the filename you have
+  "NorseResearch_0.2.1.tar.gz",  # or the filename you have
   dependencies = TRUE,
   upgrade = "always"
 )

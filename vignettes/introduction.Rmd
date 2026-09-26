@@ -336,7 +336,10 @@ after the audit.
 ### Requesting item-level details
 
 Use `verbose = TRUE` only when you want to inspect the evidence. The returned
-list includes the same overall verdict in `status` and an item table in `items`:
+list includes the same overall verdict in `status`, a short explanation table
+in `issues`, and an item table in `items`. When the default result is `NA`, its
+warning reports these issues directly; rerun with `verbose = TRUE` to retain
+them for inspection.
 
 ```{r audit-example-evidence}
 audit_details <- audit_nf_reverse(
@@ -344,6 +347,7 @@ audit_details <- audit_nf_reverse(
   group_vars = "export_id", verbose = TRUE
 )
 audit_details$status
+audit_details$issues
 
 # Inspect one positive item from each of the two scales being checked.
 subset(audit_details$items, item %in% c("Q223", "Q204"),
@@ -372,6 +376,10 @@ in `positive_scale_anchors`; otherwise their items are `"not assessed"`.
 Absent scales do not vote, and insufficient evidence in an included scale
 prevents a uniform verdict. Thresholds are diagnostic defaults, not validated
 NF cutoffs. See `?audit_nf_reverse` for the full decision rules.
+
+Scale and item-rest means use one available item by default, which accommodates
+sparse and trigger-driven NF rows without imputing responses. Set `min_items`
+or `min_fraction` only when the audit should require stricter completeness.
 
 ### How scoring uses the audit result
 

@@ -1,3 +1,22 @@
+# NorseResearch 0.2.1
+
+## Reverse-scoring audit
+
+* Explain an `NA` audit result in the warning itself, naming each unresolved
+  group and scale and whether the cause is insufficient overlap, no variation,
+  weak correlations, intervals crossing zero, or sensitivity to `-98`. Expose
+  the same concise explanations in the verbose `issues` table.
+* Calculate audit scale means from one observed item by default so sparse and
+  trigger-driven NF rows remain usable. Add `min_items` and retain optional
+  `min_fraction` for analyses that require stricter scale completeness.
+
+## QOL correction
+
+* Validate QOL item Q226 in both the audit and scoring pipeline on its actual
+  0--10 response scale rather than applying the general 1--7 NF item range.
+  Q226 remains unreversed, is excluded from the audit's problem-direction
+  verdict, and treats both `-98` and `-99` as missing during scoring.
+
 # NorseResearch 0.2.0
 
 This release clarifies the NF scoring contract. Main symptom and resource
@@ -38,8 +57,6 @@ already standardized to that direction.
 * Keep Alliance, Therapy Preferences/Needs, QOL, and Norse (Q148, including
   Q148.2) unreversed. For these exceptions, both `-98` and `-99` are missing;
   they retain their original meaning and are not problem-severity scores.
-* Validate QOL item Q226 and its resulting score on its actual 0--10 response
-  scale rather than applying the general 1--7 NF item range.
 * On the main problem-oriented scales, interpret `-98` as 1 (no problems) and
   `-99` as missing. Sentinel handling occurs before ordinary-response reversal,
   preventing `-98` from becoming a maximum-problem response.

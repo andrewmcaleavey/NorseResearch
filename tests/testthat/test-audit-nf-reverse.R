@@ -129,10 +129,12 @@ test_that("completeness counts absent metadata items and item-rest excludes targ
   f <- audit_fixture()
   f$metadata <- rbind(f$metadata, data.frame(item = "absent", reverse = "R", scale_e = "Social Support"))
   a <- run_audit_fixture(f$dat, f$metadata)
-  expect_equal(a$classifications$classification[3], "UNCERTAIN")
-  expect_true(all(subset(a$correlations, type == "scale_anchor")$n == 0))
-  b <- run_audit_fixture(f$dat, f$metadata, min_fraction = 0.5)
-  expect_equal(b$classifications$classification[3], "RAW_AGREEMENT")
+  expect_equal(a$classifications$classification[3], "RAW_AGREEMENT")
+  strict <- run_audit_fixture(f$dat, f$metadata, min_items = 2)
+  expect_equal(strict$classifications$classification[3], "UNCERTAIN")
+  expect_true(all(subset(strict$correlations, type == "scale_anchor")$n == 0))
+  proportional <- run_audit_fixture(f$dat, f$metadata, min_fraction = 0.5)
+  expect_equal(proportional$classifications$classification[3], "RAW_AGREEMENT")
   f <- audit_fixture()
   f$dat$neg <- 4
   c <- run_audit_fixture(f$dat)
@@ -153,6 +155,8 @@ test_that("inputs and anchor definitions are validated", {
   expect_error(run_audit_fixture(transform(f$dat, pos = -97)), "numeric 1:7")
   expect_error(run_audit_fixture(transform(f$dat, pos = "1")), "numeric 1:7")
   expect_error(run_audit_fixture(min_n = 3), "min_n")
+  expect_error(run_audit_fixture(min_items = 0), "positive integer")
+  expect_error(run_audit_fixture(min_items = 1.5), "positive integer")
   expect_error(run_audit_fixture(min_fraction = 0), "Invalid")
   expect_error(run_audit_fixture(item_map = c(pos = "neg")), "one-to-one")
   expect_error(run_audit_fixture(item_map = c(unknown = "x")), "known metadata")
@@ -208,6 +212,7 @@ test_that("the default is one plain dataset verdict", {
 test_that("verbose results make per-item interpretation accessible", {
   a <- run_audit_fixture()
   expect_identical(a$status, "not consistent")
+  expect_equal(nrow(a$issues), 0)
   expect_equal(a$items$status, c("assumed consistent", "not consistent",
                                 "assumed consistent", "not consistent"))
   expect_equal(a$groups$status, "not consistent")
@@ -228,6 +233,10 @@ test_that("dataset verdict combines groups without hiding unresolved evidence", 
   expect_identical(status, NA_character_)
   expect_no_warning(details <- run_audit_fixture(dat, group_vars = "batch"))
   expect_identical(details$status, NA_character_)
+  expect_true(nrow(details$issues) >= 1)
+  expect_true(all(c("group", "scale", "classification", "issue") %in%
+                    names(details$issues)))
+  expect_true(any(grepl("no variation", details$issues$issue)))
 })
 
 test_that("uncertainty is not labelled mixed or consistent", {
@@ -244,6 +253,27 @@ test_that("uncertainty is not labelled mixed or consistent", {
   expect_warning(status <- run_audit_fixture(rbind(f$dat, extras), verbose = FALSE),
                  "verbose = TRUE")
   expect_identical(status, NA_character_)
+})
+
+test_that("NA warnings explain the specific audit limitation", {
+  f <- audit_fixture()
+  expect_warning(
+    status <- run_audit_fixture(f$dat[1:7, ], verbose = FALSE),
+    "Too few complete response pairs: maximum n = 7; min_n = 30"
+  )
+  expect_identical(status, NA_character_)
+
+  f$dat$pos <- 4
+  expect_warning(
+    status <- run_audit_fixture(f$dat, verbose = FALSE),
+    "Mixed: The compared responses had no variation"
+  )
+  expect_identical(status, NA_character_)
+
+  details <- run_audit_fixture(f$dat)
+  mixed_issue <- subset(details$issues, scale == "Mixed")
+  expect_equal(mixed_issue$classification, "UNCERTAIN")
+  expect_match(mixed_issue$issue, "no variation")
 })
 
 test_that("within-scale conflict produces a mixed dataset verdict", {

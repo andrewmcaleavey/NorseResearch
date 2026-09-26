@@ -40,10 +40,14 @@
 #'   evidence; default 0.20. Must be greater than 0 and less than 1.
 #' @param conf_level Confidence level for approximate Fisher-z correlation
 #'   intervals; default 0.95. Must be greater than 0 and less than 1.
-#' @param min_fraction Minimum proportion of a scale's metadata items needed
-#'   to calculate its mean, default 0.75. For item-rest means, the denominator
-#'   excludes the target item. Absent export columns count as missing items.
-#'   Must be greater than 0 and at most 1.
+#' @param min_items Minimum number of observed items needed to calculate a
+#'   scale or item-rest mean; default 1. For item-rest means this means one
+#'   observed item other than the target item.
+#' @param min_fraction Optional minimum proportion of a scale's metadata items
+#'   needed to calculate its mean. The default `NULL` imposes no proportional
+#'   requirement, so `min_items = 1` controls the default. When supplied, it
+#'   must be greater than 0 and at most 1. `min_items` and `min_fraction` are
+#'   both enforced; absent export columns count as missing items.
 #'
 #' @param verbose A single logical value, default `FALSE`. Return a detailed
 #'   audit list instead of the single overall verdict when `TRUE`.
@@ -125,6 +129,10 @@
 #'   establish a verdict. With `verbose = TRUE`, a list containing:
 #' \describe{
 #'   \item{status}{The same dataset-level verdict as the default return value.}
+#'   \item{issues}{A short table explaining each unresolved group or scale that
+#'     prevents a dataset verdict. It distinguishes unavailable comparisons,
+#'     too few complete pairs, constant responses, weak correlations,
+#'     confidence intervals crossing zero, and dependence on -98 recoding.}
 #'   \item{items}{Per-group, per-item results: scale, item and export column,
 #'     positive wording, presence, proposed ordinary-response action,
 #'     item-conflict flag, scale classification, and status (`"consistent"`,
@@ -186,7 +194,8 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
                               positive_scale_anchors = list(
                                 "Social Support" = c("Worry", "Sad Affect")),
                               min_n = 30L, min_abs_r = 0.20,
-                              conf_level = 0.95, min_fraction = 0.75,
+                              conf_level = 0.95, min_items = 1L,
+                              min_fraction = NULL,
                               verbose = FALSE) {
   fail <- function(message) stop(message, call. = FALSE)
   if (!is.logical(verbose) || length(verbose) != 1L || is.na(verbose))
@@ -258,9 +267,12 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
   scalar <- function(x) is.numeric(x) && length(x) == 1L && is.finite(x)
   if (!scalar(min_n) || min_n < 4 || min_n != floor(min_n))
     fail("min_n must be an integer of at least 4.")
+  if (!scalar(min_items) || min_items < 1 || min_items != floor(min_items))
+    fail("min_items must be a positive integer.")
   if (!scalar(min_abs_r) || min_abs_r <= 0 || min_abs_r >= 1 ||
       !scalar(conf_level) || conf_level <= 0 || conf_level >= 1 ||
-      !scalar(min_fraction) || min_fraction <= 0 || min_fraction > 1)
+      (!is.null(min_fraction) &&
+       (!scalar(min_fraction) || min_fraction <= 0 || min_fraction > 1)))
     fail("Invalid min_abs_r, conf_level, or min_fraction.")
   scales <- unique(m$scale_e)
   indices <- lapply(scales, function(s) which(m$scale_e == s))
@@ -307,7 +319,10 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
     z <- x[, ii, drop = FALSE]
     n <- rowSums(!is.na(z))
     ans <- rowMeans(z, na.rm = TRUE)
-    ans[n < ceiling(length(ii) * min_fraction) | n == 0L] <- NA_real_
+    fraction_items <- if (is.null(min_fraction)) 1L else
+      ceiling(length(ii) * min_fraction)
+    required_items <- max(min_items, fraction_items)
+    ans[n < required_items] <- NA_real_
     ans
   }
   correlate <- function(x, y) {
@@ -482,13 +497,101 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
   known <- unique(groups$status[!is.na(groups$status)])
   status <- if ("mixed" %in% known || length(known) > 1L) "mixed" else
     if (anyNA(groups$status) || !length(known)) NA_character_ else known
+
+  issue_rows <- list()
+  add_issue <- function(group, scale, classification, issue) {
+    issue_rows[[length(issue_rows) + 1L]] <<- data.frame(
+      group = group, scale = scale, classification = classification,
+      issue = issue, stringsAsFactors = FALSE
+    )
+  }
+  unresolved_groups <- groups$group[is.na(groups$status)]
+  for (g in unresolved_groups) {
+    in_group <- classification_table$group == g & assessed
+    unresolved <- in_group &
+      !classification_table$classification %in% hypotheses
+    if (!any(in_group)) {
+      add_issue(
+        g, NA_character_, "NO_ASSESSABLE_SCALE",
+        paste0(
+          "No mixed-wording or configured positive scale had an observed ",
+          "ordinary response on a positive item."
+        )
+      )
+      next
+    }
+    for (row in which(unresolved)) {
+      scale <- classification_table$scale[row]
+      classification <- classification_table$classification[row]
+      if (classification == "SENSITIVE_TO_NO_PROBLEM_CODES") {
+        add_issue(
+          g, scale, classification,
+          "The conclusion changed when -98 responses were recoded as 1."
+        )
+        next
+      }
+      zz <- correlation_table[
+        correlation_table$group == g & correlation_table$scale == scale &
+          correlation_table$deciding & !correlation_table$include_98,
+        , drop = FALSE
+      ]
+      if (!nrow(zz)) {
+        reason <- "No deciding item-pair or scale-anchor comparison was available."
+      } else if (all(zz$n < min_n)) {
+        max_n <- if (length(zz$n)) max(zz$n, na.rm = TRUE) else 0L
+        reason <- paste0(
+          "Too few complete response pairs: maximum n = ", max_n,
+          "; min_n = ", min_n, "."
+        )
+      } else {
+        usable <- zz[zz$n >= min_n, , drop = FALSE]
+        if (all(is.na(usable$r))) {
+          reason <- "The compared responses had no variation, so correlations could not be calculated."
+        } else if (all(is.na(usable$r) | abs(usable$r) < min_abs_r)) {
+          max_r <- max(abs(usable$r), na.rm = TRUE)
+          reason <- paste0(
+            "Correlations were too weak: maximum |r| = ",
+            format(round(max_r, 3), nsmall = 3),
+            "; required |r| >= ", min_abs_r, "."
+          )
+        } else if (!any(usable$evidence %in% c("positive", "negative"))) {
+          reason <- paste0(
+            round(conf_level * 100),
+            "% correlation intervals included zero."
+          )
+        } else {
+          reason <- "The deciding correlations did not support one coding convention."
+        }
+      }
+      add_issue(g, scale, classification, reason)
+    }
+  }
+  issues <- if (length(issue_rows)) do.call(rbind, issue_rows) else data.frame(
+    group = integer(), scale = character(), classification = character(),
+    issue = character(), stringsAsFactors = FALSE
+  )
+
   if (!verbose) {
-    if (is.na(status)) warning(
-      "Insufficient or unresolved evidence for a dataset verdict; use verbose = TRUE for details.",
-      call. = FALSE)
+    if (is.na(status)) {
+      labels <- vapply(seq_len(nrow(issues)), function(i) {
+        location <- paste0("group ", issues$group[i])
+        if (!is.na(issues$scale[i]))
+          location <- paste0(location, ", ", issues$scale[i])
+        paste0("- ", location, ": ", issues$issue[i])
+      }, character(1))
+      shown <- head(labels, 6L)
+      if (length(labels) > length(shown))
+        shown <- c(shown, paste0("- ", length(labels) - length(shown),
+                                 " additional issue(s)."))
+      warning(paste(
+        c("Insufficient or unresolved evidence for a dataset verdict.", shown,
+          "Run audit_nf_reverse(..., verbose = TRUE)$issues for the full explanation."),
+        collapse = "\n"
+      ), call. = FALSE)
+    }
     return(status)
   }
-  list(status = status, items = item_table,
+  list(status = status, issues = issues, items = item_table,
        classifications = classification_table,
        correlations = correlation_table, counts = count_table,
        transformations = do.call(rbind, transformations), groups = groups,
@@ -496,6 +599,7 @@ audit_nf_reverse <- function(dat, metadata = NF3.1_items, item_map = NULL,
        settings = list(anchor_scales = anchor_scales,
          positive_scale_anchors = positive_scale_anchors, group_vars = group_vars,
          patient_id = patient_id, order_by = order_by, min_n = min_n,
-         min_abs_r = min_abs_r, conf_level = conf_level, min_fraction = min_fraction,
+         min_abs_r = min_abs_r, conf_level = conf_level,
+         min_items = min_items, min_fraction = min_fraction,
          differing_conventions_across_groups = across))
 }
